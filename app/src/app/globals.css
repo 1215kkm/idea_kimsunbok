@@ -1,8 +1,38 @@
 @import "tailwindcss";
 
-:root {
+/* ===== 다크 모드 (기본) ===== */
+:root,
+[data-theme="dark"] {
   --background: #0a0a2e;
   --foreground: #ededed;
+  --card-bg: #14143c;
+  --card-border: rgba(88, 28, 135, 0.2);
+  --header-bg: rgba(13, 13, 48, 0.8);
+  --input-bg: #14143c;
+  --modal-bg: linear-gradient(to bottom, #1a1a4e, #0d0d30);
+  --text-muted: #71717a;
+  --text-sub: #52525b;
+  --accent-gradient-from: #1a1a4e;
+  --accent-gradient-to: #0d0d30;
+  --navbar-bg: rgba(13, 13, 48, 0.95);
+  --scrollbar-thumb: #7b2ff744;
+}
+
+/* ===== 라이트 모드 ===== */
+[data-theme="light"] {
+  --background: #f5f3ff;
+  --foreground: #1e1b4b;
+  --card-bg: #ffffff;
+  --card-border: rgba(139, 92, 246, 0.2);
+  --header-bg: rgba(255, 255, 255, 0.9);
+  --input-bg: #f0ecff;
+  --modal-bg: linear-gradient(to bottom, #ffffff, #f5f3ff);
+  --text-muted: #6b7280;
+  --text-sub: #9ca3af;
+  --accent-gradient-from: #ede9fe;
+  --accent-gradient-to: #f5f3ff;
+  --navbar-bg: rgba(255, 255, 255, 0.95);
+  --scrollbar-thumb: #7b2ff766;
 }
 
 @theme inline {
@@ -10,12 +40,51 @@
   --color-foreground: var(--foreground);
 }
 
+html {
+  font-size: 18px; /* 기본 16px + 4px 증가 */
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ===== 라이트모드 Tailwind 오버라이드 ===== */
+[data-theme="light"] .dark-card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="light"] .dark-header {
+  background: var(--header-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="light"] .dark-input {
+  background: var(--input-bg) !important;
+  color: var(--foreground) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="light"] .dark-navbar {
+  background: var(--navbar-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="light"] .dark-text-muted {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="light"] .dark-text-sub {
+  color: var(--text-sub) !important;
+}
+
+[data-theme="light"] .dark-modal-bg {
+  background: var(--modal-bg) !important;
 }
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #7b2ff744; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }

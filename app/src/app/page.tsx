@@ -56,11 +56,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6">
       {/* 로고 */}
-      <div className="mb-2 text-sm tracking-widest text-zinc-500">비선형공식 리워드 플랫폼</div>
+      <div className="mb-2 text-sm tracking-widest dark-text-muted text-zinc-500">비선형공식 리워드 플랫폼</div>
       <h1 className="mb-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-rose-400 bg-clip-text text-5xl font-black text-transparent">
         다랜드
       </h1>
-      <p className="mb-10 text-sm text-zinc-500">쓸수록 쌓이는 120%의 마법</p>
+      <p className="mb-10 text-sm dark-text-muted text-zinc-500">쓸수록 쌓이는 120%의 마법</p>
 
       {/* 폼 */}
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
@@ -71,7 +71,7 @@ export default function LoginPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="w-full rounded-xl border border-purple-900/30 bg-[#14143c] px-4 py-3.5 text-sm text-white placeholder-zinc-500 outline-none focus:border-purple-500"
+            className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#14143c] px-4 py-3.5 text-sm placeholder-zinc-500 outline-none focus:border-purple-500"
           />
         )}
         <input
@@ -80,7 +80,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full rounded-xl border border-purple-900/30 bg-[#14143c] px-4 py-3.5 text-sm text-white placeholder-zinc-500 outline-none focus:border-purple-500"
+          className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#14143c] px-4 py-3.5 text-sm placeholder-zinc-500 outline-none focus:border-purple-500"
         />
         <input
           type="password"
@@ -88,7 +88,7 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full rounded-xl border border-purple-900/30 bg-[#14143c] px-4 py-3.5 text-sm text-white placeholder-zinc-500 outline-none focus:border-purple-500"
+          className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#14143c] px-4 py-3.5 text-sm placeholder-zinc-500 outline-none focus:border-purple-500"
         />
 
         {error && <p className="text-center text-sm text-rose-400">{error}</p>}
@@ -104,7 +104,7 @@ export default function LoginPage() {
 
       <button
         onClick={() => { setIsSignUp(!isSignUp); setError(""); }}
-        className="mt-6 text-sm text-zinc-500 hover:text-purple-400"
+        className="mt-6 text-sm dark-text-muted text-zinc-500 hover:text-purple-400"
       >
         {isSignUp ? "이미 계정이 있으신가요? 로그인" : "계정이 없으신가요? 회원가입"}
       </button>

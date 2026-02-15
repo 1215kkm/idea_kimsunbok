@@ -111,9 +111,9 @@ export default function StoresPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4">
+      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
         <h1 className="text-lg font-bold">가맹점</h1>
-        <p className="text-xs text-zinc-500">결제하고 120% 적립받기</p>
+        <p className="text-xs dark-text-muted text-zinc-500">결제하고 120% 적립받기</p>
       </div>
 
       {/* 가맹점 리스트 */}
@@ -122,7 +122,7 @@ export default function StoresPage() {
           <button
             key={store.id}
             onClick={() => setModal({ store, item: store.sampleItems[0] })}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-purple-900/20 bg-[#14143c] p-5 text-center transition-all hover:border-purple-500/40 hover:-translate-y-1 active:scale-95"
+            className="dark-card flex flex-col items-center gap-2 rounded-2xl border border-purple-900/20 bg-[#14143c] p-5 text-center transition-all hover:border-purple-500/40 hover:-translate-y-1 active:scale-95"
           >
             <span className="text-4xl">{store.icon}</span>
             <div className="text-sm font-bold">{store.name}</div>
@@ -137,7 +137,7 @@ export default function StoresPage() {
       {/* 결제 모달 */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-purple-900/40 bg-gradient-to-b from-[#1a1a4e] to-[#0d0d30] p-6 text-center">
+          <div className="dark-modal-bg w-full max-w-sm rounded-2xl border border-purple-900/40 bg-gradient-to-b from-[#1a1a4e] to-[#0d0d30] p-6 text-center">
             <div className="text-5xl">{modal.store.icon}</div>
             <h2 className="mt-2 text-xl font-bold">{modal.store.name}</h2>
             <p className="text-sm text-zinc-500">{modal.item.name}</p>
@@ -158,7 +158,7 @@ export default function StoresPage() {
                   placeholder="직접 입력"
                   value={customAmount}
                   onChange={(e) => setCustomAmount(e.target.value)}
-                  className="flex-1 rounded-xl border border-purple-900/30 bg-[#0d0d30] px-3 py-2.5 text-sm text-white placeholder-zinc-600 outline-none"
+                  className="dark-input flex-1 rounded-xl border border-purple-900/30 bg-[#0d0d30] px-3 py-2.5 text-sm placeholder-zinc-600 outline-none"
                 />
                 <button
                   onClick={() => { const a = parseInt(customAmount); if (a > 0) handlePay(modal.store, a); }}

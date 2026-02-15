@@ -76,8 +76,8 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4">
-        <div className="text-xs text-zinc-500">안녕하세요</div>
+      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
+        <div className="text-xs dark-text-muted text-zinc-500">안녕하세요</div>
         <div className="text-lg font-bold">
           {user.displayName || "사용자"}님
           <span className="ml-2 rounded-full bg-purple-900/30 px-2 py-0.5 text-xs text-purple-400">
@@ -87,8 +87,8 @@ export default function DashboardPage() {
       </div>
 
       {/* 포인트 카드 */}
-      <div className="mx-5 mt-5 rounded-2xl border border-purple-900/30 bg-gradient-to-br from-[#1a1a4e] to-[#0d0d30] p-6">
-        <div className="text-xs text-zinc-500">내 포인트</div>
+      <div className="dark-card mx-5 mt-5 rounded-2xl border border-purple-900/30 bg-gradient-to-br from-[#1a1a4e] to-[#0d0d30] p-6">
+        <div className="text-xs dark-text-muted text-zinc-500">내 포인트</div>
         <div className="mt-1 bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-4xl font-black text-transparent">
           {points.toLocaleString()} P
         </div>
@@ -115,22 +115,22 @@ export default function DashboardPage() {
       <div className="mx-5 mt-5 grid grid-cols-2 gap-3">
         <Link
           href="/stores"
-          className="flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
+          className="dark-card flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
         >
           <span className="text-2xl">🏪</span>
           <div>
             <div className="text-sm font-bold">가맹점 결제</div>
-            <div className="text-xs text-zinc-500">120% 적립받기</div>
+            <div className="text-xs dark-text-muted text-zinc-500">120% 적립받기</div>
           </div>
         </Link>
         <Link
           href="/history"
-          className="flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
+          className="dark-card flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
         >
           <span className="text-2xl">📋</span>
           <div>
             <div className="text-sm font-bold">포인트 내역</div>
-            <div className="text-xs text-zinc-500">적립/사용 확인</div>
+            <div className="text-xs dark-text-muted text-zinc-500">적립/사용 확인</div>
           </div>
         </Link>
       </div>
@@ -139,7 +139,7 @@ export default function DashboardPage() {
       <div className="mx-5 mt-5">
         <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-purple-400">최근 거래</h3>
         {recentTxs.length === 0 ? (
-          <div className="rounded-xl border border-purple-900/10 bg-[#14143c] p-8 text-center text-sm text-zinc-500">
+          <div className="dark-card rounded-xl border border-purple-900/10 bg-[#14143c] p-8 text-center text-sm dark-text-muted text-zinc-500">
             아직 거래 내역이 없습니다.<br />
             <Link href="/stores" className="mt-2 inline-block text-purple-400 hover:underline">
               가맹점에서 첫 결제하기 &rarr;
@@ -148,7 +148,7 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-2">
             {recentTxs.map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between rounded-xl border border-purple-900/10 bg-[#14143c] px-4 py-3">
+              <div key={tx.id} className="dark-card flex items-center justify-between rounded-xl border border-purple-900/10 bg-[#14143c] px-4 py-3">
                 <div>
                   <div className="text-sm font-medium">{tx.storeName}</div>
                   <div className="text-xs text-zinc-500">-{tx.amount.toLocaleString()}원</div>
@@ -166,13 +166,40 @@ export default function DashboardPage() {
       </div>
 
       {/* 비선형공식 설명 배너 */}
-      <div className="mx-5 mt-5 rounded-2xl border border-purple-900/20 bg-gradient-to-r from-purple-900/20 to-cyan-900/20 p-5">
+      <div className="dark-card mx-5 mt-5 rounded-2xl border border-purple-900/20 bg-gradient-to-r from-purple-900/20 to-cyan-900/20 p-5">
         <div className="text-sm font-bold text-purple-300">비선형공식이란?</div>
-        <div className="mt-1 text-xs leading-relaxed text-zinc-400">
+        <div className="mt-1 text-xs leading-relaxed dark-text-muted text-zinc-400">
           결제 금액의 120%가 포인트로 적립됩니다.<br />
           판매자 50% + 소비자 50% 분배 후<br />
           멤버십 승수 &times; 보정모드를 거쳐 120% 달성.
         </div>
+        <Link href="/engine" className="mt-3 inline-block text-xs text-purple-400 hover:underline">
+          자세히 알아보기 &rarr;
+        </Link>
+      </div>
+
+      {/* 시뮬레이션 & 엔진 바로가기 */}
+      <div className="mx-5 mt-3 grid grid-cols-2 gap-3">
+        <Link
+          href="/simulation"
+          className="dark-card flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
+        >
+          <span className="text-2xl">🎮</span>
+          <div>
+            <div className="text-sm font-bold">마을 시뮬레이션</div>
+            <div className="text-xs dark-text-muted text-zinc-500">게임으로 체험</div>
+          </div>
+        </Link>
+        <Link
+          href="/engine"
+          className="dark-card flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
+        >
+          <span className="text-2xl">⚙️</span>
+          <div>
+            <div className="text-sm font-bold">엔진 설명서</div>
+            <div className="text-xs dark-text-muted text-zinc-500">공식 원리 보기</div>
+          </div>
+        </Link>
       </div>
 
       <Navbar />
