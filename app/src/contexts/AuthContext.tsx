@@ -36,7 +36,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isConfigured || !auth) {
-      // Firebase 미설정: 데모 모드
+      // Firebase 미설정: 데모 모드 — localStorage에서 복원
+      try {
+        const saved = localStorage.getItem("daland-demo-user");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setUser({ ...DEMO_USER, displayName: parsed.displayName, email: parsed.email } as User);
+        }
+      } catch {
+        // 파싱 실패 무시
+      }
       setLoading(false);
       return;
     }
@@ -49,8 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string) => {
     if (!isConfigured || !auth) {
-      // 데모 모드: 바로 로그인
-      setUser({ ...DEMO_USER, displayName: name } as User);
+      // 데모 모드: 바로 로그인 + localStorage 저장
+      const demoUser = { ...DEMO_USER, displayName: name, email } as User;
+      setUser(demoUser);
+      localStorage.setItem("daland-demo-user", JSON.stringify({ displayName: name, email }));
       return;
     }
     const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -69,7 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     if (!isConfigured || !auth) {
-      setUser(DEMO_USER);
+      const demoUser = { ...DEMO_USER, email } as User;
+      setUser(demoUser);
+      localStorage.setItem("daland-demo-user", JSON.stringify({ displayName: DEMO_USER.displayName, email }));
       return;
     }
     await signInWithEmailAndPassword(auth, email, password);
@@ -78,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     if (!isConfigured || !auth) {
       setUser(null);
+      localStorage.removeItem("daland-demo-user");
       return;
     }
     await firebaseSignOut(auth);

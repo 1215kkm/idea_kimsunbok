@@ -64,25 +64,25 @@ export default function HistoryPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4">
+      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
         <h1 className="text-lg font-bold">포인트 내역</h1>
-        <p className="text-xs text-zinc-500">결제 및 적립 기록</p>
+        <p className="text-xs dark-text-muted text-zinc-500">결제 및 적립 기록</p>
       </div>
 
       {/* 통계 */}
       <div className="grid grid-cols-3 gap-3 p-5">
-        <div className="rounded-xl border border-purple-900/20 bg-[#14143c] p-4 text-center">
-          <div className="text-xs text-zinc-500">총 결제</div>
+        <div className="dark-card rounded-xl border border-purple-900/20 bg-[#14143c] p-4 text-center">
+          <div className="text-xs dark-text-muted text-zinc-500">총 결제</div>
           <div className="mt-1 text-lg font-bold text-rose-400">{stats.spent.toLocaleString()}</div>
           <div className="text-xs text-zinc-600">원</div>
         </div>
-        <div className="rounded-xl border border-purple-900/20 bg-[#14143c] p-4 text-center">
-          <div className="text-xs text-zinc-500">총 적립</div>
+        <div className="dark-card rounded-xl border border-purple-900/20 bg-[#14143c] p-4 text-center">
+          <div className="text-xs dark-text-muted text-zinc-500">총 적립</div>
           <div className="mt-1 text-lg font-bold text-emerald-400">{stats.earned.toLocaleString()}</div>
-          <div className="text-xs text-zinc-600">P</div>
+          <div className="text-xs dark-text-sub text-zinc-600">P</div>
         </div>
-        <div className="rounded-xl border border-purple-900/20 bg-[#14143c] p-4 text-center">
-          <div className="text-xs text-zinc-500">거래</div>
+        <div className="dark-card rounded-xl border border-purple-900/20 bg-[#14143c] p-4 text-center">
+          <div className="text-xs dark-text-muted text-zinc-500">거래</div>
           <div className="mt-1 text-lg font-bold text-cyan-400">{stats.count}</div>
           <div className="text-xs text-zinc-600">건</div>
         </div>
@@ -91,7 +91,7 @@ export default function HistoryPage() {
       {/* 거래 리스트 */}
       <div className="px-5">
         {txs.length === 0 ? (
-          <div className="rounded-xl border border-purple-900/10 bg-[#14143c] p-10 text-center text-sm text-zinc-500">
+          <div className="dark-card rounded-xl border border-purple-900/10 bg-[#14143c] p-10 text-center text-sm dark-text-muted text-zinc-500">
             아직 거래 내역이 없습니다.
           </div>
         ) : (
@@ -99,7 +99,7 @@ export default function HistoryPage() {
             {txs.map((tx) => (
               <div
                 key={tx.id}
-                className="rounded-xl border border-purple-900/10 bg-[#14143c] px-4 py-3"
+                className="dark-card rounded-xl border border-purple-900/10 bg-[#14143c] px-4 py-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="font-medium">{tx.storeName}</div>
