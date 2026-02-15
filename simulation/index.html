@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>다랜드 시뮬레이션 - 120%의 마법</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a2e;color:#fff;overflow-x:hidden;min-height:100vh;}
+
+/* ===== 인트로 ===== */
+#intro{position:fixed;inset:0;background:linear-gradient(135deg,#0a0a2e,#1a1a4e,#0a0a2e);
+display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity 0.8s;}
+#intro.hide{opacity:0;pointer-events:none;}
+#intro .sub{font-size:1.1rem;color:#888;margin-bottom:8px;letter-spacing:2px;}
+#intro h1{font-size:4rem;font-weight:900;background:linear-gradient(90deg,#00d4ff,#7b2ff7,#ff6b6b);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px;}
+#intro p{font-size:1.2rem;color:#aaa;margin-bottom:40px;}
+.btn-start{padding:18px 60px;font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,#7b2ff7,#00d4ff);
+border:none;border-radius:50px;color:#fff;cursor:pointer;box-shadow:0 0 40px rgba(123,47,247,0.4);transition:transform 0.2s;}
+.btn-start:hover{transform:scale(1.08);}
+
+/* ===== 게임 화면 ===== */
+#game{display:none;}
+#game.on{display:block;}
+
+/* 상단바 */
+.topbar{background:rgba(15,15,50,0.95);padding:15px 30px;display:flex;align-items:center;justify-content:space-between;
+border-bottom:2px solid rgba(123,47,247,0.3);position:sticky;top:0;z-index:50;}
+.topbar .logo{font-size:1.3rem;font-weight:900;color:#7b2ff7;letter-spacing:1px;}
+.topbar .info{display:flex;gap:25px;font-size:0.9rem;}
+.topbar .info div span{color:#777;}
+.topbar .info div b{color:#00d4ff;font-size:1.05rem;}
+
+/* 스토리 내레이션 */
+.narration{background:linear-gradient(135deg,rgba(20,20,60,0.9),rgba(10,10,40,0.9));
+border:1px solid rgba(123,47,247,0.2);border-radius:16px;margin:20px 30px;padding:25px 30px;
+font-size:1.05rem;line-height:1.8;color:#ccc;position:relative;}
+.narration .speaker{color:#7b2ff7;font-weight:700;font-size:0.85rem;margin-bottom:8px;letter-spacing:1px;}
+.narration em{color:#00d4ff;font-style:normal;font-weight:600;}
+
+/* 마을 */
+.town{display:flex;gap:15px;padding:20px 30px;overflow-x:auto;justify-content:center;flex-wrap:wrap;}
+.store{background:rgba(25,25,65,0.8);border:2px solid rgba(123,47,247,0.15);border-radius:20px;
+padding:25px 20px;text-align:center;cursor:pointer;transition:all 0.3s;min-width:140px;flex:1;max-width:180px;}
+.store:hover{transform:translateY(-8px);border-color:#7b2ff7;box-shadow:0 10px 30px rgba(123,47,247,0.3);}
+.store.done{opacity:0.35;pointer-events:none;border-color:#333;}
+.store .icon{font-size:3rem;display:block;margin-bottom:8px;}
+.store .name{font-weight:700;font-size:0.95rem;margin-bottom:4px;}
+.store .price{color:#ffcc00;font-size:0.8rem;}
+
+/* 캐릭터 바 */
+.char-bar{display:flex;align-items:center;justify-content:center;gap:15px;padding:10px 30px;margin-bottom:5px;}
+.char-bar .avatar{font-size:2.5rem;}
+.char-bar .say{background:rgba(123,47,247,0.15);padding:8px 18px;border-radius:20px;font-size:0.9rem;color:#ccc;max-width:400px;}
+
+/* 사이드 패널 */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:15px;padding:0 30px 20px;}
+.panel{background:rgba(20,20,55,0.8);border:1px solid rgba(123,47,247,0.15);border-radius:16px;padding:20px;}
+.panel h3{font-size:0.8rem;color:#7b2ff7;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;}
+.wallet-big{font-size:2.5rem;font-weight:900;background:linear-gradient(90deg,#00d4ff,#7b2ff7);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.wallet-sub{font-size:0.8rem;color:#666;margin-top:3px;}
+.bar-track{height:8px;background:rgba(255,255,255,0.08);border-radius:4px;margin-top:10px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#00d4ff,#7b2ff7,#ff6b6b);transition:width 1s;}
+.history-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.82rem;}
+.history-item .h-place{color:#aaa;}
+.history-item .h-spent{color:#ff6b6b;}
+.history-item .h-earn{color:#00ff88;font-weight:700;}
+
+/* ===== 결제 모달 ===== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;
+z-index:200;backdrop-filter:blur(6px);}
+.overlay.on{display:flex;}
+.modal{background:linear-gradient(135deg,#1a1a4e,#0d0d30);border:1px solid rgba(123,47,247,0.4);
+border-radius:24px;padding:40px;text-align:center;min-width:380px;box-shadow:0 0 60px rgba(123,47,247,0.25);}
+.modal .m-icon{font-size:4rem;margin-bottom:5px;}
+.modal h2{font-size:1.6rem;margin-bottom:3px;}
+.modal .m-item{color:#888;font-size:0.9rem;margin-bottom:15px;}
+.modal .m-price{font-size:2.8rem;font-weight:900;color:#ff6b6b;margin:10px 0;}
+.modal .m-price small{font-size:1rem;color:#888;}
+.btn-pay{padding:14px 45px;font-size:1.05rem;font-weight:700;background:linear-gradient(135deg,#7b2ff7,#00d4ff);
+border:none;border-radius:50px;color:#fff;cursor:pointer;transition:transform 0.2s;margin-right:8px;}
+.btn-pay:hover{transform:scale(1.05);}
+.btn-cancel{padding:12px 30px;font-size:0.9rem;background:transparent;border:1px solid #555;
+border-radius:50px;color:#888;cursor:pointer;}
+
+/* ===== 적립 애니메이션 ===== */
+.result-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:none;align-items:center;
+justify-content:center;z-index:300;backdrop-filter:blur(10px);}
+.result-overlay.on{display:flex;}
+.result{text-align:center;max-width:500px;}
+.r-line{font-size:1rem;color:#777;margin:6px 0;opacity:0;transform:translateY(15px);transition:all 0.5s;}
+.r-line.show{opacity:1;transform:translateY(0);}
+.r-line.hl{color:#00d4ff;font-weight:700;font-size:1.15rem;}
+.r-big{font-size:5rem;font-weight:900;background:linear-gradient(90deg,#00ff88,#00d4ff);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:20px 0 8px;
+opacity:0;transform:scale(0.5);transition:all 0.7s cubic-bezier(0.17,0.89,0.32,1.28);}
+.r-big.show{opacity:1;transform:scale(1);}
+.r-badge{display:inline-block;font-size:1.6rem;font-weight:900;background:linear-gradient(135deg,#ff6b6b,#ff8e53);
+padding:8px 28px;border-radius:50px;opacity:0;transform:scale(0);transition:all 0.5s cubic-bezier(0.17,0.89,0.32,1.28);}
+.r-badge.show{opacity:1;transform:scale(1);}
+.r-detail{font-size:0.9rem;color:#888;margin:4px 0;opacity:0;transition:opacity 0.4s;}
+.r-detail.show{opacity:1;}
+.r-detail strong{color:#fff;}
+.btn-next{margin-top:30px;padding:14px 45px;font-size:1rem;font-weight:600;background:rgba(123,47,247,0.25);
+border:1px solid #7b2ff7;border-radius:50px;color:#fff;cursor:pointer;opacity:0;transition:opacity 0.5s;}
+.btn-next.show{opacity:1;}
+.btn-next:hover{background:rgba(123,47,247,0.45);}
+
+/* 파티클 */
+.particle{position:fixed;pointer-events:none;z-index:400;font-size:1.5rem;
+animation:floatUp 2s ease-out forwards;}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-180px) scale(0.3);}}
+
+/* ===== 엔딩 ===== */
+#ending{position:fixed;inset:0;background:linear-gradient(135deg,#0a0a2e,#1a1a4e);
+display:none;flex-direction:column;align-items:center;justify-content:center;z-index:500;text-align:center;padding:30px;}
+#ending.on{display:flex;}
+#ending h1{font-size:2.6rem;font-weight:900;margin-bottom:25px;
+background:linear-gradient(90deg,#00d4ff,#7b2ff7,#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0;}
+.sum-card{background:rgba(25,25,65,0.8);border:1px solid rgba(123,47,247,0.3);border-radius:16px;padding:22px;min-width:180px;}
+.sum-card .label{font-size:0.8rem;color:#777;}
+.sum-card .val{font-size:2rem;font-weight:900;margin-top:5px;}
+.sum-card .val.c1{color:#ff6b6b;}.sum-card .val.c2{color:#00ff88;}.sum-card .val.c3{color:#00d4ff;}.sum-card .val.c4{color:#7b2ff7;}
+#ending .quote{font-size:1.1rem;color:#999;margin-top:25px;line-height:1.7;max-width:480px;font-style:italic;}
+.btn-restart{margin-top:25px;padding:15px 50px;font-size:1.1rem;font-weight:700;
+background:linear-gradient(135deg,#7b2ff7,#00d4ff);border:none;border-radius:50px;color:#fff;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- 인트로 -->
+<div id="intro">
+  <div class="sub">비선형공식 체험 시뮬레이션</div>
+  <h1>다랜드</h1>
+  <p>쓸수록 쌓이는 120%의 마법을 직접 체험하세요</p>
+  <button class="btn-start" onclick="startGame()">시뮬레이션 시작</button>
+</div>
+
+<!-- 게임 -->
+<div id="game">
+  <div class="topbar">
+    <div class="logo">DATALAND</div>
+    <div class="info">
+      <div><span>현금 </span><b id="s-cash">50,000원</b></div>
+      <div><span>포인트 </span><b id="s-pts">0P</b></div>
+      <div><span>방문 </span><b id="s-visit">0 / 5</b></div>
+    </div>
+  </div>
+
+  <!-- 내레이션 -->
+  <div class="narration" id="narration">
+    <div class="speaker">내레이터</div>
+    <div id="nar-text">
+      월요일 아침. <em>박영희(28세)</em>는 출근길에 한숨을 쉬었다.<br>
+      "매일 쓰는 돈은 그냥 사라지기만 하는데..."<br><br>
+      그때, 동료가 말했다. <em>"다랜드 써봤어? 쓴 돈의 120%가 돌아온대."</em><br>
+      반신반의하며 앱을 깔았다. 이제 직접 체험해 보자.
+    </div>
+  </div>
+
+  <!-- 캐릭터 -->
+  <div class="char-bar">
+    <div class="avatar">👩</div>
+    <div class="say" id="char-say">가맹점을 클릭해서 방문해 보세요!</div>
+  </div>
+
+  <!-- 마을 -->
+  <div class="town" id="town">
+    <div class="store" onclick="visit(this)" data-key="super" data-name="행복한 슈퍼" data-icon="🏪" data-price="32000" data-item="장보기 (사과, 우유, 고기)">
+      <span class="icon">🏪</span><div class="name">행복한 슈퍼</div><div class="price">장보기 32,000원</div>
+    </div>
+    <div class="store" onclick="visit(this)" data-key="cafe" data-name="다랜드 카페" data-icon="☕" data-price="4500" data-item="아메리카노 + 케이크">
+      <span class="icon">☕</span><div class="name">다랜드 카페</div><div class="price">커피세트 4,500원</div>
+    </div>
+    <div class="store" onclick="visit(this)" data-key="gas" data-name="주유소" data-icon="⛽" data-price="70000" data-item="휘발유 가득 주유">
+      <span class="icon">⛽</span><div class="name">주유소</div><div class="price">주유 70,000원</div>
+    </div>
+    <div class="store" onclick="visit(this)" data-key="pharm" data-name="건강 약국" data-icon="💊" data-price="8000" data-item="비타민 + 마스크">
+      <span class="icon">💊</span><div class="name">건강 약국</div><div class="price">비타민 8,000원</div>
+    </div>
+    <div class="store" onclick="visit(this)" data-key="rest" data-name="맛있는 식당" data-icon="🍽️" data-price="25000" data-item="가족 외식 (김치찌개 4인)">
+      <span class="icon">🍽️</span><div class="name">맛있는 식당</div><div class="price">외식 25,000원</div>
+    </div>
+  </div>
+
+  <!-- 하단 패널 -->
+  <div class="panels">
+    <div class="panel">
+      <h3>내 지갑</h3>
+      <div class="wallet-big" id="w-pts">0 P</div>
+      <div class="wallet-sub">누적 적립 포인트</div>
+      <div style="margin-top:12px;font-size:0.85rem;color:#666;">평균 적립률</div>
+      <div style="font-size:1.8rem;font-weight:900;color:#00ff88;" id="w-rate">-</div>
+      <div class="bar-track"><div class="bar-fill" id="w-bar" style="width:0%"></div></div>
+    </div>
+    <div class="panel">
+      <h3>결제 내역</h3>
+      <div id="history">
+        <div style="font-size:0.82rem;color:#444;padding:15px 0;text-align:center;">아직 결제 내역이 없습니다</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 결제 모달 -->
+<div class="overlay" id="payModal">
+  <div class="modal">
+    <div class="m-icon" id="m-icon"></div>
+    <h2 id="m-name"></h2>
+    <div class="m-item" id="m-item"></div>
+    <div class="m-price" id="m-price"></div>
+    <div>
+      <button class="btn-pay" onclick="pay()">다랜드로 결제</button>
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 적립 애니메이션 -->
+<div class="result-overlay" id="resultOv">
+  <div class="result" id="resultBox"></div>
+</div>
+
+<!-- 엔딩 -->
+<div id="ending">
+  <h1>영희의 하루 - 시뮬레이션 완료!</h1>
+  <div class="sum-grid" id="sumGrid"></div>
+  <div class="quote" id="endQuote"></div>
+  <button class="btn-restart" onclick="location.reload()">다시 체험하기</button>
+</div>
+
+<script>
+/* ===== 상태 ===== */
+const S = { cash:50000, pts:0, spent:0, earned:0, visits:0, total:5, hist:[], cur:null };
+
+const stories = {
+  super: { before:'영희는 퇴근 후 슈퍼에 들렀다.\n"오늘 저녁은 뭘 해먹지... 장바구니에 사과, 우유, 고기를 넣었다."', after:'"32,000원이나 썼는데... 38,400포인트?!\n장볼 때마다 6,400원이 덤으로?!"' },
+  cafe: { before:'출근길, 늘 가던 카페 앞에 멈춰 섰다.\n"오늘도 아메리카노 한 잔... 습관처럼."', after:'"커피값 4,500원에 5,400포인트라니.\n매일 마시는 커피가 오히려 돈을 만들어주네?"' },
+  gas: { before:'주유 경고등이 켜졌다.\n"기름값이 또 올랐네... 가득 채우면 7만원이다."', after:'"7만원 주유했는데 84,000포인트?!\n기름값 부담이 확 줄었다!"' },
+  pharm: { before:'환절기라 비타민을 사러 약국에 들렀다.\n"건강은 챙겨야지."', after:'"8,000원에 9,600포인트.\n약국비도 120% 돌려받다니, 건강도 챙기고 돈도 챙기고!"' },
+  rest: { before:'주말, 가족과 외식을 나왔다.\n"애들이 김치찌개 먹고 싶대. 4인분이면 25,000원..."', after:'"외식비 25,000원 → 30,000포인트!\n가족과의 시간에 보너스가 붙다니."' }
+};
+
+/* ===== 인트로 → 게임 ===== */
+function startGame(){
+  document.getElementById('intro').classList.add('hide');
+  setTimeout(()=>document.getElementById('game').classList.add('on'),500);
+}
+
+/* ===== 가맹점 클릭 ===== */
+function visit(el){
+  if(el.classList.contains('done')) return;
+  const d = el.dataset;
+  const price = +d.price;
+  if(S.cash < price){ alert('현금이 부족합니다!'); return; }
+  S.cur = { el, key:d.key, name:d.name, icon:d.icon, price, item:d.item };
+
+  // 내레이션 변경
+  setNarration(stories[d.key].before);
+  document.getElementById('char-say').textContent = d.name + '에 왔어요!';
+
+  // 모달
+  document.getElementById('m-icon').textContent = d.icon;
+  document.getElementById('m-name').textContent = d.name;
+  document.getElementById('m-item').textContent = d.item;
+  document.getElementById('m-price').innerHTML = price.toLocaleString()+'원 <small>결제</small>';
+  document.getElementById('payModal').classList.add('on');
+}
+
+function closeModal(){ document.getElementById('payModal').classList.remove('on'); S.cur=null; }
+
+/* ===== 결제 ===== */
+function pay(){
+  const c = S.cur;
+  document.getElementById('payModal').classList.remove('on');
+
+  S.cash -= c.price;
+  const earned = Math.round(c.price * 1.2);
+  const bonus = earned - c.price;
+  S.pts += earned;
+  S.spent += c.price;
+  S.earned += earned;
+  S.visits++;
+  S.hist.push({ icon:c.icon, name:c.name, price:c.price, earned });
+  c.el.classList.add('done');
+
+  showResult(c, earned, bonus);
+}
+
+/* ===== 비선형공식 애니메이션 ===== */
+function showResult(c, earned, bonus){
+  const box = document.getElementById('resultBox');
+  const sellerShare = (c.price * 0.5).toLocaleString();
+  const consumerShare = (c.price * 0.5).toLocaleString();
+
+  box.innerHTML = `
+    <div class="r-line" data-d="0">${c.icon} ${c.name}</div>
+    <div class="r-line" data-d="300" style="color:#aaa">"${c.item}"</div>
+    <div class="r-line" data-d="700" style="font-size:1.6rem;color:#ff6b6b;font-weight:700">-${c.price.toLocaleString()}원 결제</div>
+    <div class="r-line" data-d="1200" style="color:#7b2ff7;font-size:1.1rem">
+      ── 비선형공식 실행 ──</div>
+    <div class="r-line" data-d="1700">
+      A1: ${c.price.toLocaleString()} x 50% = <b style="color:#ffcc00">${sellerShare}</b> (판매자 적립)</div>
+    <div class="r-line" data-d="2200">
+      B1: ${c.price.toLocaleString()} x 50% = <b style="color:#ffcc00">${consumerShare}</b> (소비자 적립)</div>
+    <div class="r-line" data-d="2700">
+      U:C1 x 멤버십(10배) x 보정모드 적용</div>
+    <div class="r-line hl" data-d="3200">
+      보정: 150% → <b>120%</b> 안전 보정 완료</div>
+    <div class="r-big" data-d="3800">+${earned.toLocaleString()}P</div>
+    <div class="r-badge" data-d="4400">120% 적립!</div>
+    <div class="r-detail" data-d="4900">원금 <strong>${c.price.toLocaleString()}P</strong> + 보너스 <strong>${bonus.toLocaleString()}P</strong></div>
+    <div class="r-detail" data-d="5200">내 총 포인트: <strong style="color:#00ff88">${S.pts.toLocaleString()}P</strong></div>
+    <button class="btn-next" data-d="5700" onclick="closeResult()">
+      ${S.visits < S.total ? '다음 가맹점 방문 →' : '하루 정산 보기 →'}</button>
+  `;
+
+  document.getElementById('resultOv').classList.add('on');
+
+  box.querySelectorAll('[data-d]').forEach(el=>{
+    setTimeout(()=>{
+      el.classList.add('show');
+      if(el.classList.contains('r-big')) particles();
+    }, +el.dataset.d);
+  });
+}
+
+/* ===== 파티클 ===== */
+function particles(){
+  const em = ['💰','✨','🎉','💎','🪙','⭐'];
+  for(let i=0;i<12;i++){
+    setTimeout(()=>{
+      const p = document.createElement('div');
+      p.className='particle';
+      p.textContent=em[Math.floor(Math.random()*em.length)];
+      p.style.left=(30+Math.random()*40)+'%';
+      p.style.top=(35+Math.random()*25)+'%';
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(),2000);
+    },i*80);
+  }
+}
+
+/* ===== 결과 닫기 ===== */
+function closeResult(){
+  document.getElementById('resultOv').classList.remove('on');
+  updateUI();
+  setNarration(stories[S.cur.key].after);
+  document.getElementById('char-say').textContent =
+    S.visits < S.total ? `${S.visits}곳 방문 완료! 다음은 어디로?` : '오늘 하루가 끝났어요!';
+  S.cur = null;
+  if(S.visits >= S.total) setTimeout(showEnding, 1200);
+}
+
+/* ===== UI 갱신 ===== */
+function updateUI(){
+  document.getElementById('s-cash').textContent = S.cash.toLocaleString()+'원';
+  document.getElementById('s-pts').textContent = S.pts.toLocaleString()+'P';
+  document.getElementById('s-visit').textContent = S.visits+' / '+S.total;
+  document.getElementById('w-pts').textContent = S.pts.toLocaleString()+' P';
+
+  const rate = S.spent > 0 ? Math.round(S.earned/S.spent*100) : 0;
+  document.getElementById('w-rate').textContent = rate+'%';
+  document.getElementById('w-bar').style.width = Math.min(rate,150)/1.5+'%';
+
+  document.getElementById('history').innerHTML = S.hist.map(h=>
+    `<div class="history-item">
+      <span class="h-place">${h.icon} ${h.name}</span>
+      <span class="h-spent">-${h.price.toLocaleString()}</span>
+      <span class="h-earn">+${h.earned.toLocaleString()}P</span>
+    </div>`
+  ).join('');
+}
+
+/* ===== 내레이션 ===== */
+function setNarration(text){
+  document.getElementById('nar-text').innerHTML = text.replace(/\n/g,'<br>');
+}
+
+/* ===== 엔딩 ===== */
+function showEnding(){
+  const profit = S.earned - S.spent;
+  document.getElementById('sumGrid').innerHTML = `
+    <div class="sum-card"><div class="label">총 사용 금액</div><div class="val c1">${S.spent.toLocaleString()}원</div></div>
+    <div class="sum-card"><div class="label">총 적립 포인트</div><div class="val c2">${S.earned.toLocaleString()}P</div></div>
+    <div class="sum-card"><div class="label">순이익 (포인트 - 현금)</div><div class="val c3">+${profit.toLocaleString()}P</div></div>
+    <div class="sum-card"><div class="label">평균 적립률</div><div class="val c4">120%</div></div>
+  `;
+  document.getElementById('endQuote').innerHTML = `
+    "${S.spent.toLocaleString()}원을 썼지만,<br>${S.earned.toLocaleString()}포인트가 돌아왔습니다."<br><br>
+    <span style="color:#7b2ff7;font-weight:700">항아리 속의 물 총량은 같다 — 바가지만 바뀔 뿐.</span><br>
+    <span style="font-size:0.9rem">이것이 비선형공식의 마법입니다.</span>
+  `;
+  document.getElementById('ending').classList.add('on');
+}
+</script>
+</body>
+</html>
