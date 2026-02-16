@@ -186,17 +186,27 @@ export default function EnginePage() {
 
                   {/* 상세 내용 (활성 스텝) */}
                   {i === activeStep && (
-                    <div
-                      className="mt-3 rounded-xl p-3 text-sm leading-relaxed"
-                      style={{
-                        background: "rgba(168, 85, 247, 0.08)",
-                        color: "var(--text-muted)",
-                        animation: "fadeIn 0.5s ease-out",
-                        whiteSpace: "pre-line",
-                      }}
-                    >
-                      {step.detail}
-                    </div>
+                    <>
+                      <div
+                        className="mt-3 rounded-xl p-3 text-sm leading-relaxed"
+                        style={{
+                          background: "rgba(168, 85, 247, 0.08)",
+                          color: "var(--text-muted)",
+                          animation: "fadeIn 0.5s ease-out",
+                          whiteSpace: "pre-line",
+                        }}
+                      >
+                        {step.detail}
+                      </div>
+                      {!showFormula && (
+                        <button
+                          onClick={goNext}
+                          className="mt-3 w-full rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 py-3 text-sm font-bold text-white shadow-md shadow-purple-500/20 transition-transform hover:scale-[1.02] active:scale-95"
+                        >
+                          {i < STEPS.length - 1 ? "다음 단계 →" : "최종 결과 보기 →"}
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -215,16 +225,6 @@ export default function EnginePage() {
             </div>
           ))}
         </div>
-
-        {/* 다음 버튼 (스텝 진행 중) */}
-        {activeStep >= 0 && !showFormula && (
-          <button
-            onClick={goNext}
-            className="mt-4 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 py-4 text-base font-bold text-white shadow-lg shadow-purple-500/20 transition-transform hover:scale-[1.02] active:scale-95"
-          >
-            {activeStep < STEPS.length - 1 ? "다음 단계 →" : "최종 결과 보기 →"}
-          </button>
-        )}
 
         {/* 처음부터 다시 버튼 */}
         {showFormula && (
