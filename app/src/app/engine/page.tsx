@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 
 interface Step {
@@ -69,36 +69,25 @@ export default function EnginePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(-1);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [showFormula, setShowFormula] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
   }, [user, loading, router]);
 
-  const startAnimation = () => {
-    setActiveStep(-1);
-    setIsPlaying(true);
-    setShowFormula(false);
-    let step = 0;
-    timerRef.current = setInterval(() => {
-      if (step >= STEPS.length) {
-        if (timerRef.current) clearInterval(timerRef.current);
-        setIsPlaying(false);
-        setShowFormula(true);
-        return;
-      }
-      setActiveStep(step);
-      step++;
-    }, 2000);
+  const goNext = () => {
+    const next = activeStep + 1;
+    if (next >= STEPS.length) {
+      setShowFormula(true);
+    } else {
+      setActiveStep(next);
+    }
   };
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
+  const reset = () => {
+    setActiveStep(-1);
+    setShowFormula(false);
+  };
 
   if (loading || !user) {
     return <div className="flex min-h-screen items-center justify-center dark-text-muted">로딩 중...</div>;
@@ -113,14 +102,29 @@ export default function EnginePage() {
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-6">
-        {/* 시작 버튼 */}
-        <button
-          onClick={startAnimation}
-          disabled={isPlaying}
-          className="mb-6 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 py-4 text-base font-bold text-white shadow-lg shadow-purple-500/20 transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-50"
-        >
-          {isPlaying ? "실행 중..." : activeStep >= 0 ? "다시 실행하기" : "비선형공식 실행하기"}
-        </button>
+        {/* 시작/다음/처음부터 버튼 */}
+        {activeStep === -1 && !showFormula && (
+          <button
+            onClick={goNext}
+            className="mb-6 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 py-4 text-base font-bold text-white shadow-lg shadow-purple-500/20 transition-transform hover:scale-[1.02] active:scale-95"
+          >
+            비선형공식 실행하기
+          </button>
+        )}
+
+        {/* 진행률 표시 */}
+        {activeStep >= 0 && !showFormula && (
+          <div className="mb-4 flex items-center gap-2">
+            {STEPS.map((_, i) => (
+              <div
+                key={i}
+                className="h-1.5 flex-1 rounded-full transition-all duration-300"
+                style={{ background: i <= activeStep ? "linear-gradient(90deg, #a855f7, #06b6d4)" : "rgba(255,255,255,0.1)" }}
+              />
+            ))}
+            <span className="ml-1 text-xs text-zinc-500">{activeStep + 1}/{STEPS.length}</span>
+          </div>
+        )}
 
         {/* 인풋 표시 */}
         {activeStep >= 0 && (
@@ -180,10 +184,10 @@ export default function EnginePage() {
 
                   <p className="mt-0.5 text-xs dark-text-muted text-zinc-500">{step.desc}</p>
 
-                  {/* 상세 내용 (활성 스텝만) */}
+                  {/* 상세 내용 (활성 스텝) */}
                   {i === activeStep && (
                     <div
-                      className="mt-3 rounded-xl p-3 text-xs leading-relaxed"
+                      className="mt-3 rounded-xl p-3 text-sm leading-relaxed"
                       style={{
                         background: "rgba(168, 85, 247, 0.08)",
                         color: "var(--text-muted)",
@@ -211,6 +215,26 @@ export default function EnginePage() {
             </div>
           ))}
         </div>
+
+        {/* 다음 버튼 (스텝 진행 중) */}
+        {activeStep >= 0 && !showFormula && (
+          <button
+            onClick={goNext}
+            className="mt-4 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 py-4 text-base font-bold text-white shadow-lg shadow-purple-500/20 transition-transform hover:scale-[1.02] active:scale-95"
+          >
+            {activeStep < STEPS.length - 1 ? "다음 단계 →" : "최종 결과 보기 →"}
+          </button>
+        )}
+
+        {/* 처음부터 다시 버튼 */}
+        {showFormula && (
+          <button
+            onClick={reset}
+            className="mt-4 w-full rounded-2xl border border-purple-500/30 py-3 text-sm font-bold text-purple-400 transition-transform hover:scale-[1.02] active:scale-95"
+          >
+            처음부터 다시 보기
+          </button>
+        )}
 
         {/* 최종 공식 요약 */}
         {showFormula && (
