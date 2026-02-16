@@ -8,9 +8,12 @@ import { useAuth } from "@/contexts/AuthContext";
 const menuItems = [
   { href: "/dashboard", label: "홈", icon: "🏠", desc: "대시보드" },
   { href: "/stores", label: "가맹점", icon: "🏪", desc: "결제 & 120% 적립" },
+  { href: "/card", label: "비선형카드", icon: "💳", desc: "카드 잔액 & 결제" },
   { href: "/history", label: "내역", icon: "📋", desc: "포인트 기록" },
   { href: "/simulation", label: "시뮬레이션", icon: "🎮", desc: "다랜드 마을 체험" },
   { href: "/engine", label: "엔진 설명", icon: "⚙️", desc: "비선형공식 원리" },
+  { href: "/advertiser", label: "광고주", icon: "🏢", desc: "광고주 120% 수익" },
+  { href: "/philosophy", label: "자리이타", icon: "🙏", desc: "다랜드 핵심 철학" },
 ];
 
 export default function HamburgerMenu() {
