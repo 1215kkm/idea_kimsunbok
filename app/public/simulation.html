@@ -423,28 +423,45 @@ background:linear-gradient(135deg,#7b2ff7,#00d4ff);border:none;border-radius:50p
 
   <div class="cycle-ring" id="cycleRing">
     <svg class="cycle-svg" viewBox="0 0 280 280">
+      <defs>
+        <marker id="arrow-pink" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#ff6b9d"/>
+        </marker>
+        <marker id="arrow-orange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#ff8c42"/>
+        </marker>
+        <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#4dabf7"/>
+        </marker>
+      </defs>
       <circle cx="140" cy="140" r="110" fill="none" stroke="rgba(123,47,247,0.15)" stroke-width="1"/>
-      <path class="cycle-arrow" d="M80,50 A110,110 0 0,1 200,50" stroke="#ff6b9d"/>
-      <path class="cycle-arrow" d="M230,140 A110,110 0 0,1 140,250" stroke="#ff8c42" style="animation-delay:0.3s"/>
-      <path class="cycle-arrow" d="M60,200 A110,110 0 0,1 60,80" stroke="#4dabf7" style="animation-delay:0.6s"/>
+      <!-- 영희(top) → 김철수(bottom-right) -->
+      <path class="cycle-arrow" d="M170,38 A110,110 0 0,1 232,188" stroke="#ff6b9d" marker-end="url(#arrow-pink)"/>
+      <!-- 김철수(bottom-right) → 이지은(bottom-left) -->
+      <path class="cycle-arrow" d="M205,225 A110,110 0 0,1 75,225" stroke="#ff8c42" marker-end="url(#arrow-orange)" style="animation-delay:0.3s"/>
+      <!-- 이지은(bottom-left) → 영희(top) -->
+      <path class="cycle-arrow" d="M48,188 A110,110 0 0,1 110,38" stroke="#4dabf7" marker-end="url(#arrow-blue)" style="animation-delay:0.6s"/>
     </svg>
     <div class="cycle-center">
       <div class="cc-label">비선형공식</div>
       <div class="cc-val">120%</div>
     </div>
+    <!-- 영희: top center -->
     <div class="cycle-node" id="cn-younghee" style="left:calc(50% - 30px);top:-10px;
       background:linear-gradient(135deg,#ff6b9d,#c44dff);border-color:#ff8fbf;">
       <span class="cn-emoji">👩</span>
       <span class="cn-name">영희</span>
       <span class="cn-pts" id="cn-pts-y">0P</span>
     </div>
-    <div class="cycle-node" id="cn-chulsu" style="right:-10px;top:calc(50% - 30px);
+    <!-- 김철수: bottom-right -->
+    <div class="cycle-node" id="cn-chulsu" style="right:-5px;bottom:15px;
       background:linear-gradient(135deg,#ff8c42,#e6553a);border-color:#ffaa66;">
       <span class="cn-emoji">👨‍🍳</span>
       <span class="cn-name">김철수</span>
       <span class="cn-pts" id="cn-pts-c">0P</span>
     </div>
-    <div class="cycle-node" id="cn-jieun" style="left:-10px;top:calc(50% - 30px);
+    <!-- 이지은: bottom-left -->
+    <div class="cycle-node" id="cn-jieun" style="left:-5px;bottom:15px;
       background:linear-gradient(135deg,#4dabf7,#3b5bdb);border-color:#74c0fc;">
       <span class="cn-emoji">👩‍💼</span>
       <span class="cn-name">이지은</span>

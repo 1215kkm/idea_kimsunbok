@@ -53,23 +53,23 @@ export default function AdvertiserPage() {
       <div className="mx-auto max-w-lg px-5 py-6">
         {/* 핵심 메시지 */}
         <div
-          className="mb-6 rounded-2xl border border-emerald-500/30 p-5 text-center"
+          className="dark-card mb-6 rounded-2xl border border-emerald-500/30 p-5 text-center"
           style={{
             background:
               "linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 182, 212, 0.08))",
           }}
         >
-          <div className="text-sm text-zinc-400">광고주가 투자하면</div>
+          <div className="text-sm dark-text-muted text-zinc-400">광고주가 투자하면</div>
           <div className="mt-1 text-3xl font-black text-emerald-400">
             120% 수익 발생
           </div>
-          <div className="mt-2 text-xs text-zinc-500">
+          <div className="mt-2 text-xs dark-text-muted text-zinc-500">
             광고비가 사라지지 않고, 비선형공식으로 순환합니다
           </div>
         </div>
 
         {/* 광고주 선택 */}
-        <div className="mb-4 text-sm font-bold text-zinc-400">
+        <div className="mb-4 text-sm font-bold dark-text-muted text-zinc-400">
           광고주 시뮬레이션
         </div>
         <div className="mb-4 grid grid-cols-2 gap-2">
@@ -80,7 +80,7 @@ export default function AdvertiserPage() {
                 setSelectedIdx(i);
                 setShowResult(false);
               }}
-              className="rounded-xl border p-3 text-left transition-all"
+              className="dark-card rounded-xl border p-3 text-left transition-all"
               style={{
                 borderColor:
                   i === selectedIdx
@@ -94,7 +94,7 @@ export default function AdvertiserPage() {
             >
               <div className="text-xl">{e.icon}</div>
               <div className="mt-1 text-sm font-bold">{e.name}</div>
-              <div className="text-xs text-zinc-500">{e.desc}</div>
+              <div className="text-xs dark-text-muted text-zinc-500">{e.desc}</div>
               <div className="mt-1 text-xs font-bold text-emerald-400">
                 투자: {formatKorean(e.invest)}
               </div>
@@ -115,21 +115,21 @@ export default function AdvertiserPage() {
           <div className="space-y-3">
             {/* 투자 금액 */}
             <div
-              className="rounded-2xl border border-zinc-700 p-4"
-              style={{ background: "var(--card-bg)" }}
+              className="dark-card rounded-2xl border p-4"
+              style={{ background: "var(--card-bg)", borderColor: "var(--card-border)" }}
             >
-              <div className="text-xs text-zinc-500">투자 금액</div>
+              <div className="text-xs dark-text-muted text-zinc-500">투자 금액</div>
               <div className="mt-1 text-2xl font-black text-rose-400">
                 -{formatKorean(ex.invest)}
               </div>
-              <div className="mt-1 text-xs text-zinc-500">
+              <div className="mt-1 text-xs dark-text-muted text-zinc-500">
                 {ex.name}이 비선형 시스템에 충전
               </div>
             </div>
 
             {/* 비선형 분배 과정 */}
             <div
-              className="rounded-2xl border border-purple-500/30 p-4"
+              className="dark-card rounded-2xl border border-purple-500/30 p-4"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))",
@@ -139,26 +139,26 @@ export default function AdvertiserPage() {
                 비선형공식 분배 과정
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between rounded-xl bg-black/20 px-3 py-2 text-xs">
-                  <span className="text-zinc-400">
+                <div className="flex items-center justify-between rounded-xl px-3 py-2 text-xs" style={{ background: "rgba(0,0,0,0.1)" }}>
+                  <span className="dark-text-muted text-zinc-400">
                     광고 시청 리워드 (소비자)
                   </span>
                   <span className="font-bold text-cyan-400">소비자에게 분배</span>
                 </div>
-                <div className="flex items-center justify-between rounded-xl bg-black/20 px-3 py-2 text-xs">
-                  <span className="text-zinc-400">가맹점 결제 유도</span>
+                <div className="flex items-center justify-between rounded-xl px-3 py-2 text-xs" style={{ background: "rgba(0,0,0,0.1)" }}>
+                  <span className="dark-text-muted text-zinc-400">가맹점 결제 유도</span>
                   <span className="font-bold text-amber-400">
                     판매자 50% 적립
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-xl bg-black/20 px-3 py-2 text-xs">
-                  <span className="text-zinc-400">멤버십 풀 x10 확장</span>
+                <div className="flex items-center justify-between rounded-xl px-3 py-2 text-xs" style={{ background: "rgba(0,0,0,0.1)" }}>
+                  <span className="dark-text-muted text-zinc-400">멤버십 풀 x10 확장</span>
                   <span className="font-bold text-purple-400">
                     비선형 분배
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-xl bg-black/20 px-3 py-2 text-xs">
-                  <span className="text-zinc-400">보정 모드 (안전장치)</span>
+                <div className="flex items-center justify-between rounded-xl px-3 py-2 text-xs" style={{ background: "rgba(0,0,0,0.1)" }}>
+                  <span className="dark-text-muted text-zinc-400">보정 모드 (안전장치)</span>
                   <span className="font-bold text-purple-400">
                     150% → 120%
                   </span>
@@ -168,13 +168,13 @@ export default function AdvertiserPage() {
 
             {/* 수익 결과 */}
             <div
-              className="rounded-2xl border border-emerald-500/30 p-5 text-center"
+              className="dark-card rounded-2xl border border-emerald-500/30 p-5 text-center"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 182, 212, 0.08))",
               }}
             >
-              <div className="text-xs text-zinc-500">비선형공식 적용 결과</div>
+              <div className="text-xs dark-text-muted text-zinc-500">비선형공식 적용 결과</div>
               <div className="mt-2 text-4xl font-black text-emerald-400">
                 +{formatKorean(returnAmount)}
               </div>
@@ -183,14 +183,14 @@ export default function AdvertiserPage() {
               </div>
 
               <div className="mx-auto mt-4 max-w-xs space-y-2">
-                <div className="flex justify-between rounded-xl bg-black/20 px-4 py-2 text-sm">
-                  <span className="text-zinc-500">투자</span>
+                <div className="flex justify-between rounded-xl px-4 py-2 text-sm" style={{ background: "rgba(0,0,0,0.1)" }}>
+                  <span className="dark-text-muted text-zinc-500">투자</span>
                   <span className="font-bold text-rose-400">
                     {formatKorean(ex.invest)}
                   </span>
                 </div>
-                <div className="flex justify-between rounded-xl bg-black/20 px-4 py-2 text-sm">
-                  <span className="text-zinc-500">수익</span>
+                <div className="flex justify-between rounded-xl px-4 py-2 text-sm" style={{ background: "rgba(0,0,0,0.1)" }}>
+                  <span className="dark-text-muted text-zinc-500">수익</span>
                   <span className="font-bold text-emerald-400">
                     {formatKorean(returnAmount)}
                   </span>
@@ -207,10 +207,10 @@ export default function AdvertiserPage() {
 
             {/* 핵심 설명 */}
             <div
-              className="rounded-2xl border border-zinc-700 p-4 text-xs leading-relaxed text-zinc-400"
-              style={{ background: "var(--card-bg)" }}
+              className="dark-card rounded-2xl border p-4 text-xs leading-relaxed"
+              style={{ background: "var(--card-bg)", borderColor: "var(--card-border)", color: "var(--text-muted)" }}
             >
-              <div className="mb-2 text-sm font-bold text-emerald-300">
+              <div className="mb-2 text-sm font-bold text-emerald-500">
                 왜 광고주도 이득인가?
               </div>
               <p>
