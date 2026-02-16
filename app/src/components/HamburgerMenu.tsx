@@ -43,7 +43,7 @@ export default function HamburgerMenu() {
 
       {/* 사이드 메뉴 */}
       <div
-        className="fixed left-0 top-0 z-[101] h-full w-72 transition-transform duration-300"
+        className="fixed left-0 top-0 z-[101] flex h-full w-72 flex-col transition-transform duration-300"
         style={{
           background: "var(--background)",
           borderRight: "1px solid var(--card-border)",
@@ -66,32 +66,34 @@ export default function HamburgerMenu() {
           <div className="text-xs" style={{ color: "var(--text-muted)" }}>{user.email}</div>
         </div>
 
-        {/* 메뉴 리스트 */}
-        <nav className="flex flex-col gap-1 p-3">
-          {menuItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 transition-all"
-              style={{
-                background: pathname === item.href ? "var(--card-border)" : "transparent",
-              }}
-            >
-              <span className="text-xl">{item.icon}</span>
-              <div>
-                <div className="text-sm font-bold">{item.label}</div>
-                <div className="text-xs" style={{ color: "var(--text-muted)" }}>{item.desc}</div>
-              </div>
-              {pathname === item.href && (
-                <div className="ml-auto h-2 w-2 rounded-full bg-purple-500" />
-              )}
-            </Link>
-          ))}
+        {/* 메뉴 리스트 (스크롤 가능) */}
+        <nav className="flex-1 overflow-y-auto p-3">
+          <div className="flex flex-col gap-1">
+            {menuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 rounded-xl px-4 py-3 transition-all"
+                style={{
+                  background: pathname === item.href ? "var(--card-border)" : "transparent",
+                }}
+              >
+                <span className="text-xl">{item.icon}</span>
+                <div>
+                  <div className="text-sm font-bold">{item.label}</div>
+                  <div className="text-xs" style={{ color: "var(--text-muted)" }}>{item.desc}</div>
+                </div>
+                {pathname === item.href && (
+                  <div className="ml-auto h-2 w-2 rounded-full bg-purple-500" />
+                )}
+              </Link>
+            ))}
+          </div>
         </nav>
 
         {/* 로그아웃 */}
-        <div className="absolute bottom-6 left-0 right-0 px-3">
+        <div className="shrink-0 border-t px-3 py-3" style={{ borderColor: "var(--card-border)" }}>
           <button
             onClick={() => { signOut(); setOpen(false); }}
             className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors hover:bg-rose-500/10"
