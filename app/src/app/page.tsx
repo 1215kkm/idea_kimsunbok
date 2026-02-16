@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function LoginPage() {
-  const { user, loading, signIn, signUp } = useAuth();
+  const { user, loading, signIn, signUp, demoSignIn } = useAuth();
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState("");
@@ -108,6 +108,33 @@ export default function LoginPage() {
       >
         {isSignUp ? "이미 계정이 있으신가요? 로그인" : "계정이 없으신가요? 회원가입"}
       </button>
+
+      {/* 데모 로그인 */}
+      <div className="mt-8 w-full max-w-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-px flex-1 bg-zinc-700" />
+          <span className="text-xs text-zinc-500">또는</span>
+          <div className="h-px flex-1 bg-zinc-700" />
+        </div>
+        <button
+          onClick={async () => {
+            setSubmitting(true);
+            setError("");
+            try {
+              await demoSignIn();
+            } catch {
+              setError("데모 로그인에 실패했습니다.");
+            } finally {
+              setSubmitting(false);
+            }
+          }}
+          disabled={submitting}
+          className="w-full rounded-xl border border-zinc-700 bg-zinc-800/50 py-3.5 text-sm font-medium text-zinc-300 transition-all hover:border-purple-500/50 hover:bg-zinc-800 hover:text-white disabled:opacity-50"
+        >
+          🎮 데모 아이디로 체험하기
+        </button>
+        <p className="mt-2 text-center text-xs text-zinc-600">가입 없이 바로 둘러볼 수 있어요</p>
+      </div>
     </div>
   );
 }

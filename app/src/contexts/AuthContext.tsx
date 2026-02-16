@@ -19,6 +19,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  demoSignIn: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -88,6 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
+  const demoSignIn = async () => {
+    const demoUser = { ...DEMO_USER } as User;
+    setUser(demoUser);
+    localStorage.setItem("daland-demo-user", JSON.stringify({ displayName: DEMO_USER.displayName, email: DEMO_USER.email }));
+  };
+
   const signOut = async () => {
     if (!isConfigured || !auth) {
       setUser(null);
@@ -98,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isDemo: !isConfigured, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isDemo: !isConfigured, signUp, signIn, signOut, demoSignIn }}>
       {children}
     </AuthContext.Provider>
   );
