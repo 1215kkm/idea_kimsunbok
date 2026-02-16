@@ -43,6 +43,7 @@ export default function StoresPage() {
   const [result, setResult] = useState<ResultState>(null);
   const [processing, setProcessing] = useState(false);
   const [customAmount, setCustomAmount] = useState("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -116,9 +117,27 @@ export default function StoresPage() {
         <p className="text-xs dark-text-muted text-zinc-500">결제하고 120% 적립받기</p>
       </div>
 
+      {/* 검색 */}
+      <div className="px-5 pt-4">
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">🔍</span>
+          <input
+            type="text"
+            placeholder="가맹점 이름 또는 카테고리 검색"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#14143c] py-2.5 pl-9 pr-3 text-sm placeholder-zinc-600 outline-none focus:border-purple-500/50"
+          />
+        </div>
+      </div>
+
       {/* 가맹점 리스트 */}
       <div className="grid grid-cols-2 gap-3 p-5">
-        {stores.map((store) => (
+        {stores.filter((s) => {
+          if (!search.trim()) return true;
+          const q = search.trim().toLowerCase();
+          return s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
+        }).map((store) => (
           <button
             key={store.id}
             onClick={() => setModal({ store, item: store.sampleItems[0] })}
