@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>다랜드 비선형공식 시나리오 시뮬레이션</title>
+<style>
+  @page {
+    margin: 2cm 2.5cm;
+    size: A4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif;
+    color: #1a1a1a;
+    line-height: 1.8;
+    font-size: 11pt;
+    background: #fff;
+    padding: 40px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* 인쇄 시 */
+  @media print {
+    body { padding: 0; max-width: none; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    h1, h2, h3 { page-break-after: avoid; }
+    table, .box, .quote-box { page-break-inside: avoid; }
+  }
+
+  /* 화면 표시 */
+  @media screen {
+    body { background: #f5f5f5; }
+    .print-area {
+      background: #fff;
+      padding: 60px 50px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      border-radius: 4px;
+    }
+  }
+
+  .print-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #7b2ff7, #06b6d4);
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(123,47,247,0.3);
+    z-index: 100;
+  }
+  .print-btn:hover { transform: scale(1.05); }
+
+  /* 표지 */
+  .cover { text-align: center; padding: 80px 0 60px; }
+  .cover-title {
+    font-size: 32pt;
+    font-weight: 900;
+    color: #1a1a2e;
+    letter-spacing: -1px;
+  }
+  .cover-sub {
+    font-size: 14pt;
+    color: #666;
+    margin-top: 10px;
+  }
+  .cover-line {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #7b2ff7, #06b6d4);
+    margin: 25px auto;
+  }
+  .cover-info {
+    font-size: 10pt;
+    color: #999;
+    margin-top: 40px;
+  }
+
+  h1 {
+    font-size: 20pt;
+    font-weight: 900;
+    color: #1a1a2e;
+    margin: 40px 0 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #7b2ff7;
+  }
+  h2 {
+    font-size: 15pt;
+    font-weight: 800;
+    color: #333;
+    margin: 30px 0 15px;
+  }
+  h3 {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #555;
+    margin: 20px 0 10px;
+  }
+
+  p { margin: 8px 0; text-align: justify; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 10pt;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background: #f0ecff;
+    font-weight: 700;
+    color: #333;
+  }
+  td { color: #444; }
+
+  .box {
+    background: #f8f6ff;
+    border: 1px solid #e0d6ff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 15px 0;
+    font-size: 10pt;
+  }
+  .box-title {
+    font-weight: 800;
+    color: #7b2ff7;
+    font-size: 10pt;
+    margin-bottom: 6px;
+  }
+
+  .noti-box {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-left: 4px solid #22c55e;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 10pt;
+    font-family: 'Consolas', 'D2Coding', monospace;
+    line-height: 1.6;
+  }
+
+  .diary-date {
+    font-size: 12pt;
+    font-weight: 800;
+    color: #7b2ff7;
+    margin: 25px 0 8px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #d4c6f7;
+  }
+
+  .quote-box {
+    background: #fafafa;
+    border-left: 4px solid #7b2ff7;
+    padding: 12px 20px;
+    margin: 15px 0;
+    font-style: italic;
+    color: #555;
+  }
+
+  .flow-diagram {
+    text-align: center;
+    padding: 20px;
+    margin: 15px 0;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    font-family: 'Consolas', 'D2Coding', monospace;
+    font-size: 10pt;
+    line-height: 2;
+    white-space: pre-line;
+  }
+
+  .comparison-table td:nth-child(2) { color: #dc2626; }
+  .comparison-table td:nth-child(3) { color: #16a34a; font-weight: 700; }
+
+  .highlight { color: #7b2ff7; font-weight: 700; }
+  .red { color: #dc2626; font-weight: 700; }
+  .green { color: #16a34a; font-weight: 700; }
+  .blue { color: #2563eb; font-weight: 700; }
+
+  .section-divider {
+    text-align: center;
+    margin: 30px 0;
+    color: #ccc;
+    font-size: 14pt;
+    letter-spacing: 8px;
+  }
+
+  .toc { margin: 20px 0 40px; }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dotted #ddd;
+    font-size: 10pt;
+  }
+  .toc-item span:first-child { font-weight: 600; }
+  .toc-item span:last-child { color: #999; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">인쇄하기 / PDF 저장</button>
+
+<div class="print-area">
+
+<!-- ===== 표지 ===== -->
+<div class="cover">
+  <div class="cover-title">다랜드 비선형공식</div>
+  <div class="cover-sub">시나리오 시뮬레이션</div>
+  <div class="cover-line"></div>
+  <p style="font-size:11pt;color:#666;margin-top:20px;">
+    소비가 만드는 선순환 경제<br>
+    가입부터 사용, 이득까지 — 전체 시나리오
+  </p>
+  <div class="cover-info">
+    다랜드 주식회사<br>
+    2026년 2월
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ===== 목차 ===== -->
+<h1>목차</h1>
+<div class="toc">
+  <div class="toc-item"><span>등장인물 소개</span><span>3</span></div>
+  <div class="toc-item"><span>제1편. 일기 모드 — 박영희의 이야기</span><span>4</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;3월 15일 — 가입일</span><span>4</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;3월 17일 — 첫 결제</span><span>4</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;3월 20일 — 포인트 재결제</span><span>5</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;3월 20일 — 드디어 이해했다</span><span>6</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;4월 15일 — 한 달 정산</span><span>7</span></div>
+  <div class="toc-item"><span>제1편. 일기 모드 — 김철수 사장님의 이야기</span><span>8</span></div>
+  <div class="toc-item"><span>제1편. 일기 모드 — 신한은행(광고주) 보고서</span><span>9</span></div>
+  <div class="toc-item"><span>제2편. 소설 모드 — 「항아리 속의 물」</span><span>10</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;1장. 새어나가는 돈</span><span>10</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;2장. "쓴 돈이 돌아온다고?"</span><span>10</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;3장. 첫 결제</span><span>11</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;4장. 카페 사장의 사정</span><span>12</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;5장. 돈은 어디서 오는가</span><span>13</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;6장. 한 달 후</span><span>14</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;7장. 선순환</span><span>14</span></div>
+  <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;마지막 장. 항아리</span><span>15</span></div>
+  <div class="toc-item"><span>한 장 요약 — 전체 구조도 & 비교표</span><span>16</span></div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ===== 등장인물 ===== -->
+<h1>등장인물 소개</h1>
+
+<table>
+  <tr>
+    <th>이름</th><th>역할</th><th>나이</th><th>상황</th>
+  </tr>
+  <tr>
+    <td><strong>박영희</strong></td><td>소비자</td><td>28세</td>
+    <td>월급 250만원, 매달 생활비에 허덕임</td>
+  </tr>
+  <tr>
+    <td><strong>김철수</strong></td><td>카페 사장 (가맹점)</td><td>45세</td>
+    <td>하루 매출 30만원, 배달앱 수수료에 고통</td>
+  </tr>
+  <tr>
+    <td><strong>이지은</strong></td><td>소비자 (영희 동료)</td><td>32세</td>
+    <td>포인트 적립 마니아, 다랜드 먼저 사용</td>
+  </tr>
+  <tr>
+    <td><strong>신한은행</strong></td><td>광고주</td><td>—</td>
+    <td>카드 회원 모집, 월 광고비 10억</td>
+  </tr>
+  <tr>
+    <td><strong>다랜드</strong></td><td>플랫폼 운영사</td><td>—</td>
+    <td>비선형공식 엔진 운영</td>
+  </tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ===== 제1편: 일기 모드 ===== -->
+<h1>제1편. 일기 모드</h1>
+
+<h2>박영희의 일기</h2>
+
+<div class="diary-date">3월 15일 (토) — 가입일</div>
+
+<p>오늘 지은이가 자꾸 다랜드 다랜드 거려서 결국 깔았다.</p>
+<p>"쓴 돈의 120%가 돌아온다"는데... 솔직히 믿기 힘들다. 세상에 공짜가 어딨어.</p>
+<p>근데 가입하는데 30초밖에 안 걸렸다. 이름, 전화번호, 끝. 카드 등록도 안 해도 돼서 일단 깔아만 뒀다.</p>
+
+<div class="section-divider">· · ·</div>
+
+<div class="diary-date">3월 17일 (월) — 첫 결제일</div>
+
+<p>출근길에 철수 사장님 카페에서 아메리카노 4,000원. 평소엔 그냥 카드로 긁는데, 지은이가 옆에서 "다랜드로 결제해봐!" 하길래 해봤다.</p>
+<p>QR코드 찍고 4,000원 결제. <strong>그런데 바로 알림이 왔다.</strong></p>
+
+<div class="noti-box">
+  💳 행복한 카페 결제: -4,000원<br>
+  ✅ 적립 완료: +4,800P (120%)
+</div>
+
+<p>어... 4,000원 썼는데 4,800포인트? 800원이 어디서 온 거지?</p>
+
+<p>지은이한테 물어봤더니 이렇게 설명해줬다:</p>
+
+<div class="quote-box">
+  "네가 4,000원 결제하면, 카페 사장님한테 판매자 적립 2,000P가 가고, 너한테 소비자 적립 2,000P가 가는데, 이게 멤버십 풀에서 확장되고 보정돼서 결국 4,800P가 되는 거야. <strong>돈이 새로 생기는 게 아니라, 광고주들이 넣은 광고비 + 가맹점 수수료가 풀에 쌓여있는 거야.</strong>"
+</div>
+
+<p>음... 아직 좀 헷갈리지만 일단 800원 이득인 건 맞는 것 같다.</p>
+
+<h3>점심 — 두 번째 결제</h3>
+
+<p>점심에 김치찌개 8,000원도 다랜드로 결제했다.</p>
+
+<div class="noti-box">
+  💳 맛있는 식당 결제: -8,000원<br>
+  ✅ 적립 완료: +9,600P (120%)
+</div>
+
+<p>오늘 하루만 12,000원 쓰고 14,400P 받았다. <span class="green">2,400원 이득.</span></p>
+
+<p>근데 이 포인트를 어디에 쓰지? 앱을 열어봤더니 포인트로 다른 가맹점에서 결제가 된다. 편의점, 주유소, 약국... 다 된다고?</p>
+
+<div class="section-divider">· · ·</div>
+
+<div class="diary-date">3월 20일 (목) — 포인트로 결제</div>
+
+<p>쌓인 포인트가 14,400P. 편의점에서 우유 + 빵 3,500원짜리를 <strong>포인트로 결제했다.</strong></p>
+
+<div class="noti-box">
+  💳 행복한 슈퍼 결제: -3,500P<br>
+  ✅ 적립 완료: +4,200P (120%)
+</div>
+
+<p>미쳤다. <strong>포인트로 결제했는데 또 120% 적립이 된다.</strong> 3,500P 쓰고 4,200P 받았으니 700P 이득.</p>
+
+<div class="section-divider">· · ·</div>
+
+<div class="diary-date">3월 20일 (목) — 드디어 이해했다</div>
+
+<p>앱에 있는 "엔진 설명" 페이지를 정독했다. 드디어 이해했다.</p>
+
+<div class="box">
+  <div class="box-title">💰 돈이 들어오는 곳 — 시스템 풀의 재원</div>
+  <p><strong>① 광고주 광고비:</strong> 신한은행 같은 기업이 다랜드 앱에 광고를 싣고 월 10억 지불</p>
+  <p><strong>② 가맹점 수수료:</strong> 카페 사장님이 결제 수수료 1.5%를 다랜드에 지불 (배달앱 15%보다 훨씬 저렴)</p>
+  <p><strong>③ 프리미엄 멤버십:</strong> 월 9,900원 구독자는 적립률 130%로 업그레이드</p>
+</div>
+
+<div class="box">
+  <div class="box-title">💸 돈이 나가는 곳 — 소비자/판매자에게</div>
+  <p><strong>① 소비자 적립 120%:</strong> 내가 받는 것</p>
+  <p><strong>② 판매자 적립 50%:</strong> 카페 사장님이 받는 것</p>
+</div>
+
+<div class="box">
+  <div class="box-title">⚖️ 왜 유지가 되는가</div>
+  <p>광고주가 넣는 돈 + 가맹점 수수료 + 프리미엄 구독료 = 소비자 보너스 20% + 판매자 적립 50%</p>
+  <p style="margin-top:8px;"><strong>풀에 쌓이는 돈 > 나가는 돈 → 시스템 유지</strong></p>
+  <p><strong>풀에 쌓이는 돈 < 나가는 돈 → 보정모드가 120%→110%로 자동 조절</strong></p>
+</div>
+
+<div class="quote-box">
+  <strong>핵심:</strong> 내 주머니에서 나오는 게 아니라, 광고주 주머니에서 나오는 거였다.<br><br>
+  네이버 검색할 때 광고 보이잖아. 그 광고비가 네이버 매출이 되듯이, 다랜드에선 그 광고비가 <strong>나한테</strong> 오는 거다.
+</div>
+
+<div class="page-break"></div>
+
+<div class="diary-date">4월 15일 (화) — 한 달 정산</div>
+
+<div class="box">
+  <div class="box-title">📊 3월 한 달 사용 리포트</div>
+  <table>
+    <tr><td>총 결제 금액</td><td style="text-align:right"><span class="red">348,000원</span></td></tr>
+    <tr><td>총 적립 포인트</td><td style="text-align:right"><span class="green">417,600P</span></td></tr>
+    <tr style="background:#f0fdf4;"><td><strong>순이익</strong></td><td style="text-align:right"><strong class="green">+69,600P</strong></td></tr>
+    <tr><td>적립률</td><td style="text-align:right"><span class="highlight">120%</span></td></tr>
+  </table>
+  <p style="text-align:center;margin-top:8px;">어차피 쓸 생활비에서 69,600원을 번 셈!<br><strong>1년이면 약 84만원.</strong></p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ===== 김철수 사장님 ===== -->
+<h2>김철수 사장님의 일기</h2>
+
+<div class="diary-date">3월 15일 (토) — 가맹점 가입일</div>
+
+<p>배달앱 수수료가 15%다. 커피 한 잔 4,000원 팔면 600원을 떼간다. 하루에 100잔 팔면 6만원이 수수료로 사라진다. <span class="red">한 달이면 180만원.</span></p>
+
+<p>다랜드에서 가맹점 제안이 왔다. 수수료가 <span class="green">1.5%</span>란다. 배달앱의 1/10.</p>
+
+<p>4,000원에 60원. 하루 100잔이면 6,000원. 한 달 18만원. 배달앱보다 <span class="green">162만원 절약.</span></p>
+
+<p>가입했다.</p>
+
+<div class="section-divider">· · ·</div>
+
+<div class="diary-date">3월 17일 (월) — 첫 다랜드 매출</div>
+
+<p>영희가 다랜드로 커피 결제했다.</p>
+
+<div class="noti-box">
+  📱 가맹점 대시보드 알림<br>
+  ━━━━━━━━━━━━━━━━<br>
+  고객 결제: 4,000원<br>
+  수수료 (1.5%): -60원<br>
+  내 통장 입금: 3,940원<br>
+  판매자 포인트 적립: +2,000P
+</div>
+
+<p>잠깐. 3,940원 받고, <strong>추가로 2,000P까지?</strong> 이 포인트로 나도 식자재 살 수 있다고?</p>
+
+<div class="section-divider">· · ·</div>
+
+<div class="diary-date">4월 15일 (화) — 한 달 정산</div>
+
+<div class="box">
+  <div class="box-title">📊 가맹점 3월 리포트</div>
+  <table>
+    <tr><td>총 매출</td><td style="text-align:right">9,200,000원</td></tr>
+    <tr><td>수수료 (1.5%)</td><td style="text-align:right"><span class="red">-138,000원</span></td></tr>
+    <tr><td>판매자 포인트</td><td style="text-align:right"><span class="green">+4,600,000P</span></td></tr>
+    <tr style="background:#f0fdf4;"><td><strong>실수령</strong></td><td style="text-align:right"><strong>9,062,000원 + 460만P</strong></td></tr>
+  </table>
+</div>
+
+<div class="box" style="background:#fff5f5;border-color:#fecaca;">
+  <div class="box-title" style="color:#dc2626;">비교) 배달앱이었다면</div>
+  <table>
+    <tr><td>수수료 (15%)</td><td style="text-align:right"><span class="red">-1,380,000원</span></td></tr>
+    <tr><td>판매자 포인트</td><td style="text-align:right">0원</td></tr>
+  </table>
+  <p style="text-align:center;margin-top:8px;"><strong class="green">다랜드 전환 이득: 1,242,000원 + 460만P</strong></p>
+</div>
+
+<p>단골도 늘었다. 다랜드 앱에 내 카페가 나오니까 근처 사람들이 "120% 적립받으려고" 찾아온다. 광고를 안 해도 손님이 온다.</p>
+
+<div class="page-break"></div>
+
+<!-- ===== 광고주 ===== -->
+<h2>신한은행 (광고주) 보고서</h2>
+
+<h3>3월 광고 집행 비교</h3>
+
+<table class="comparison-table">
+  <tr>
+    <th>항목</th><th>기존 (네이버/인스타)</th><th>다랜드</th>
+  </tr>
+  <tr>
+    <td>광고비 지출</td><td>10억원</td><td>10억원</td>
+  </tr>
+  <tr>
+    <td>노출 수</td><td>5,000만 회</td><td>3,000만 회</td>
+  </tr>
+  <tr>
+    <td>광고 시청 완료</td><td>—</td><td>800만 회 (보상형)</td>
+  </tr>
+  <tr>
+    <td>카드 신규가입</td><td>2,000명</td><td>8,500명</td>
+  </tr>
+  <tr>
+    <td>1인당 획득비용</td><td>500,000원</td><td>117,647원</td>
+  </tr>
+  <tr>
+    <td>광고비 이후</td><td>노출 후 소멸</td><td>소비자 리워드로 순환</td>
+  </tr>
+</table>
+
+<p><span class="green">효율이 4.3배.</span> 왜?</p>
+
+<p>다랜드 광고는 "15초 시청하면 포인트를 준다." 사용자가 적극적으로 광고를 본다. 강제 노출이 아니라 <strong>자발적 시청.</strong></p>
+
+<p>게다가 포인트를 받은 소비자가 가맹점에서 쓰면 → 가맹점도 이득 → 가맹점이 다랜드를 홍보 → 사용자 증가 → 광고 노출 증가 → <strong>선순환.</strong></p>
+
+<div class="page-break"></div>
+
+<!-- ===== 제2편: 소설 모드 ===== -->
+<h1>제2편. 소설 모드 — 「항아리 속의 물」</h1>
+
+<h2>1장. 새어나가는 돈</h2>
+
+<p>박영희는 월급날이 가장 슬픈 사람이었다.</p>
+
+<p>250만원이 통장에 찍히는 순간, 자동이체가 시작된다. 월세 55만원. 통신비 7만원. 보험 12만원. 남은 176만원으로 한 달을 산다.</p>
+
+<p>커피 한 잔, 점심 한 끼, 버스비, 편의점 간식. 하나하나는 작은데 모이면 거대했다. 월말이면 통장엔 늘 2~3만원만 남았다.</p>
+
+<p>"돈이 자꾸 새어나가."</p>
+
+<p>영희는 가계부 앱을 깔았다 지웠다를 반복했다. 기록해봤자 달라지는 건 없었다. 쓸 돈은 써야 하니까.</p>
+
+<div class="section-divider">· · ·</div>
+
+<h2>2장. "쓴 돈이 돌아온다고?"</h2>
+
+<p>"영희야, 이거 써봐."</p>
+
+<p>동료 이지은이 핸드폰을 들이밀었다. 보라색 앱 아이콘. <strong>다랜드.</strong></p>
+
+<p>"뭔데?"</p>
+
+<p>"결제하면 120%가 포인트로 돌아와."</p>
+
+<p>"그런 게 어딨어. 무슨 사기 아니야?"</p>
+
+<p>지은이 웃었다.</p>
+
+<div class="quote-box">
+  "나도 처음엔 그랬어. 근데 생각해봐. 네이버 쓸 때 광고 보이잖아. 그 광고비가 네이버 매출이 되잖아. 다랜드는 그 광고비가 <strong>우리한테</strong> 오는 거야. 기업이 광고비를 내면, 그게 풀에 쌓이고, 우리가 결제할 때마다 그 풀에서 보너스가 나오는 구조야."
+</div>
+
+<p>"...진짜?"</p>
+
+<p>"내가 지난 달에 42만원 썼는데 50만 4천 포인트 받았어. 8만 4천원 이득이야. 이거 편의점에서도 쓸 수 있어."</p>
+
+<p>영희는 반신반의하며 앱을 깔았다.</p>
+
+<div class="section-divider">· · ·</div>
+
+<h2>3장. 첫 결제</h2>
+
+<p>다음 날 아침. 출근길.</p>
+
+<p>김철수 사장이 운영하는 「행복한 카페」. 매일 오는 곳이다. 아메리카노 4,000원.</p>
+
+<p>영희는 떨리는 손으로 다랜드 앱을 열었다. QR코드가 떴다. 카페 카운터의 단말기에 갖다 댔다.</p>
+
+<p style="text-align:center;font-size:14pt;margin:15px 0;">삐.</p>
+
+<div class="box">
+  <div class="box-title">비선형공식 분배 내역</div>
+  <table>
+    <tr><td>결제금액</td><td style="text-align:right">4,000원</td></tr>
+    <tr><td>판매자 적립 (50%)</td><td style="text-align:right">2,000P</td></tr>
+    <tr><td>소비자 적립 (50%)</td><td style="text-align:right">2,000P</td></tr>
+    <tr><td>멤버십 풀 확장</td><td style="text-align:right">×10</td></tr>
+    <tr><td>보정 모드</td><td style="text-align:right">150% → 120%</td></tr>
+    <tr style="background:#f0fdf4;"><td><strong>최종 적립</strong></td><td style="text-align:right"><strong class="green">4,800P</strong></td></tr>
+    <tr><td colspan="2" style="text-align:center;color:#666;">원금 4,000 + 보너스 800</td></tr>
+  </table>
+</div>
+
+<p>4,000원을 썼는데 4,800포인트. <strong>커피 한 잔을 공짜로 더 마실 수 있는 포인트가 생겼다.</strong></p>
+
+<div class="section-divider">· · ·</div>
+
+<h2>4장. 카페 사장의 사정</h2>
+
+<p>카운터 너머 김철수도 알림을 받았다.</p>
+
+<div class="noti-box">
+  💰 고객 결제: 4,000원<br>
+  &nbsp;&nbsp;&nbsp;수수료(1.5%): -60원<br>
+  &nbsp;&nbsp;&nbsp;입금: 3,940원<br>
+  &nbsp;&nbsp;&nbsp;판매자 포인트: +2,000P
+</div>
+
+<p>철수는 한숨을 쉬었다. 이번엔 안도의 한숨이었다.</p>
+
+<p>지난 3년간 배달앱 수수료로 매달 180만원을 냈다. 매출의 15%가 사라졌다. 커피 한 잔 팔면 600원이 수수료였다.</p>
+
+<p>다랜드는 1.5%. 커피 한 잔에 60원. <strong>1/10.</strong></p>
+
+<p>게다가 판매자 포인트 2,000P가 쌓인다. 이걸로 식자재를 사면 된다.</p>
+
+<p>배달앱은 빼앗아 갔다. 다랜드는 <strong>되돌려줬다.</strong></p>
+
+<div class="page-break"></div>
+
+<h2>5장. 돈은 어디서 오는가</h2>
+
+<p>영희는 그날 밤 침대에서 앱을 들여다봤다. "엔진 설명" 페이지를 눌렀다. 하나하나 단계를 넘기면서 읽었다.</p>
+
+<div class="box">
+  <div class="box-title">Q. 120%가 가능한 이유?</div>
+  <p>돈이 하늘에서 떨어지는 게 아닙니다.</p>
+  <p style="margin-top:10px;"><strong>① 광고주의 광고비</strong><br>
+  신한은행, 삼성전자 같은 기업이 다랜드 앱에 광고를 싣습니다. 사용자가 광고를 시청하면 보상(포인트)을 받습니다. 이 광고비가 시스템 풀에 들어갑니다.</p>
+  <p style="margin-top:8px;"><strong>② 가맹점 수수료 (1.5%)</strong><br>
+  가맹점은 결제금액의 1.5%만 수수료로 냅니다. 배달앱(15%)보다 훨씬 저렴하지만, 100만 가맹점이 모이면 거대한 풀이 됩니다.</p>
+  <p style="margin-top:8px;"><strong>③ 프리미엄 구독료</strong><br>
+  월 9,900원 프리미엄 회원은 적립률 130%. 이 구독료도 풀에 들어갑니다.</p>
+  <p style="margin-top:12px;">이 세 가지가 <strong>멤버십 풀</strong>을 만들고, 비선형공식이 모든 참여자에게 분배합니다.</p>
+</div>
+
+<div class="quote-box" style="text-align:center;font-size:12pt;">
+  <strong>"항아리 속의 물 총량은 같다. 바가지만 바뀔 뿐."</strong>
+</div>
+
+<p>영희는 드디어 이해했다.</p>
+
+<p>네이버를 쓸 때, 광고를 보는 대가로 네이버가 돈을 벌었다. 유튜브를 볼 때, 광고를 보는 대가로 구글이 돈을 벌었다.</p>
+
+<p>다랜드는 그 구조를 뒤집은 것이다. <strong>광고를 보는 대가를 플랫폼이 아니라 사용자가 가져간다.</strong></p>
+
+<div class="section-divider">· · ·</div>
+
+<h2>6장. 한 달 후</h2>
+
+<div class="box">
+  <div class="box-title">📊 박영희의 4월 리포트</div>
+  <table>
+    <tr><td>총 결제</td><td style="text-align:right">348,000원</td></tr>
+    <tr><td>(커피, 점심, 편의점, 주유, 외식...)</td><td></td></tr>
+    <tr><td>총 적립</td><td style="text-align:right"><span class="green">417,600P</span></td></tr>
+    <tr style="background:#f0fdf4;"><td><strong>순이익</strong></td><td style="text-align:right"><strong class="green">+69,600P</strong></td></tr>
+  </table>
+</div>
+
+<p>월말이 됐는데, 통장에 7만원이 더 있었다. 정확히는 7만원이 아니라 <strong>어차피 쓸 돈을 다랜드로 결제해서 생긴 보너스 포인트</strong>다.</p>
+
+<div class="box">
+  <div class="box-title">📊 김철수 사장의 4월 리포트</div>
+  <table>
+    <tr><td>총 매출</td><td style="text-align:right">9,200,000원</td></tr>
+    <tr><td>수수료</td><td style="text-align:right"><span class="red">-138,000원 (1.5%)</span></td></tr>
+    <tr><td>판매자 포인트</td><td style="text-align:right"><span class="green">+4,600,000P</span></td></tr>
+    <tr style="background:#f0fdf4;"><td><strong>배달앱 대비 이득</strong></td><td style="text-align:right"><strong class="green">+1,242,000원 + 460만P</strong></td></tr>
+  </table>
+</div>
+
+<p>철수 사장은 아낀 수수료로 알바생 시급을 올렸다. 또 다랜드 포인트로 도매시장에서 원두를 사기 시작했다.</p>
+
+<div class="section-divider">· · ·</div>
+
+<h2>7장. 선순환</h2>
+
+<p>그렇게 반년이 흘렀다.</p>
+
+<div class="flow-diagram">
+영희 → 카페에서 결제 → 철수 사장 포인트 적립
+철수 → 슈퍼에서 식자재 결제 → 슈퍼 사장 포인트 적립
+슈퍼 사장 → 식당에서 외식 → 식당 주인 포인트 적립
+식당 주인 → 약국에서 비타민 → 약국 포인트 적립
+약국 → 카페에서 커피 → 다시 철수 사장에게
+
+<strong>한 사람의 소비가 사라지지 않고
+마을 전체를 돌며 모두에게 돌아갔다.</strong>
+</div>
+
+<p>신한은행은 다랜드 광고로 카드회원을 8,500명 모았다. 기존 방식보다 4배 효율적이었다. <strong>광고비를 늘렸다.</strong></p>
+
+<p>광고비가 늘어나자 멤버십 풀이 커졌다. 풀이 커지자 분배할 수 있는 포인트가 늘었다. 포인트가 늘자 사용자가 몰렸다. 사용자가 몰리자 가맹점이 늘었다. 가맹점이 늘자 광고주가 더 투자했다.</p>
+
+<p style="text-align:center;font-size:14pt;font-weight:900;margin:20px 0;">눈덩이였다.</p>
+
+<div class="page-break"></div>
+
+<h2>마지막 장. 항아리</h2>
+
+<p>영희는 1년이 지나서야 다랜드가 만든 세상을 완전히 이해했다.</p>
+
+<div class="box" style="background:#fff5f5;border-color:#fecaca;">
+  <div class="box-title" style="color:#dc2626;">기존 세상</div>
+  <p>소비자가 돈을 쓴다 → 플랫폼이 가져간다 → 끝</p>
+</div>
+
+<div class="box" style="background:#f0fdf4;border-color:#bbf7d0;">
+  <div class="box-title" style="color:#16a34a;">다랜드 세상</div>
+  <p>소비자가 돈을 쓴다 → 판매자에게 간다 → 동시에 풀에 쌓인다 → 광고주 돈도 풀에 쌓인다 → 풀에서 소비자에게 돌아온다 → 소비자가 다시 쓴다 → 반복</p>
+</div>
+
+<p>돈의 총량은 같다. 다만, 기존에는 플랫폼 한 곳이 독식했던 것을 <strong>모든 참여자가 나눠 갖는 구조로 바꿨을 뿐이다.</strong></p>
+
+<div class="quote-box" style="text-align:center;font-size:12pt;">
+  항아리 속의 물 총량은 같다.<br>바가지만 바뀔 뿐.<br><br>
+  그리고 그 바가지가<br>
+  네이버에서, 배달의민족에서, 쿠팡에서<br>
+  <strong style="color:#7b2ff7;font-size:14pt;">나에게</strong> 온 것이다.
+</div>
+
+<div class="page-break"></div>
+
+<!-- ===== 한 장 요약 ===== -->
+<h1>한 장 요약</h1>
+
+<h2>전체 순환 구조</h2>
+
+<div class="flow-diagram" style="font-size:11pt;">
+              광고주 (신한은행)
+               💰 광고비 투입
+                    │
+                    ▼
+        ┌─────────────────────┐
+        │    다랜드 멤버십 풀    │ ← 가맹점 수수료 1.5%
+        │   (비선형공식 엔진)    │ ← 프리미엄 구독료
+        └─────────────────────┘
+             │            │
+        120% 적립    50% 판매자 적립
+             │            │
+             ▼            ▼
+          소비자 ──결제──→ 가맹점
+          (영희)          (철수)
+             ▲            │
+             │   포인트로   │
+             └──재결제────┘
+
+        🔄 이 순환이 반복될수록 풀이 커진다
+</div>
+
+<h2>참여자별 비교</h2>
+
+<table>
+  <tr>
+    <th>참여자</th><th>기존 방식</th><th>다랜드</th>
+  </tr>
+  <tr>
+    <td><strong>소비자</strong></td>
+    <td>돈 쓰면 끝, 되돌아오는 것 없음</td>
+    <td class="green">쓴 금액의 120%가 포인트로 돌아옴</td>
+  </tr>
+  <tr>
+    <td><strong>가맹점</strong></td>
+    <td>수수료 15% (배달앱), 포인트 없음</td>
+    <td class="green">수수료 1.5% + 결제금액 50% 포인트 적립</td>
+  </tr>
+  <tr>
+    <td><strong>광고주</strong></td>
+    <td>광고비 소멸, 낮은 전환율</td>
+    <td class="green">4배 높은 효율, 광고비가 순환하여 재사용</td>
+  </tr>
+  <tr>
+    <td><strong>플랫폼</strong></td>
+    <td>수수료 독식 구조</td>
+    <td>수수료 1.5% + 구독료 + 광고 수익으로 운영</td>
+  </tr>
+</table>
+
+<h2>연간 예상 이득</h2>
+
+<table>
+  <tr><th>참여자</th><th>월 이용/매출</th><th>월 이득</th><th>연간 이득</th></tr>
+  <tr>
+    <td>소비자 (월 35만원 소비)</td>
+    <td>350,000원</td>
+    <td><span class="green">+70,000P</span></td>
+    <td><span class="green">+840,000P</span></td>
+  </tr>
+  <tr>
+    <td>가맹점 (월 920만원 매출)</td>
+    <td>9,200,000원</td>
+    <td><span class="green">+5,842,000원 상당</span></td>
+    <td><span class="green">+70,104,000원 상당</span></td>
+  </tr>
+  <tr>
+    <td>광고주 (월 10억 집행)</td>
+    <td>10억원</td>
+    <td colspan="2"><span class="green">기존 대비 4.3배 전환 효율</span></td>
+  </tr>
+</table>
+
+<div style="text-align:center;margin-top:40px;padding:20px;background:#f8f6ff;border-radius:12px;">
+  <p style="font-size:14pt;font-weight:900;color:#1a1a2e;">아무도 손해보지 않는 경제.</p>
+  <p style="font-size:11pt;color:#666;margin-top:8px;">모두가 쓰는 만큼 돌려받는 세상.</p>
+  <p style="font-size:16pt;font-weight:900;color:#7b2ff7;margin-top:15px;">다랜드, 비선형공식.</p>
+</div>
+
+</div><!-- .print-area -->
+
+</body>
+</html>
