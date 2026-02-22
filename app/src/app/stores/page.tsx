@@ -3,74 +3,55 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, getDocs, doc, getDoc, runTransaction, serverTimestamp } from "firebase/firestore";
+import { collection, doc, getDoc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import { calculateNonlinear } from "@/lib/nonlinear-engine";
 import Navbar from "@/components/Navbar";
 
-interface Store {
+interface SpendCategory {
   id: string;
   name: string;
-  category: string;
   icon: string;
-  sampleItems: { name: string; price: number }[];
+  examples: string;
 }
 
-// 기본 가맹점 (Firestore에 없을 때 표시)
-const DEFAULT_STORES: Store[] = [
-  { id: "super", name: "행복한 슈퍼", category: "마트", icon: "🏪",
-    sampleItems: [{ name: "장보기 (사과, 우유, 고기)", price: 32000 }] },
-  { id: "cafe", name: "다랜드 카페", category: "카페", icon: "☕",
-    sampleItems: [{ name: "아메리카노 + 케이크", price: 4500 }] },
-  { id: "gas", name: "주유소", category: "주유", icon: "⛽",
-    sampleItems: [{ name: "휘발유 가득 주유", price: 70000 }] },
-  { id: "pharm", name: "건강 약국", category: "약국", icon: "💊",
-    sampleItems: [{ name: "비타민 + 마스크", price: 8000 }] },
-  { id: "rest", name: "맛있는 식당", category: "식당", icon: "🍽️",
-    sampleItems: [{ name: "김치찌개 4인분", price: 25000 }] },
-  { id: "beauty", name: "뷰티샵", category: "미용", icon: "💇",
-    sampleItems: [{ name: "커트 + 염색", price: 45000 }] },
+const CATEGORIES: SpendCategory[] = [
+  { id: "food", name: "식비", icon: "🍽️", examples: "식당, 카페, 배달" },
+  { id: "mart", name: "마트/편의점", icon: "🛒", examples: "장보기, 생필품" },
+  { id: "gas", name: "주유/교통", icon: "⛽", examples: "주유소, 택시, 버스" },
+  { id: "medical", name: "의료/약국", icon: "💊", examples: "병원, 약국, 건강" },
+  { id: "beauty", name: "뷰티/패션", icon: "👗", examples: "미용실, 옷, 화장품" },
+  { id: "etc", name: "기타", icon: "📦", examples: "기타 신용카드 결제" },
 ];
 
-type ModalState = null | { store: Store; item: { name: string; price: number } };
-type ResultState = null | { store: Store; amount: number; earned: number; bonus: number };
+type ModalState = null | { category: SpendCategory };
+type ResultState = null | {
+  category: SpendCategory;
+  amount: number;
+  earned: number;
+  bonus: number;
+  memberCount: number;
+  perMemberAmount: number;
+};
 
 export default function StoresPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [stores, setStores] = useState<Store[]>(DEFAULT_STORES);
   const [modal, setModal] = useState<ModalState>(null);
   const [result, setResult] = useState<ResultState>(null);
   const [processing, setProcessing] = useState(false);
-  const [customAmount, setCustomAmount] = useState("");
-  const [search, setSearch] = useState("");
+  const [amount, setAmount] = useState("");
+  const [memo, setMemo] = useState("");
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (!isConfigured || !db) return;
-    const fetchStores = async () => {
-      try {
-        const snap = await getDocs(collection(db!, "stores"));
-        if (!snap.empty) {
-          const list: Store[] = [];
-          snap.forEach((d) => list.push({ id: d.id, ...d.data() } as Store));
-          setStores(list);
-        }
-      } catch {
-        // Firestore 연결 전에는 기본 가맹점 사용
-      }
-    };
-    fetchStores();
-  }, []);
-
-  const handlePay = async (store: Store, amount: number) => {
+  const handleRegister = async (category: SpendCategory, spendAmount: number) => {
     if (!user || processing) return;
     setProcessing(true);
 
-    const result = calculateNonlinear(amount);
+    const nlResult = calculateNonlinear(spendAmount);
 
     if (isConfigured && db) {
       try {
@@ -78,15 +59,24 @@ export default function StoresPage() {
           const userRef = doc(db!, "users", user.uid);
           const userSnap = await transaction.get(userRef);
           const currentPoints = userSnap.exists() ? (userSnap.data().totalPoints || 0) : 0;
-          transaction.set(userRef, { totalPoints: currentPoints + result.totalAccumulation }, { merge: true });
+          transaction.set(userRef, { totalPoints: currentPoints + nlResult.totalAccumulation }, { merge: true });
           const txRef = doc(collection(db!, "transactions"));
           transaction.set(txRef, {
-            consumerId: user.uid,
-            storeId: store.id,
-            storeName: store.name,
-            amount,
-            nonlinearResult: { principal: result.principal, bonus: result.bonus, totalAccumulation: result.totalAccumulation, rate: result.rate },
-            totalAccumulation: result.totalAccumulation,
+            userId: user.uid,
+            userName: user.displayName || "사용자",
+            category: category.id,
+            categoryName: category.name,
+            amount: spendAmount,
+            memo: memo || category.examples,
+            nonlinearResult: {
+              principal: nlResult.principal,
+              bonus: nlResult.bonus,
+              totalAccumulation: nlResult.totalAccumulation,
+              rate: nlResult.rate,
+              memberCount: nlResult.memberCount,
+              perMemberAmount: nlResult.perMemberAmount,
+            },
+            totalAccumulation: nlResult.totalAccumulation,
             createdAt: serverTimestamp(),
           });
         });
@@ -97,12 +87,16 @@ export default function StoresPage() {
 
     setModal(null);
     setResult({
-      store,
-      amount,
-      earned: result.totalAccumulation,
-      bonus: result.bonus,
+      category,
+      amount: spendAmount,
+      earned: nlResult.totalAccumulation,
+      bonus: nlResult.bonus,
+      memberCount: nlResult.memberCount,
+      perMemberAmount: nlResult.perMemberAmount,
     });
     setProcessing(false);
+    setAmount("");
+    setMemo("");
   };
 
   if (loading || !user) {
@@ -113,85 +107,105 @@ export default function StoresPage() {
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
       <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
-        <h1 className="text-lg font-bold">가맹점</h1>
-        <p className="text-xs dark-text-muted text-zinc-500">결제하고 120% 적립받기</p>
+        <h1 className="text-lg font-bold">지출데이터 등록</h1>
+        <p className="text-xs dark-text-muted text-zinc-500">신용카드 결제 → 지출데이터 단말기 증명 → 120% 적립</p>
       </div>
 
-      {/* 검색 */}
-      <div className="px-5 pt-4">
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">🔍</span>
-          <input
-            type="text"
-            placeholder="가맹점 이름 또는 카테고리 검색"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#14143c] py-2.5 pl-9 pr-3 text-sm placeholder-zinc-600 outline-none focus:border-purple-500/50"
-          />
+      {/* 안내 배너 */}
+      <div className="mx-5 mt-4 rounded-2xl border border-cyan-500/20 p-4"
+        style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}>
+        <div className="flex items-center gap-2 text-sm font-bold text-cyan-400">
+          <span>💡</span> 이용 방법
+        </div>
+        <div className="mt-2 space-y-1 text-xs text-zinc-400 leading-relaxed">
+          <p>1. 어디서든 <strong className="text-white">신용카드로 결제</strong>합니다</p>
+          <p>2. <strong className="text-white">지출데이터 단말기</strong>가 영수증을 증명합니다</p>
+          <p>3. 본인 충전데이터에서 지출금액이 차감됩니다</p>
+          <p>4. 비선형공식으로 <strong className="text-cyan-400">120% 증액 적립</strong>됩니다</p>
+          <p>5. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
         </div>
       </div>
 
-      {/* 가맹점 리스트 */}
-      <div className="grid grid-cols-2 gap-3 p-5">
-        {stores.filter((s) => {
-          if (!search.trim()) return true;
-          const q = search.trim().toLowerCase();
-          return s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
-        }).map((store) => (
+      {/* 카테고리 선택 */}
+      <div className="px-5 pt-4">
+        <div className="text-xs font-bold uppercase tracking-wider text-purple-400 mb-3">지출 카테고리 선택</div>
+      </div>
+      <div className="grid grid-cols-3 gap-3 px-5">
+        {CATEGORIES.map((cat) => (
           <button
-            key={store.id}
-            onClick={() => setModal({ store, item: store.sampleItems[0] })}
-            className="dark-card flex flex-col items-center gap-2 rounded-2xl border border-purple-900/20 bg-[#14143c] p-5 text-center transition-all hover:border-purple-500/40 hover:-translate-y-1 active:scale-95"
+            key={cat.id}
+            onClick={() => { setModal({ category: cat }); setAmount(""); setMemo(""); }}
+            className="dark-card flex flex-col items-center gap-2 rounded-2xl border border-purple-900/20 bg-[#14143c] p-4 text-center transition-all hover:border-purple-500/40 hover:-translate-y-1 active:scale-95"
           >
-            <span className="text-4xl">{store.icon}</span>
-            <div className="text-sm font-bold">{store.name}</div>
-            <div className="text-xs text-zinc-500">{store.category}</div>
-            <div className="mt-1 text-xs text-amber-400">
-              {store.sampleItems[0].price.toLocaleString()}원~
-            </div>
+            <span className="text-3xl">{cat.icon}</span>
+            <div className="text-sm font-bold">{cat.name}</div>
+            <div className="text-[10px] text-zinc-500">{cat.examples}</div>
           </button>
         ))}
       </div>
 
-      {/* 결제 모달 */}
+      {/* 지출 등록 모달 */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 backdrop-blur-sm">
-          <div className="dark-modal-bg w-full max-w-sm rounded-2xl border border-purple-900/40 bg-gradient-to-b from-[#1a1a4e] to-[#0d0d30] p-6 text-center">
-            <div className="text-5xl">{modal.store.icon}</div>
-            <h2 className="mt-2 text-xl font-bold">{modal.store.name}</h2>
-            <p className="text-sm text-zinc-500">{modal.item.name}</p>
+          <div className="dark-modal-bg w-full max-w-sm rounded-2xl border border-purple-900/40 bg-gradient-to-b from-[#1a1a4e] to-[#0d0d30] p-6">
+            <div className="text-center">
+              <div className="text-5xl">{modal.category.icon}</div>
+              <h2 className="mt-2 text-xl font-bold">{modal.category.name} 지출 등록</h2>
+              <p className="text-xs text-zinc-500 mt-1">신용카드 결제 영수증 기준</p>
+            </div>
 
-            {/* 금액 선택 */}
-            <div className="mt-5 space-y-2">
-              <button
-                onClick={() => handlePay(modal.store, modal.item.price)}
-                disabled={processing}
-                className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 py-3 text-sm font-bold text-white disabled:opacity-50"
-              >
-                {processing ? "처리 중..." : `${modal.item.price.toLocaleString()}원 결제`}
-              </button>
-
-              <div className="flex gap-2">
+            <div className="mt-5 space-y-3">
+              {/* 금액 입력 */}
+              <div>
+                <label className="text-xs text-zinc-500 mb-1 block">결제 금액 (원)</label>
                 <input
                   type="number"
-                  placeholder="직접 입력"
-                  value={customAmount}
-                  onChange={(e) => setCustomAmount(e.target.value)}
-                  className="dark-input flex-1 rounded-xl border border-purple-900/30 bg-[#0d0d30] px-3 py-2.5 text-sm placeholder-zinc-600 outline-none"
+                  placeholder="결제 금액 입력"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#0d0d30] px-4 py-3 text-lg font-bold text-center placeholder-zinc-600 outline-none focus:border-purple-500/50"
                 />
-                <button
-                  onClick={() => { const a = parseInt(customAmount); if (a > 0) handlePay(modal.store, a); }}
-                  disabled={processing || !customAmount}
-                  className="rounded-xl bg-purple-900/40 px-4 py-2.5 text-sm font-bold text-purple-300 disabled:opacity-30"
-                >
-                  결제
-                </button>
               </div>
+
+              {/* 메모 입력 */}
+              <div>
+                <label className="text-xs text-zinc-500 mb-1 block">메모 (선택)</label>
+                <input
+                  type="text"
+                  placeholder={modal.category.examples}
+                  value={memo}
+                  onChange={(e) => setMemo(e.target.value)}
+                  className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#0d0d30] px-4 py-2.5 text-sm placeholder-zinc-600 outline-none focus:border-purple-500/50"
+                />
+              </div>
+
+              {/* 미리보기 */}
+              {amount && parseInt(amount) > 0 && (
+                <div className="rounded-xl bg-purple-900/20 border border-purple-500/20 p-3 text-center">
+                  <div className="text-xs text-zinc-500">비선형공식 적용 시</div>
+                  <div className="text-2xl font-black text-emerald-400 mt-1">
+                    +{Math.round(parseInt(amount) * 1.2).toLocaleString()}P
+                  </div>
+                  <div className="text-xs text-purple-400 mt-1">120% 증액 적립</div>
+                </div>
+              )}
+
+              {/* 등록 버튼 */}
+              <button
+                onClick={() => {
+                  const a = parseInt(amount);
+                  if (a > 0) handleRegister(modal.category, a);
+                }}
+                disabled={processing || !amount || parseInt(amount) <= 0}
+                className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 py-3 text-sm font-bold text-white disabled:opacity-50"
+              >
+                {processing ? "지출데이터 단말기 증명 중..." : "지출데이터 등록"}
+              </button>
             </div>
 
             <button
-              onClick={() => { setModal(null); setCustomAmount(""); }}
-              className="mt-4 text-sm text-zinc-500 hover:text-zinc-300"
+              onClick={() => { setModal(null); setAmount(""); setMemo(""); }}
+              className="mt-4 w-full text-center text-sm text-zinc-500 hover:text-zinc-300"
             >
               취소
             </button>
@@ -203,10 +217,11 @@ export default function StoresPage() {
       {result && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-6 backdrop-blur-md">
           <div className="w-full max-w-sm text-center">
-            <div className="text-5xl">{result.store.icon}</div>
-            <div className="mt-2 text-sm text-zinc-400">{result.store.name}</div>
-            <div className="mt-1 text-lg font-bold text-rose-400">
-              -{result.amount.toLocaleString()}원 결제
+            <div className="text-4xl">✅</div>
+            <div className="mt-2 text-sm text-zinc-400">지출데이터 단말기 증명 완료</div>
+
+            <div className="mt-2 text-lg font-bold text-rose-400">
+              {result.category.icon} {result.category.name} -{result.amount.toLocaleString()}원
             </div>
 
             <div className="my-4 text-xs text-purple-400">── 비선형공식 실행 ──</div>
@@ -216,11 +231,18 @@ export default function StoresPage() {
             </div>
 
             <div className="mt-2 inline-block rounded-full bg-gradient-to-r from-rose-500 to-orange-400 px-5 py-1.5 text-sm font-bold text-white">
-              120% 적립!
+              120% 증액 적립!
             </div>
 
             <div className="mt-3 text-xs text-zinc-500">
               원금 {result.amount.toLocaleString()}P + 보너스 {result.bonus.toLocaleString()}P
+            </div>
+
+            {/* 멤버십 분배 안내 */}
+            <div className="mt-4 rounded-xl border border-purple-500/20 bg-purple-900/10 p-3 text-xs text-zinc-400">
+              <div className="text-purple-400 font-bold mb-1">🔄 멤버십 회원 분배</div>
+              <p>이 지출금액이 {result.memberCount}명의 멤버십 회원에게 전달됩니다.</p>
+              <p>각 회원도 본인 적립금에서 차감 → 비선형공식 → <span className="text-cyan-400 font-bold">120% 적립</span></p>
             </div>
 
             <button

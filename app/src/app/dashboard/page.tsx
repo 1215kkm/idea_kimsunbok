@@ -117,10 +117,10 @@ export default function DashboardPage() {
           href="/stores"
           className="dark-card flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
         >
-          <span className="text-2xl">🏪</span>
+          <span className="text-2xl">💳</span>
           <div>
-            <div className="text-sm font-bold">가맹점 결제</div>
-            <div className="text-xs dark-text-muted text-zinc-500">120% 적립받기</div>
+            <div className="text-sm font-bold">지출데이터 등록</div>
+            <div className="text-xs dark-text-muted text-zinc-500">신용카드 결제 → 120% 적립</div>
           </div>
         </Link>
         <Link
@@ -142,7 +142,7 @@ export default function DashboardPage() {
           <div className="dark-card rounded-xl border border-purple-900/10 bg-[#14143c] p-8 text-center text-sm dark-text-muted text-zinc-500">
             아직 거래 내역이 없습니다.<br />
             <Link href="/stores" className="mt-2 inline-block text-purple-400 hover:underline">
-              가맹점에서 첫 결제하기 &rarr;
+              첫 지출데이터 등록하기 &rarr;
             </Link>
           </div>
         ) : (
@@ -170,8 +170,8 @@ export default function DashboardPage() {
         <div className="text-sm font-bold text-purple-300">비선형공식이란?</div>
         <div className="mt-1 text-xs leading-relaxed dark-text-muted text-zinc-400">
           결제 금액의 120%가 포인트로 적립됩니다.<br />
-          판매자 50% + 소비자 50% 분배 후<br />
-          멤버십 승수 &times; 보정모드를 거쳐 120% 달성.
+          신용카드 결제 → 지출데이터 단말기 증명 →<br />
+          본인 충전데이터 차감 → 비선형공식 → 120% 증액 적립
         </div>
         <Link href="/engine" className="mt-3 inline-block text-xs text-purple-400 hover:underline">
           자세히 알아보기 &rarr;

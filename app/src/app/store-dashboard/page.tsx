@@ -3,38 +3,38 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import Navbar from "@/components/Navbar";
 
-interface Transaction {
+interface Distribution {
   id: string;
-  storeName: string;
+  userName: string;
+  categoryName: string;
   amount: number;
   totalAccumulation: number;
-  consumerId: string;
   createdAt: any;
 }
 
-// 데모 거래 데이터
-const DEMO_TRANSACTIONS: Transaction[] = [
-  { id: "d1", storeName: "다랜드 카페", amount: 4500, totalAccumulation: 5400, consumerId: "user1", createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 30) } },
-  { id: "d2", storeName: "다랜드 카페", amount: 8500, totalAccumulation: 10200, consumerId: "user2", createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 90) } },
-  { id: "d3", storeName: "다랜드 카페", amount: 4500, totalAccumulation: 5400, consumerId: "user3", createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 180) } },
-  { id: "d4", storeName: "다랜드 카페", amount: 12000, totalAccumulation: 14400, consumerId: "user4", createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 60 * 5) } },
-  { id: "d5", storeName: "다랜드 카페", amount: 6000, totalAccumulation: 7200, consumerId: "user5", createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 60 * 8) } },
-  { id: "d6", storeName: "다랜드 카페", amount: 25000, totalAccumulation: 30000, consumerId: "user6", createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 60 * 24) } },
-  { id: "d7", storeName: "다랜드 카페", amount: 4500, totalAccumulation: 5400, consumerId: "user7", createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 60 * 26) } },
-  { id: "d8", storeName: "다랜드 카페", amount: 9000, totalAccumulation: 10800, consumerId: "user8", createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 60 * 48) } },
+// 데모 데이터
+const DEMO_DISTRIBUTIONS: Distribution[] = [
+  { id: "d1", userName: "이지은", categoryName: "식비", amount: 8500, totalAccumulation: 10200, createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 30) } },
+  { id: "d2", userName: "홍길동", categoryName: "마트", amount: 32000, totalAccumulation: 38400, createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 90) } },
+  { id: "d3", userName: "김민수", categoryName: "주유", amount: 70000, totalAccumulation: 84000, createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 180) } },
+  { id: "d4", userName: "박수진", categoryName: "카페", amount: 4500, totalAccumulation: 5400, createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 60 * 5) } },
+  { id: "d5", userName: "최영호", categoryName: "약국", amount: 12000, totalAccumulation: 14400, createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 60 * 8) } },
+  { id: "d6", userName: "정하늘", categoryName: "식비", amount: 25000, totalAccumulation: 30000, createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 60 * 24) } },
+  { id: "d7", userName: "한소라", categoryName: "뷰티", amount: 45000, totalAccumulation: 54000, createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 60 * 26) } },
+  { id: "d8", userName: "윤재호", categoryName: "기타", amount: 9000, totalAccumulation: 10800, createdAt: { toDate: () => new Date(Date.now() - 1000 * 60 * 60 * 48) } },
 ];
 
-type TabType = "today" | "all";
+type TabType = "received" | "sent";
 
-export default function StoreDashboardPage() {
+export default function MembershipDistributionPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [tab, setTab] = useState<TabType>("today");
+  const [distributions, setDistributions] = useState<Distribution[]>([]);
+  const [tab, setTab] = useState<TabType>("received");
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -43,62 +43,43 @@ export default function StoreDashboardPage() {
   useEffect(() => {
     if (!user) return;
     if (!isConfigured || !db) {
-      setTransactions(DEMO_TRANSACTIONS);
+      setDistributions(DEMO_DISTRIBUTIONS);
       return;
     }
-    const fetchTx = async () => {
+    const fetchData = async () => {
       try {
-        const q = query(
-          collection(db!, "transactions"),
-          where("storeName", "==", "다랜드 카페"),
-          orderBy("createdAt", "desc")
-        );
+        const q = query(collection(db!, "transactions"), orderBy("createdAt", "desc"));
         const snap = await getDocs(q);
-        const list: Transaction[] = [];
-        snap.forEach((d) => list.push({ id: d.id, ...d.data() } as Transaction));
-        setTransactions(list.length > 0 ? list : DEMO_TRANSACTIONS);
+        const list: Distribution[] = [];
+        snap.forEach((d) => list.push({ id: d.id, ...d.data() } as Distribution));
+        setDistributions(list.length > 0 ? list : DEMO_DISTRIBUTIONS);
       } catch {
-        setTransactions(DEMO_TRANSACTIONS);
+        setDistributions(DEMO_DISTRIBUTIONS);
       }
     };
-    fetchTx();
+    fetchData();
   }, [user]);
 
   if (loading || !user) {
     return <div className="flex min-h-screen items-center justify-center dark-text-muted">로딩 중...</div>;
   }
 
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const totalReceived = distributions.reduce((s, d) => s + Math.round(d.amount * 0.05), 0);
+  const totalReceivedAccumulation = Math.round(totalReceived * 1.2);
+  const totalSent = distributions.reduce((s, d) => s + d.amount, 0);
+  const totalSentAccumulation = distributions.reduce((s, d) => s + d.totalAccumulation, 0);
 
-  const todayTxs = transactions.filter((tx) => {
+  const formatTime = (d: Distribution) => {
     try {
-      const d = tx.createdAt?.toDate ? tx.createdAt.toDate() : new Date(tx.createdAt);
-      return d >= todayStart;
-    } catch { return false; }
-  });
-
-  const displayTxs = tab === "today" ? todayTxs : transactions;
-
-  const todaySales = todayTxs.reduce((s, t) => s + t.amount, 0);
-  const todayPoints = Math.round(todaySales * 0.5);
-  const todayCount = todayTxs.length;
-  const totalSales = transactions.reduce((s, t) => s + t.amount, 0);
-  const totalPoints = Math.round(totalSales * 0.5);
-
-  const formatTime = (tx: Transaction) => {
-    try {
-      const d = tx.createdAt?.toDate ? tx.createdAt.toDate() : new Date(tx.createdAt);
-      const h = d.getHours().toString().padStart(2, "0");
-      const m = d.getMinutes().toString().padStart(2, "0");
-      return `${h}:${m}`;
+      const date = d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt);
+      return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
     } catch { return "--:--"; }
   };
 
-  const formatDate = (tx: Transaction) => {
+  const formatDate = (d: Distribution) => {
     try {
-      const d = tx.createdAt?.toDate ? tx.createdAt.toDate() : new Date(tx.createdAt);
-      return `${d.getMonth() + 1}/${d.getDate()}`;
+      const date = d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt);
+      return `${date.getMonth() + 1}/${date.getDate()}`;
     } catch { return "--/--"; }
   };
 
@@ -107,160 +88,130 @@ export default function StoreDashboardPage() {
       {/* 헤더 */}
       <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
         <div className="flex items-center gap-2">
-          <span className="text-xl">🏪</span>
+          <span className="text-xl">🔄</span>
           <div>
-            <h1 className="text-lg font-bold">가맹점 대시보드</h1>
-            <p className="text-xs dark-text-muted text-zinc-500">다랜드 카페 · 김철수 사장님</p>
+            <h1 className="text-lg font-bold">멤버십 분배 현황</h1>
+            <p className="text-xs dark-text-muted text-zinc-500">회원간 지출데이터 전달 & 120% 적립</p>
           </div>
         </div>
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-5">
-        {/* 오늘 매출 요약 */}
-        <div
-          className="dark-card rounded-2xl border p-5"
-          style={{ borderColor: "var(--card-border)", background: "linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))" }}
-        >
-          <div className="text-xs dark-text-muted text-zinc-500">오늘 매출</div>
-          <div className="mt-1 bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-4xl font-black text-transparent">
-            {todaySales.toLocaleString()}원
-          </div>
-          <div className="mt-3 grid grid-cols-3 gap-3">
-            <div className="rounded-xl p-2 text-center" style={{ background: "rgba(0,0,0,0.1)" }}>
-              <div className="text-xs dark-text-muted text-zinc-500">건수</div>
-              <div className="text-lg font-bold text-cyan-400">{todayCount}건</div>
-            </div>
-            <div className="rounded-xl p-2 text-center" style={{ background: "rgba(0,0,0,0.1)" }}>
-              <div className="text-xs dark-text-muted text-zinc-500">판매자 적립</div>
-              <div className="text-lg font-bold text-amber-400">{todayPoints.toLocaleString()}P</div>
-            </div>
-            <div className="rounded-xl p-2 text-center" style={{ background: "rgba(0,0,0,0.1)" }}>
-              <div className="text-xs dark-text-muted text-zinc-500">객단가</div>
-              <div className="text-lg font-bold text-purple-400">
-                {todayCount > 0 ? Math.round(todaySales / todayCount).toLocaleString() : 0}원
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 누적 통계 */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-            <div className="text-xs dark-text-muted text-zinc-500">누적 매출</div>
-            <div className="mt-1 text-xl font-black text-emerald-400">{totalSales.toLocaleString()}원</div>
-          </div>
-          <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-            <div className="text-xs dark-text-muted text-zinc-500">누적 판매자 적립</div>
-            <div className="mt-1 text-xl font-black text-amber-400">{totalPoints.toLocaleString()}P</div>
-          </div>
-        </div>
-
-        {/* 비선형 혜택 안내 */}
-        <div
-          className="dark-card mt-4 rounded-xl border border-purple-500/20 p-4"
-          style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}
-        >
-          <div className="flex items-center gap-2">
+        {/* 구조 설명 */}
+        <div className="rounded-2xl border border-purple-500/20 p-4 mb-4"
+          style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
+          <div className="flex items-center gap-2 mb-2">
             <span className="text-lg">💡</span>
-            <div className="text-sm font-bold text-purple-400">판매자 혜택</div>
+            <div className="text-sm font-bold text-purple-400">분배 원리</div>
           </div>
-          <div className="mt-2 text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            고객이 결제할 때마다 결제금액의 <span className="font-bold text-amber-400">50%</span>가 판매자 포인트로 적립됩니다.
-            적립된 포인트는 다른 가맹점에서 결제하거나 현금으로 정산할 수 있습니다.
+          <div className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            다른 회원이 신용카드로 결제하면, 그 <span className="font-bold text-cyan-400">지출금액이 멤버십 회원들에게 전달</span>됩니다.
+            전달받은 회원은 본인 적립금에서 차감 → 비선형공식 → <span className="font-bold text-emerald-400">120% 증액 적립</span>됩니다.
+          </div>
+        </div>
+
+        {/* 요약 카드 */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
+            <div className="text-xs dark-text-muted text-zinc-500">받은 분배 적립</div>
+            <div className="mt-1 text-xl font-black text-emerald-400">+{totalReceivedAccumulation.toLocaleString()}P</div>
+            <div className="text-[10px] text-zinc-500">다른 회원 지출에서</div>
+          </div>
+          <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
+            <div className="text-xs dark-text-muted text-zinc-500">내 지출 → 회원 분배</div>
+            <div className="mt-1 text-xl font-black text-cyan-400">{totalSentAccumulation.toLocaleString()}P</div>
+            <div className="text-[10px] text-zinc-500">회원들에게 전달됨</div>
           </div>
         </div>
 
         {/* 탭 */}
-        <div className="mt-6 flex gap-2">
+        <div className="flex gap-2">
           <button
-            onClick={() => setTab("today")}
+            onClick={() => setTab("received")}
             className="rounded-full px-4 py-1.5 text-sm font-bold transition-all"
             style={{
-              background: tab === "today" ? "linear-gradient(135deg, #7b2ff7, #06b6d4)" : "var(--card-bg)",
-              color: tab === "today" ? "#fff" : "var(--text-muted)",
-              border: tab === "today" ? "none" : "1px solid var(--card-border)",
+              background: tab === "received" ? "linear-gradient(135deg, #7b2ff7, #06b6d4)" : "var(--card-bg)",
+              color: tab === "received" ? "#fff" : "var(--text-muted)",
+              border: tab === "received" ? "none" : "1px solid var(--card-border)",
             }}
           >
-            오늘 ({todayCount})
+            받은 분배
           </button>
           <button
-            onClick={() => setTab("all")}
+            onClick={() => setTab("sent")}
             className="rounded-full px-4 py-1.5 text-sm font-bold transition-all"
             style={{
-              background: tab === "all" ? "linear-gradient(135deg, #7b2ff7, #06b6d4)" : "var(--card-bg)",
-              color: tab === "all" ? "#fff" : "var(--text-muted)",
-              border: tab === "all" ? "none" : "1px solid var(--card-border)",
+              background: tab === "sent" ? "linear-gradient(135deg, #7b2ff7, #06b6d4)" : "var(--card-bg)",
+              color: tab === "sent" ? "#fff" : "var(--text-muted)",
+              border: tab === "sent" ? "none" : "1px solid var(--card-border)",
             }}
           >
-            전체 ({transactions.length})
+            보낸 분배
           </button>
         </div>
 
-        {/* 거래 목록 */}
+        {/* 분배 목록 */}
         <div className="mt-3 space-y-2">
-          {displayTxs.length === 0 ? (
-            <div
-              className="dark-card rounded-xl border p-8 text-center text-sm"
-              style={{ borderColor: "var(--card-border)", background: "var(--card-bg)", color: "var(--text-muted)" }}
-            >
-              {tab === "today" ? "오늘 거래가 없습니다" : "거래 내역이 없습니다"}
+          {distributions.length === 0 ? (
+            <div className="dark-card rounded-xl border p-8 text-center text-sm"
+              style={{ borderColor: "var(--card-border)", background: "var(--card-bg)", color: "var(--text-muted)" }}>
+              분배 내역이 없습니다
             </div>
           ) : (
-            displayTxs.map((tx) => (
-              <div
-                key={tx.id}
-                className="dark-card flex items-center justify-between rounded-xl border px-4 py-3"
-                style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-              >
+            distributions.map((d) => (
+              <div key={d.id} className="dark-card flex items-center justify-between rounded-xl border px-4 py-3"
+                style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-500/10 text-lg">
-                    👤
+                    {tab === "received" ? "📥" : "📤"}
                   </div>
                   <div>
-                    <div className="text-sm font-medium">고객 결제</div>
+                    <div className="text-sm font-medium">
+                      {tab === "received"
+                        ? <><span className="text-zinc-400">{d.userName}</span>님 지출 분배</>
+                        : <><span className="text-zinc-400">{d.categoryName}</span> 지출 → 회원 분배</>
+                      }
+                    </div>
                     <div className="text-xs dark-text-muted text-zinc-500">
-                      {tab === "today" ? formatTime(tx) : `${formatDate(tx)} ${formatTime(tx)}`}
+                      {formatDate(d)} {formatTime(d)}
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-bold text-cyan-400">
-                    {tx.amount.toLocaleString()}원
-                  </div>
-                  <div className="text-xs font-bold text-amber-400">
-                    +{Math.round(tx.amount * 0.5).toLocaleString()}P
-                  </div>
+                  {tab === "received" ? (
+                    <>
+                      <div className="text-sm font-bold text-emerald-400">
+                        +{Math.round(d.amount * 0.05 * 1.2).toLocaleString()}P
+                      </div>
+                      <div className="text-[10px] text-zinc-500">120% 적립</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-sm font-bold text-cyan-400">
+                        {d.amount.toLocaleString()}원
+                      </div>
+                      <div className="text-[10px] text-emerald-400">
+                        → 회원들 120% 적립
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             ))
           )}
         </div>
 
-        {/* 정산 안내 */}
-        <div
-          className="dark-card mt-6 rounded-2xl border p-5"
-          style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-        >
-          <div className="mb-3 text-sm font-bold text-purple-400">정산 안내</div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm" style={{ color: "var(--text-muted)" }}>정산 가능 금액</span>
-              <span className="text-lg font-bold text-emerald-400">{totalPoints.toLocaleString()}P</span>
-            </div>
-            <div className="h-px" style={{ background: "var(--card-border)" }} />
-            <div className="flex items-center justify-between text-xs" style={{ color: "var(--text-muted)" }}>
-              <span>정산 주기</span>
-              <span>매주 월요일</span>
-            </div>
-            <div className="flex items-center justify-between text-xs" style={{ color: "var(--text-muted)" }}>
-              <span>최소 정산 금액</span>
-              <span>10,000P</span>
-            </div>
-            <button
-              className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-500 py-3 text-sm font-bold text-white transition-transform hover:scale-[1.02] active:scale-95"
-            >
-              정산 신청하기
-            </button>
+        {/* 순환 다이어그램 */}
+        <div className="mt-6 rounded-2xl border border-purple-500/20 p-5 text-center"
+          style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
+          <div className="text-sm font-bold text-purple-400 mb-3">멤버십 분배 구조</div>
+          <div className="text-xs leading-relaxed text-zinc-400 font-mono space-y-1">
+            <p>회원A 신용카드 결제 (-10,000원)</p>
+            <p className="text-purple-400">↓ 지출데이터 단말기 증명</p>
+            <p className="text-cyan-400">↓ 비선형공식 → 회원A: +12,000P (120%)</p>
+            <p className="text-purple-400">↓ 지출금액 → 멤버십 회원들에게 전달</p>
+            <p className="text-emerald-400">↓ 회원B,C,D... 각자 적립금 차감 → 120% 적립</p>
+            <p className="text-amber-400 font-bold mt-2">= 모든 사용자가 120% 증액!</p>
           </div>
         </div>
       </div>

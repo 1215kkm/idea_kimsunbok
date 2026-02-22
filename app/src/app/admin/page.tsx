@@ -57,7 +57,7 @@ export default function AdminPage() {
 
   const tabs: { key: TabType; label: string; icon: string }[] = [
     { key: "overview", label: "총괄", icon: "📊" },
-    { key: "stores", label: "가맹점", icon: "🏪" },
+    { key: "stores", label: "사용자", icon: "🏪" },
     { key: "users", label: "회원", icon: "👥" },
     { key: "transactions", label: "거래", icon: "💳" },
   ];
@@ -77,7 +77,7 @@ export default function AdminPage() {
   const roleLabel = (role: string) => {
     switch (role) {
       case "consumer": return { text: "소비자", color: "#06b6d4" };
-      case "store": return { text: "가맹점", color: "#f59e0b" };
+      case "store": return { text: "사용자(사업주)", color: "#f59e0b" };
       case "advertiser": return { text: "광고주", color: "#a855f7" };
       default: return { text: role, color: "#71717a" };
     }
@@ -131,7 +131,7 @@ export default function AdminPage() {
                 <div className="mt-1 text-xl font-black text-cyan-400">{totalUsers}명</div>
               </div>
               <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-zinc-500">활성 가맹점</div>
+                <div className="text-xs dark-text-muted text-zinc-500">활성 사용자</div>
                 <div className="mt-1 text-xl font-black text-amber-400">{totalStores}개</div>
               </div>
               <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
@@ -193,7 +193,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ========== 가맹점 관리 탭 ========== */}
+        {/* ========== 사용자 관리 탭 ========== */}
         {tab === "stores" && (
           <div className="space-y-4">
             {/* 검색 + 추가 버튼 */}
@@ -202,7 +202,7 @@ export default function AdminPage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">🔍</span>
                 <input
                   type="text"
-                  placeholder="가맹점/사장님 이름 검색"
+                  placeholder="사용자/회원 이름 검색"
                   value={storeSearch}
                   onChange={(e) => setStoreSearch(e.target.value)}
                   className="dark-input w-full rounded-xl border py-2.5 pl-9 pr-3 text-sm placeholder-zinc-600 outline-none"
@@ -214,7 +214,7 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* 가맹점 리스트 */}
+            {/* 사용자 리스트 */}
             <div className="space-y-2">
               {filteredStores.map((store) => (
                 <div
@@ -239,7 +239,7 @@ export default function AdminPage() {
                           </span>
                         </div>
                         <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          {store.category} · {store.owner} 사장님
+                          {store.category} · {store.owner} 회원
                         </div>
                       </div>
                     </div>
@@ -274,7 +274,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-3 gap-2">
               {[
                 { label: "소비자", count: DEMO_USERS.filter((u) => u.role === "consumer").length, color: "#06b6d4" },
-                { label: "가맹점", count: DEMO_USERS.filter((u) => u.role === "store").length, color: "#f59e0b" },
+                { label: "사용자", count: DEMO_USERS.filter((u) => u.role === "store").length, color: "#f59e0b" },
                 { label: "광고주", count: DEMO_USERS.filter((u) => u.role === "advertiser").length, color: "#a855f7" },
               ].map((r) => (
                 <div
