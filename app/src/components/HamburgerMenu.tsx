@@ -7,14 +7,15 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
   { href: "/dashboard", label: "홈", icon: "🏠", desc: "대시보드" },
-  { href: "/stores", label: "가맹점", icon: "🏪", desc: "결제 & 120% 적립" },
-  { href: "/card", label: "비선형카드", icon: "💳", desc: "카드 잔액 & 결제" },
+  { href: "/stores", label: "지출등록", icon: "💳", desc: "신용카드 지출 & 120% 적립" },
+  { href: "/withdraw", label: "출금", icon: "🏦", desc: "다랜드 계좌 → 내 은행계좌" },
+  { href: "/card", label: "비선형카드", icon: "🪪", desc: "카드 잔액 & 충전데이터" },
   { href: "/history", label: "내역", icon: "📋", desc: "포인트 기록" },
-  { href: "/simulation", label: "시뮬레이션", icon: "🎮", desc: "다랜드 마을 체험" },
+  { href: "/store-dashboard", label: "멤버십 분배", icon: "🔄", desc: "회원간 분배 현황" },
+  { href: "/simulation", label: "시뮬레이션", icon: "🎮", desc: "다랜드 체험" },
   { href: "/engine", label: "엔진 설명", icon: "⚙️", desc: "비선형공식 원리" },
   { href: "/advertiser", label: "광고주", icon: "🏢", desc: "광고주 120% 수익" },
   { href: "/philosophy", label: "자리이타", icon: "🙏", desc: "다랜드 핵심 철학" },
-  { href: "/store-dashboard", label: "가맹점 대시보드", icon: "📊", desc: "매출 & 정산 관리" },
   { href: "/admin", label: "관리자", icon: "🛡️", desc: "시스템 관리 패널" },
 ];
 

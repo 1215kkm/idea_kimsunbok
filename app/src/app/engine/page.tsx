@@ -15,52 +15,59 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    title: "소비자 결제",
-    desc: "영희가 카페에서 10,000원 결제",
+    title: "사용자 신용카드 결제",
+    desc: "영희가 어디서든 신용카드로 10,000원 결제",
     icon: "💳",
-    detail: "소비자가 다랜드 가맹점에서 결제하면 비선형공식 엔진이 작동합니다.",
+    detail: "사용자가 신용카드로 결제하면 지출데이터가 생성됩니다.\n\n다랜드에는 '가맹점'이 없습니다.\n모든 참여자는 '사용자(소비자)'입니다.",
     highlight: "-10,000원",
   },
   {
-    title: "A1: 판매자 적립 (50%)",
-    desc: "카페 사장님에게 5,000P 적립",
-    icon: "🏪",
-    detail: "결제 금액의 50%가 판매자(가맹점)에게 포인트로 적립됩니다.\n10,000 x 50% = 5,000P",
-    highlight: "+5,000P",
+    title: "지출데이터 단말기 증명",
+    desc: "영수증이 지출데이터 단말기로 증명됨",
+    icon: "🧾",
+    detail: "신용카드 결제 영수증이 지출데이터 단말기를 통해 증명됩니다.\n\n이 증명된 지출데이터가 비선형공식 시스템에 입력됩니다.",
+    highlight: "증명 완료",
   },
   {
-    title: "B1: 소비자 적립 (50%)",
-    desc: "영희에게 5,000P 적립",
-    icon: "👩",
-    detail: "결제 금액의 나머지 50%가 소비자에게 포인트로 적립됩니다.\n10,000 x 50% = 5,000P",
-    highlight: "+5,000P",
+    title: "본인 충전데이터 차감",
+    desc: "영희의 충전된 데이터에서 지출금액 차감",
+    icon: "📊",
+    detail: "다랜드 회원 본인이 충전한 데이터에서\n지출금액 10,000원이 차감됩니다.\n\n충전 데이터: 50,000P → 40,000P\n차감분: -10,000P",
+    highlight: "-10,000P",
   },
   {
-    title: "멤버십 풀 (x10 확장)",
-    desc: "소비자 적립분이 10배로 확장",
-    icon: "🏦",
-    detail: "소비자 적립분 5,000P가 멤버십 풀에서 10배 확장됩니다.\n5,000 x 10 = 50,000P\n\n이 풀은 모든 회원의 거래가 쌓여 만들어집니다.",
+    title: "비선형공식 분배 (A1+B1)",
+    desc: "차감된 금액이 비선형공식 알고리즘으로 분배",
+    icon: "⚙️",
+    detail: "A1: 사용자 본인 적립 (50%) = 5,000P\nB1: 멤버십 회원 분배분 (50%) = 5,000P\n\n이 두 모듈이 비선형공식의 기본 분배입니다.\n\n멤버십 풀 확장: 5,000P × 10 = 50,000P",
     highlight: "50,000P 풀",
   },
   {
     title: "5라운드 비선형 분배",
     desc: "가중치 [1, 1, 2, 2, 4]로 분배",
     icon: "🔄",
-    detail: "멤버십 풀 50,000P를 5라운드에 걸쳐 분배합니다.\n\nR1: 50,000 / 10 x 1 = 5,000P\nR2: 50,000 / 10 x 1 = 5,000P\nR3: 50,000 / 10 x 2 = 10,000P\nR4: 50,000 / 10 x 2 = 10,000P\nR5: 50,000 / 10 x 4 = 20,000P\n\n합계 = 50,000P (분배 완료)",
+    detail: "멤버십 풀 50,000P를 5라운드에 걸쳐 분배합니다.\n\nR1: 50,000 / 10 × 1 = 5,000P\nR2: 50,000 / 10 × 1 = 5,000P\nR3: 50,000 / 10 × 2 = 10,000P\nR4: 50,000 / 10 × 2 = 10,000P\nR5: 50,000 / 10 × 4 = 20,000P\n\n합계 = 50,000P (분배 완료)",
     highlight: "5라운드",
   },
   {
     title: "보정 모드 (안전장치)",
-    desc: "150% -> 120%로 안전 보정",
+    desc: "150% → 120%로 안전 보정",
     icon: "🛡️",
-    detail: "판매자 50% + 멤버십 100% = 150%\n\n과도한 분배를 방지하기 위해\n보정 모드가 150%를 120%로 조정합니다.\n\n이것이 시스템의 안정성을 보장합니다.",
+    detail: "본인적립 50% + 멤버십 100% = 150%\n\n과도한 분배를 방지하기 위해\n보정 모드가 150%를 120%로 조정합니다.\n\n이것이 시스템의 안정성을 보장합니다.",
     highlight: "120%",
   },
   {
-    title: "최종 결과",
-    desc: "10,000원 결제 -> 12,000P 적립!",
+    title: "멤버십 회원 분배",
+    desc: "다른 회원들에게 지출금액 전달 → 모두 120%",
+    icon: "👥",
+    detail: "영희의 지출금액이 다른 멤버십 회원들에게 전달됩니다.\n\n전달받은 회원들도:\n본인 적립금에서 차감 → 비선형공식 → 120% 적립\n\n한 사람의 소비가 모든 회원에게 순환합니다.",
+    highlight: "모두 120%",
+  },
+  {
+    title: "최종 결과 → 다랜드 내 계좌에 적립",
+    desc: "10,000원 결제 → 12,000P 다랜드 계좌 적립!",
     icon: "🎉",
-    detail: "원금: 10,000P\n보너스: 2,000P\n\n합계: 12,000P (120% 적립!)\n\n소비자는 쓴 것보다 더 많이 돌려받고,\n판매자도 포인트가 쌓이는 선순환 경제!",
+    detail: "원금: 10,000P\n보너스: 2,000P\n\n합계: 12,000P (120% 적립!)\n\n✅ 다랜드 내 계좌에 12,000P 적립\n✅ 등록된 은행계좌로 출금 가능 (1P = 1원)\n✅ 다른 회원도 분배받고 120% 적립\n✅ 모두가 사용자 — 가맹점 구분 없음",
     highlight: "12,000P",
   },
 ];
@@ -102,7 +109,7 @@ export default function EnginePage() {
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-6">
-        {/* 시작/다음/처음부터 버튼 */}
+        {/* 시작 버튼 */}
         {activeStep === -1 && !showFormula && (
           <button
             onClick={goNext}
@@ -112,7 +119,7 @@ export default function EnginePage() {
           </button>
         )}
 
-        {/* 진행률 표시 */}
+        {/* 진행률 */}
         {activeStep >= 0 && !showFormula && (
           <div className="mb-4 flex items-center gap-2">
             {STEPS.map((_, i) => (
@@ -130,11 +137,11 @@ export default function EnginePage() {
         {activeStep >= 0 && (
           <div className="mb-4 rounded-2xl border border-cyan-500/30 p-4 text-center dark-card bg-[#14143c]">
             <div className="text-xs dark-text-muted text-zinc-500">입력</div>
-            <div className="mt-1 text-2xl font-black text-cyan-400">10,000원 결제</div>
+            <div className="mt-1 text-2xl font-black text-cyan-400">신용카드 10,000원 결제</div>
           </div>
         )}
 
-        {/* 스텝 카드들 */}
+        {/* 스텝 카드 */}
         <div className="space-y-3">
           {STEPS.map((step, i) => (
             <div
@@ -149,21 +156,17 @@ export default function EnginePage() {
               }}
             >
               <div className="flex items-start gap-4 p-4">
-                {/* 아이콘 */}
                 <div
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-2xl"
                   style={{
                     background: i === activeStep
                       ? "linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(6, 182, 212, 0.3))"
                       : "rgba(168, 85, 247, 0.1)",
-                    transition: "background 0.5s",
                   }}
                 >
                   {step.icon}
                 </div>
-
                 <div className="flex-1 min-w-0">
-                  {/* 타이틀 */}
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-bold">{step.title}</h3>
                     {step.highlight && i <= activeStep && (
@@ -174,17 +177,13 @@ export default function EnginePage() {
                             ? "linear-gradient(135deg, #10b981, #06b6d4)"
                             : "linear-gradient(135deg, #a855f7, #06b6d4)",
                           color: "white",
-                          animation: i === activeStep ? "pulse 1s ease-in-out" : "none",
                         }}
                       >
                         {step.highlight}
                       </span>
                     )}
                   </div>
-
                   <p className="mt-0.5 text-xs dark-text-muted text-zinc-500">{step.desc}</p>
-
-                  {/* 상세 내용 (활성 스텝) */}
                   {i === activeStep && (
                     <>
                       <div
@@ -192,7 +191,6 @@ export default function EnginePage() {
                         style={{
                           background: "rgba(168, 85, 247, 0.08)",
                           color: "var(--text-muted)",
-                          animation: "fadeIn 0.5s ease-out",
                           whiteSpace: "pre-line",
                         }}
                       >
@@ -210,53 +208,46 @@ export default function EnginePage() {
                   )}
                 </div>
               </div>
-
-              {/* 연결선 */}
               {i < STEPS.length - 1 && i <= activeStep && (
                 <div className="flex justify-center pb-1">
-                  <div
-                    className="h-4 w-0.5 rounded-full"
-                    style={{
-                      background: "linear-gradient(to bottom, rgba(168, 85, 247, 0.4), transparent)",
-                    }}
-                  />
+                  <div className="h-4 w-0.5 rounded-full" style={{ background: "linear-gradient(to bottom, rgba(168, 85, 247, 0.4), transparent)" }} />
                 </div>
               )}
             </div>
           ))}
         </div>
 
-        {/* 처음부터 다시 버튼 */}
+        {/* 처음부터 다시 */}
         {showFormula && (
-          <button
-            onClick={reset}
-            className="mt-4 w-full rounded-2xl border border-purple-500/30 py-3 text-sm font-bold text-purple-400 transition-transform hover:scale-[1.02] active:scale-95"
-          >
+          <button onClick={reset} className="mt-4 w-full rounded-2xl border border-purple-500/30 py-3 text-sm font-bold text-purple-400">
             처음부터 다시 보기
           </button>
         )}
 
         {/* 최종 공식 요약 */}
         {showFormula && (
-          <div
-            className="mt-6 rounded-2xl border border-purple-500/30 p-6 text-center"
-            style={{
-              background: "linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))",
-              animation: "fadeIn 0.8s ease-out",
-            }}
-          >
+          <div className="mt-6 rounded-2xl border border-purple-500/30 p-6 text-center"
+            style={{ background: "linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))" }}>
             <div className="text-sm font-bold text-purple-400">비선형공식 요약</div>
             <div className="mt-4 space-y-2 text-sm">
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">결제 금액</span>
+                <span className="dark-text-muted text-zinc-500">신용카드 결제</span>
                 <span className="font-bold text-rose-400">10,000원</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">판매자 적립 (A1)</span>
+                <span className="dark-text-muted text-zinc-500">지출데이터 증명</span>
+                <span className="font-bold text-cyan-400">✅ 완료</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
+                <span className="dark-text-muted text-zinc-500">충전데이터 차감</span>
+                <span className="font-bold text-rose-400">-10,000P</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
+                <span className="dark-text-muted text-zinc-500">A1: 본인 적립 (50%)</span>
                 <span className="font-bold text-amber-400">5,000P</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">소비자 적립 (B1)</span>
+                <span className="dark-text-muted text-zinc-500">B1: 회원 분배 (50%)</span>
                 <span className="font-bold text-amber-400">5,000P</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
@@ -267,23 +258,25 @@ export default function EnginePage() {
                 <span className="dark-text-muted text-zinc-500">보정 모드</span>
                 <span className="font-bold text-purple-400">150% &rarr; 120%</span>
               </div>
+              <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
+                <span className="dark-text-muted text-zinc-500">회원 분배</span>
+                <span className="font-bold text-emerald-400">모두 120%</span>
+              </div>
               <div className="mt-3 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-base font-bold">최종 적립</span>
-                <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-2xl font-black text-transparent">
-                  12,000P
-                </span>
+                <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-2xl font-black text-transparent">12,000P</span>
               </div>
               <div className="inline-block rounded-full bg-gradient-to-r from-rose-500 to-orange-400 px-5 py-1.5 text-sm font-bold text-white">
                 120% 적립 달성!
               </div>
             </div>
 
-            {/* 핵심 원리 */}
             <div className="mt-5 rounded-xl bg-black/10 p-4 text-left text-xs leading-relaxed dark-text-muted text-zinc-400">
               <div className="mb-2 text-sm font-bold text-purple-300">핵심 원리</div>
-              <p>돈이 새로 생기는 것이 아닙니다.</p>
-              <p className="mt-1">광고주의 광고비, 가맹점 수수료, 프리미엄 멤버십 — 이 돈들이 시스템 풀에 쌓이고, 비선형공식이 모든 참여자에게 골고루 분배하는 구조입니다.</p>
+              <p>다랜드에는 가맹점이 없습니다. <strong>모두가 사용자</strong>입니다.</p>
+              <p className="mt-1">사용자가 신용카드로 결제하면 지출데이터 단말기가 증명하고, 본인 충전데이터에서 차감된 금액이 비선형공식으로 분배되어 120% 증액 적립됩니다.</p>
+              <p className="mt-1">이 지출금액은 다른 멤버십 회원들에게도 전달되어, 그들도 120% 적립을 받습니다.</p>
               <p className="mt-2 text-center font-bold text-purple-400">
                 &ldquo;항아리 속의 물 총량은 같다. 바가지만 바뀔 뿐.&rdquo;
               </p>
@@ -298,10 +291,6 @@ export default function EnginePage() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
         }
       `}</style>
     </div>

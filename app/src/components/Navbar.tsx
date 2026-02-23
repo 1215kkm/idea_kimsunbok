@@ -12,7 +12,8 @@ export default function Navbar() {
 
   const links = [
     { href: "/dashboard", label: "홈", icon: "🏠" },
-    { href: "/stores", label: "가맹점", icon: "🏪" },
+    { href: "/stores", label: "지출등록", icon: "💳" },
+    { href: "/withdraw", label: "출금", icon: "🏦" },
     { href: "/history", label: "내역", icon: "📋" },
   ];
 
