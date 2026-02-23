@@ -72,17 +72,21 @@ export default function CardPage() {
 
         <div className="mb-4 rounded-2xl border border-cyan-500/20 p-5 text-center"
           style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(168, 85, 247, 0.05))" }}>
-          <div className="text-xs text-zinc-500">비선형 포인트 잔액</div>
+          <div className="text-xs text-zinc-500">다랜드 내 계좌 잔액</div>
           <div className="mt-1 text-4xl font-black text-cyan-400">{balance.toLocaleString()}P</div>
-          <div className="mt-1 text-xs text-zinc-500">= {balance.toLocaleString()}원 상당</div>
+          <div className="mt-1 text-xs text-zinc-500">= {balance.toLocaleString()}원 상당 (1P = 1원)</div>
+          <a href="/withdraw" className="mt-3 inline-flex items-center gap-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-4 py-1.5 text-xs font-bold text-cyan-400 hover:bg-cyan-500/20 transition-colors">
+            🏦 내 은행계좌로 출금
+          </a>
         </div>
 
         <div className="space-y-3">
           <div className="text-sm font-bold text-zinc-400">비선형카드 특징</div>
           {[
-            { icon: "💳", title: "신용카드 결제 → 120% 적립", desc: "어디서든 신용카드로 결제하면 지출데이터 단말기가 증명하고, 120%가 포인트로 돌아옵니다.", color: "#06b6d4" },
+            { icon: "💳", title: "신용카드 결제 → 120% 적립", desc: "어디서든 신용카드로 결제하면 다랜드가 지출을 인식하고, 120%가 다랜드 내 계좌에 적립됩니다.", color: "#06b6d4" },
             { icon: "🧾", title: "지출데이터 단말기 증명", desc: "영수증이 지출데이터 단말기를 통해 자동으로 증명되어 비선형공식에 입력됩니다.", color: "#a855f7" },
-            { icon: "📊", title: "충전데이터에서 차감", desc: "비선형 시스템에 충전된 본인 데이터에서 지출 금액만큼 차감되고, 비선형공식으로 분배됩니다.", color: "#10b981" },
+            { icon: "📊", title: "다랜드 내 계좌에 적립", desc: "비선형공식으로 120% 증액된 포인트가 다랜드 내 본인 계좌에 적립됩니다.", color: "#10b981" },
+            { icon: "🏦", title: "내 은행계좌로 출금", desc: "다랜드에 등록한 본인 은행계좌로 언제든 출금할 수 있습니다. 1P = 1원.", color: "#ec4899" },
             { icon: "🔄", title: "멤버십 회원 분배", desc: "내 지출금액이 다른 멤버십 회원들에게도 전달되어, 모든 회원이 120% 적립을 받습니다.", color: "#f59e0b" },
           ].map((item, i) => (
             <div key={i} className="flex items-start gap-4 rounded-2xl border p-4"
@@ -104,8 +108,9 @@ export default function CardPage() {
             {[
               { step: "1", text: "신용카드로 어디서든 결제", sub: "예: 50,000원 결제" },
               { step: "2", text: "지출데이터 단말기 영수증 증명", sub: "자동 증명 → 비선형 시스템 입력" },
-              { step: "3", text: "충전데이터에서 차감 & 비선형공식 분배", sub: "본인 데이터 -50,000 → 공식 실행" },
-              { step: "4", text: "120% 증액 적립 + 회원 분배", sub: "본인 60,000P + 다른 회원들도 120% 적립" },
+              { step: "3", text: "비선형공식 → 120% 증액", sub: "50,000원 → 60,000P (120%)" },
+              { step: "4", text: "다랜드 내 계좌에 적립", sub: "60,000P가 내 다랜드 계좌에 적립" },
+              { step: "5", text: "내 은행계좌로 출금 가능", sub: "등록한 은행계좌로 언제든 출금" },
             ].map((s, i) => (
               <div key={i} className="flex items-start gap-3">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black text-white"

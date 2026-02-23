@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const menuItems = [
   { href: "/dashboard", label: "홈", icon: "🏠", desc: "대시보드" },
   { href: "/stores", label: "지출등록", icon: "💳", desc: "신용카드 지출 & 120% 적립" },
+  { href: "/withdraw", label: "출금", icon: "🏦", desc: "다랜드 계좌 → 내 은행계좌" },
   { href: "/card", label: "비선형카드", icon: "🪪", desc: "카드 잔액 & 충전데이터" },
   { href: "/history", label: "내역", icon: "📋", desc: "포인트 기록" },
   { href: "/store-dashboard", label: "멤버십 분배", icon: "🔄", desc: "회원간 분배 현황" },

@@ -121,8 +121,9 @@ export default function StoresPage() {
           <p>1. 어디서든 <strong className="text-white">신용카드로 결제</strong>합니다</p>
           <p>2. <strong className="text-white">지출데이터 단말기</strong>가 영수증을 증명합니다</p>
           <p>3. 본인 충전데이터에서 지출금액이 차감됩니다</p>
-          <p>4. 비선형공식으로 <strong className="text-cyan-400">120% 증액 적립</strong>됩니다</p>
-          <p>5. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
+          <p>4. 비선형공식으로 <strong className="text-cyan-400">120% 증액</strong> → <strong className="text-emerald-400">다랜드 내 계좌에 적립</strong></p>
+          <p>5. 적립 포인트를 <strong className="text-white">내 은행계좌로 출금</strong> 가능 (1P = 1원)</p>
+          <p>6. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
         </div>
       </div>
 
@@ -218,7 +219,7 @@ export default function StoresPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-6 backdrop-blur-md">
           <div className="w-full max-w-sm text-center">
             <div className="text-4xl">✅</div>
-            <div className="mt-2 text-sm text-zinc-400">지출데이터 단말기 증명 완료</div>
+            <div className="mt-2 text-sm text-zinc-400">지출데이터 증명 → 다랜드 내 계좌에 적립 완료</div>
 
             <div className="mt-2 text-lg font-bold text-rose-400">
               {result.category.icon} {result.category.name} -{result.amount.toLocaleString()}원
@@ -238,8 +239,15 @@ export default function StoresPage() {
               원금 {result.amount.toLocaleString()}P + 보너스 {result.bonus.toLocaleString()}P
             </div>
 
+            {/* 다랜드 계좌 안내 */}
+            <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 text-xs text-zinc-400">
+              <div className="text-cyan-400 font-bold mb-1">🏦 다랜드 내 계좌에 적립됨</div>
+              <p>적립된 포인트는 등록된 <span className="text-white font-bold">내 은행계좌로 출금</span>할 수 있습니다.</p>
+              <p>1P = 1원 (출금 수수료 무료)</p>
+            </div>
+
             {/* 멤버십 분배 안내 */}
-            <div className="mt-4 rounded-xl border border-purple-500/20 bg-purple-900/10 p-3 text-xs text-zinc-400">
+            <div className="mt-2 rounded-xl border border-purple-500/20 bg-purple-900/10 p-3 text-xs text-zinc-400">
               <div className="text-purple-400 font-bold mb-1">🔄 멤버십 회원 분배</div>
               <p>이 지출금액이 {result.memberCount}명의 멤버십 회원에게 전달됩니다.</p>
               <p>각 회원도 본인 적립금에서 차감 → 비선형공식 → <span className="text-cyan-400 font-bold">120% 적립</span></p>

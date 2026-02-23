@@ -86,15 +86,22 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 포인트 카드 */}
+      {/* 다랜드 내 계좌 카드 */}
       <div className="dark-card mx-5 mt-5 rounded-2xl border border-purple-900/30 bg-gradient-to-br from-[#1a1a4e] to-[#0d0d30] p-6">
-        <div className="text-xs dark-text-muted text-zinc-500">내 포인트</div>
+        <div className="flex items-center justify-between">
+          <div className="text-xs dark-text-muted text-zinc-500">다랜드 내 계좌</div>
+          <div className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5">
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] text-emerald-400">활성</span>
+          </div>
+        </div>
         <div className="mt-1 bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-4xl font-black text-transparent">
           {points.toLocaleString()} P
         </div>
+        <div className="mt-1 text-xs text-zinc-500">= {points.toLocaleString()}원 상당</div>
         <div className="mt-3 flex gap-6 text-sm">
           <div>
-            <span className="text-zinc-500">총 사용 </span>
+            <span className="text-zinc-500">총 지출 </span>
             <span className="font-bold text-rose-400">{totalSpent.toLocaleString()}원</span>
           </div>
           <div>
@@ -109,6 +116,13 @@ export default function DashboardPage() {
             style={{ width: `${Math.min(rate || 0, 150) / 1.5}%` }}
           />
         </div>
+        {/* 출금 버튼 */}
+        <Link
+          href="/withdraw"
+          className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 py-2.5 text-sm font-bold text-cyan-400 transition-colors hover:bg-cyan-500/20"
+        >
+          <span>🏦</span> 내 은행계좌로 출금하기
+        </Link>
       </div>
 
       {/* 퀵 액션 */}
@@ -169,9 +183,9 @@ export default function DashboardPage() {
       <div className="dark-card mx-5 mt-5 rounded-2xl border border-purple-900/20 bg-gradient-to-r from-purple-900/20 to-cyan-900/20 p-5">
         <div className="text-sm font-bold text-purple-300">비선형공식이란?</div>
         <div className="mt-1 text-xs leading-relaxed dark-text-muted text-zinc-400">
-          결제 금액의 120%가 포인트로 적립됩니다.<br />
-          신용카드 결제 → 지출데이터 단말기 증명 →<br />
-          본인 충전데이터 차감 → 비선형공식 → 120% 증액 적립
+          신용카드 결제 → 다랜드가 지출 인식 →<br />
+          비선형공식 → 120% 증액 → <span className="text-cyan-400 font-bold">다랜드 내 계좌에 적립</span><br />
+          적립된 포인트는 등록된 은행계좌로 출금 가능!
         </div>
         <Link href="/engine" className="mt-3 inline-block text-xs text-purple-400 hover:underline">
           자세히 알아보기 &rarr;
