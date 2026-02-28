@@ -192,6 +192,30 @@ export default function DashboardPage() {
         </Link>
       </div>
 
+      {/* CMS & 영수증 바로가기 */}
+      <div className="mx-5 mt-3 grid grid-cols-2 gap-3">
+        <Link
+          href="/cms-register"
+          className="dark-card flex items-center gap-3 rounded-xl border border-cyan-900/20 bg-[#14143c] p-4 transition-colors hover:border-cyan-500/40"
+        >
+          <span className="text-2xl">🔄</span>
+          <div>
+            <div className="text-sm font-bold">CMS 가입센터</div>
+            <div className="text-xs dark-text-muted text-zinc-500">결제수단 등록</div>
+          </div>
+        </Link>
+        <Link
+          href="/receipt-extract"
+          className="dark-card flex items-center gap-3 rounded-xl border border-cyan-900/20 bg-[#14143c] p-4 transition-colors hover:border-cyan-500/40"
+        >
+          <span className="text-2xl">🧾</span>
+          <div>
+            <div className="text-sm font-bold">영수증 자동추출</div>
+            <div className="text-xs dark-text-muted text-zinc-500">CMS 자동인식</div>
+          </div>
+        </Link>
+      </div>
+
       {/* 시뮬레이션 & 엔진 바로가기 */}
       <div className="mx-5 mt-3 grid grid-cols-2 gap-3">
         <Link

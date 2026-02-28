@@ -1,3 +1,23 @@
+export interface EscapeModeResult {
+  totalPool: number;
+  loggedAmount: number;
+  remainingPool: number;
+  emptySlot: number;
+  combinedPool: number;
+  canCombine: boolean;
+}
+
+export interface FundZoneResult {
+  principal: number;
+  augmentRate: number;
+  augmentedAmount: number;
+  totalAccumulation: number;
+  rate: number;
+  entityType: string;
+  priority: number;
+  unitThreshold: number;
+}
+
 export interface NonlinearResult {
   amount: number;
   userAccumulation: number;
@@ -8,6 +28,10 @@ export interface NonlinearResult {
   principal: number;
   memberCount: number;
   perMemberAmount: number;
+  escapeMode: EscapeModeResult;
+  fundZone: FundZoneResult;
+  membershipAccumulation: number;
+  consumerAccumulation: number;
 }
 
 const DEFAULT_CONFIG = {
@@ -52,11 +76,41 @@ export function calculateNonlinear(amount: number, memberCount?: number): Nonlin
     distributed += (membershipPool / totalMultiplier) * c.roundMultipliers[i];
   }
 
+  // 이탈모드: 로그기록 데이터 이탈 → 결합모드
+  // C1:4,000,000,000(free) - a:500,000,000(f) = 3,500,000,000 + d1:500,000,000(빈)
+  const escapeAmount = amount * 0.25;
+  const escapeMode: EscapeModeResult = {
+    totalPool: amount * 2,
+    loggedAmount: escapeAmount,
+    remainingPool: amount * 2 - escapeAmount,
+    emptySlot: escapeAmount,
+    combinedPool: amount * 2,
+    canCombine: true,
+  };
+
+  // 멤버십 적립 모드: A1(20%) + b = 멤버십 적립 (10억 단위)
+  const membershipAccumulation = amount * 0.2;
+
+  // 소비자 적립 (1억 단위): 300,000,000(free) - 120,000,000(free)
+  const consumerAccumulation = amount * 0.12;
+
   // 보정모드: 150% → 120%
   const correctedTotal = amount * c.correctionTarget;
 
   const principal = amount;
   const bonus = correctedTotal - amount;
+
+  // 펀드존: 120%(100%:지출원금 + 20%:증액)
+  const fundZone: FundZoneResult = {
+    principal: amount,
+    augmentRate: 20,
+    augmentedAmount: bonus,
+    totalAccumulation: correctedTotal,
+    rate: 120,
+    entityType: 'consumer',
+    priority: 5,
+    unitThreshold: 100_000_000,
+  };
 
   // 각 멤버십 회원에게 전달되는 금액
   const perMemberAmount = Math.round(memberDistribution / members);
@@ -71,5 +125,9 @@ export function calculateNonlinear(amount: number, memberCount?: number): Nonlin
     principal,
     memberCount: members,
     perMemberAmount,
+    escapeMode,
+    fundZone,
+    membershipAccumulation,
+    consumerAccumulation,
   };
 }

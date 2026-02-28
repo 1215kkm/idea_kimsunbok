@@ -118,7 +118,15 @@ class NonlinearEngine {
 
   /**
    * 결합 모듈 - 120% 적립 실현
-   * 선순환 + 멤버십 → 보정모드 → 120% (원금100% + 수수료20%)
+   * 선순환 + 멤버십 → 이탈모드 → 결합모드 → 보정모드 → 120%
+   *
+   * 상세 수치 (10억 단위 기준):
+   *   A1:1,000,000,000(50%) + B1:1,000,000,000(50%) → U:C1:4,000,000,000
+   *   이탈모드: C1:4,000,000,000(free) - a:500,000,000(f) = 3,500,000,000 + d1:500,000,000(빈)
+   *   A1:1,000,000,000(20%) + b:200,000,000 = A1:1,200,000,000 (멤버십 적립 모드/10억 단위)
+   *   300,000,000(free) - 120,000,000(free) = 소비자 적립/1억 단위
+   *   보정모드: e:130,000,000 → 수수료
+   *   멤버십:펀드존:120%(100%:지출원금 + 20%:증액)
    *
    * @param {number} transactionAmount - 거래 금액
    * @param {number} memberCount - 멤버십 회원 수
@@ -129,20 +137,34 @@ class NonlinearEngine {
       throw new Error('거래 금액은 0보다 커야 합니다');
     }
 
-    // 1. 선순환 모듈 실행
+    // 1. 선순환 모듈 실행 (A1:50% + B1:50%)
     const selection = this.selectionModule(transactionAmount);
 
     // 2. 멤버십 모듈 실행
     const membership = this.membershipModule(transactionAmount, memberCount);
 
-    // 3. 비선형 분배 실행
+    // 3. 비선형 분배 실행 (U:C1 = 4배 확장)
     const distribution = this.nonlinearDistribution(transactionAmount);
 
-    // 4. 보정 모드: 150% → 120% 보정
+    // 4. 이탈모드 실행: 로그기록 데이터 이탈 → 결합모드
+    const escapeAmount = transactionAmount * 0.25; // a:500,000,000(f) 비율
+    const escape = this.escapeMode(transactionAmount * 2, escapeAmount);
+
+    // 5. 멤버십 적립 모드 (A1의 20% + b)
+    const membershipAccumulation = transactionAmount * 0.2; // 20%
+    const membershipTotal = transactionAmount + membershipAccumulation; // 10억 + 2억 = 12억 (10억 단위)
+
+    // 6. 소비자 적립 (1억 단위): 300,000,000(free) - 120,000,000(free)
+    const consumerAccumulation = transactionAmount * 0.12; // 소비자 적립분
+
+    // 7. 보정 모드: 150% → 120% 보정
     const rawAccumulation = selection.totalDistributed + (membership.membershipPool * 0.01);
     const correctedAccumulation = this.correctionMode(transactionAmount, rawAccumulation);
 
-    // 5. 최종 120% 적립
+    // 8. 펀드존: 120% (원금100% + 증액20%)
+    const fundZone = this.fundZoneModule(transactionAmount);
+
+    // 9. 최종 120% 적립
     const principal = transactionAmount; // 100% 원금
     const feeIncome = transactionAmount * 0.2; // 20% 수수료 소득
     const totalAccumulation = principal + feeIncome; // 120%
@@ -156,8 +178,76 @@ class NonlinearEngine {
       selection,
       membership,
       distribution,
+      escape,
+      fundZone,
+      membershipAccumulation,
+      consumerAccumulation,
       rawAccumulation: Math.round(rawAccumulation * 100) / 100,
       correctedAccumulation: Math.round(correctedAccumulation * 100) / 100,
+    };
+  }
+
+  /**
+   * 이탈모드 - 로그기록이 있는 데이터를 이탈시켜 결합모드로 전환
+   *
+   * 로그기록이 있으면 결합하는 것이 불가능하므로
+   * 데이터를 이탈시켜 결합모드로 재진입
+   *
+   * 예시:
+   *   C1:4,000,000,000(free) - a:500,000,000(f) = 3,500,000,000 + d1:500,000,000(빈)
+   *   이탈된 데이터(a)가 빈 슬롯(d1)으로 이동하여 결합 가능 상태로 전환
+   *
+   * @param {number} totalPool - 전체 풀 금액 (C1)
+   * @param {number} loggedAmount - 로그기록이 있는 금액 (이탈 대상)
+   * @returns {object} 이탈모드 처리 결과
+   */
+  escapeMode(totalPool, loggedAmount) {
+    if (totalPool <= 0) {
+      throw new Error('전체 풀 금액은 0보다 커야 합니다');
+    }
+
+    const remainingPool = totalPool - loggedAmount;
+    const emptySlot = loggedAmount; // d1: 빈 슬롯으로 이동
+
+    return {
+      totalPool,
+      loggedAmount,
+      remainingPool,
+      emptySlot,
+      combinedPool: remainingPool + emptySlot, // 결합 후 원래 금액 복원
+      canCombine: true, // 이탈 후 결합 가능
+    };
+  }
+
+  /**
+   * 펀드존 모듈 - 멤버십 펀드존 120% 적립
+   *
+   * 멤버십:펀드존:120%(100%:지출원금 + 20%:증액)
+   * 1초에 20%를 적립하므로
+   * 은행/보험사/신용카드사/사업주 순서로 (단위 1억 이상) 소비자 적립
+   *
+   * @param {number} principal - 지출원금 (100%)
+   * @param {string} entityType - 적립 주체 유형 ('bank'|'insurance'|'creditcard'|'business'|'consumer')
+   * @returns {object} 펀드존 적립 결과
+   */
+  fundZoneModule(principal, entityType = 'consumer') {
+    const augmentRate = 0.2; // 20% 증액
+    const augmentedAmount = principal * augmentRate;
+    const totalAccumulation = principal + augmentedAmount; // 120%
+
+    // 적립 우선순위: 은행 > 보험사 > 신용카드사 > 사업주 > 소비자 (1억 이상 단위)
+    const priorityOrder = ['bank', 'insurance', 'creditcard', 'business', 'consumer'];
+    const priority = priorityOrder.indexOf(entityType);
+
+    return {
+      principal,
+      augmentRate: augmentRate * 100,
+      augmentedAmount,
+      totalAccumulation,
+      rate: 120,
+      entityType,
+      priority: priority >= 0 ? priority + 1 : priorityOrder.length,
+      unitThreshold: 100_000_000, // 1억 이상 단위
     };
   }
 

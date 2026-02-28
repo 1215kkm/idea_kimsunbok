@@ -50,11 +50,25 @@ const STEPS: Step[] = [
     highlight: "5라운드",
   },
   {
+    title: "이탈모드 → 결합모드",
+    desc: "로그기록 데이터를 이탈시켜 결합 가능 상태로 전환",
+    icon: "🔀",
+    detail: "로그기록이 있으면 결합하는 것이 불가능하므로\n데이터를 이탈시켜 결합모드로 재진입합니다.\n\nC1:4,000,000,000(free)\n- a:500,000,000(f) = 3,500,000,000\n+ d1:500,000,000(빈)\n\n이탈된 데이터가 빈 슬롯으로 이동 → 결합 가능",
+    highlight: "이탈→결합",
+  },
+  {
     title: "보정 모드 (안전장치)",
-    desc: "150% → 120%로 안전 보정",
+    desc: "150% → 120%로 안전 보정 / e:수수료",
     icon: "🛡️",
-    detail: "본인적립 50% + 멤버십 100% = 150%\n\n과도한 분배를 방지하기 위해\n보정 모드가 150%를 120%로 조정합니다.\n\n이것이 시스템의 안정성을 보장합니다.",
+    detail: "A1:1,000,000,000(20%) + b:200,000,000\n= A1:1,200,000,000 (멤버십 적립 모드/10억 단위)\n\n300,000,000(free) - 120,000,000(free)\n= 소비자 적립 (1억 단위)\n\n180,000,000 - d:50,000,000(보정모드)\n= e:130,000,000 → 수수료\n\n과도한 분배를 120%로 조정합니다.",
     highlight: "120%",
+  },
+  {
+    title: "멤버십 : 펀드존",
+    desc: "120%(100%:지출원금 + 20%:증액) 적립",
+    icon: "💰",
+    detail: "멤버십:펀드존:120%\n100% : 지출원금 + 20% : 증액 = 120%\n\n1초에 20%를 적립하므로\n\n적립 우선순위 (단위 1억 이상):\n1. 은행\n2. 보험사\n3. 신용카드사\n4. 사업주\n→ 소비자 적립",
+    highlight: "펀드존",
   },
   {
     title: "멤버십 회원 분배",
@@ -255,8 +269,16 @@ export default function EnginePage() {
                 <span className="font-bold text-cyan-400">50,000P</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
+                <span className="dark-text-muted text-zinc-500">이탈모드 → 결합모드</span>
+                <span className="font-bold text-amber-400">데이터 재결합</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
                 <span className="dark-text-muted text-zinc-500">보정 모드</span>
                 <span className="font-bold text-purple-400">150% &rarr; 120%</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
+                <span className="dark-text-muted text-zinc-500">펀드존</span>
+                <span className="font-bold text-cyan-400">100%원금 + 20%증액</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
                 <span className="dark-text-muted text-zinc-500">회원 분배</span>

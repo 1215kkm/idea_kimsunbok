@@ -15,13 +15,17 @@ interface SpendCategory {
   examples: string;
 }
 
+// 판매자(사업주) & 소비자 지출종류
+// a:식자재 b:인건비 c:임대료 d:공과금 e:세금 f:대출상환금 g:투자금 h:소비자 의.식.주.기타생활비
 const CATEGORIES: SpendCategory[] = [
-  { id: "food", name: "식비", icon: "🍽️", examples: "식당, 카페, 배달" },
-  { id: "mart", name: "마트/편의점", icon: "🛒", examples: "장보기, 생필품" },
-  { id: "gas", name: "주유/교통", icon: "⛽", examples: "주유소, 택시, 버스" },
-  { id: "medical", name: "의료/약국", icon: "💊", examples: "병원, 약국, 건강" },
-  { id: "beauty", name: "뷰티/패션", icon: "👗", examples: "미용실, 옷, 화장품" },
-  { id: "etc", name: "기타", icon: "📦", examples: "기타 신용카드 결제" },
+  { id: "food-material", name: "식자재", icon: "🥬", examples: "식재료, 농수산물, 원재료" },
+  { id: "labor", name: "인건비", icon: "👷", examples: "급여, 아르바이트, 외주비" },
+  { id: "rent", name: "임대료", icon: "🏢", examples: "매장임대, 사무실, 창고" },
+  { id: "utility", name: "공과금", icon: "💡", examples: "전기, 수도, 가스, 통신" },
+  { id: "tax", name: "세금", icon: "🏛️", examples: "부가세, 소득세, 재산세" },
+  { id: "loan", name: "대출상환금", icon: "🏦", examples: "원금상환, 이자, 할부금" },
+  { id: "invest", name: "투자금", icon: "📈", examples: "사업투자, 설비, 시설투자" },
+  { id: "living", name: "의.식.주.생활비", icon: "🏠", examples: "식비, 의류, 주거, 기타생활" },
 ];
 
 type ModalState = null | { category: SpendCategory };
@@ -129,9 +133,9 @@ export default function StoresPage() {
 
       {/* 카테고리 선택 */}
       <div className="px-5 pt-4">
-        <div className="text-xs font-bold uppercase tracking-wider text-purple-400 mb-3">지출 카테고리 선택</div>
+        <div className="text-xs font-bold uppercase tracking-wider text-purple-400 mb-3">판매자(사업주) & 소비자 지출종류</div>
       </div>
-      <div className="grid grid-cols-3 gap-3 px-5">
+      <div className="grid grid-cols-4 gap-2 px-5">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.id}
