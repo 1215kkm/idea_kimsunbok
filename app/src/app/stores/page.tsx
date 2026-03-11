@@ -8,6 +8,47 @@ import { db, isConfigured } from "@/lib/firebase";
 import { calculateNonlinear } from "@/lib/nonlinear-engine";
 import Navbar from "@/components/Navbar";
 
+// Web Audio API 신호음
+function playSignalSound() {
+  try {
+    const ctx = new AudioContext();
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.frequency.setValueAtTime(800, ctx.currentTime);
+    osc1.frequency.setValueAtTime(1200, ctx.currentTime + 0.1);
+    gain1.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain1.gain.setValueAtTime(0, ctx.currentTime + 0.2);
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.2);
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.frequency.setValueAtTime(1400, ctx.currentTime + 0.25);
+    gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.25);
+    gain2.gain.setValueAtTime(0, ctx.currentTime + 0.5);
+    osc2.start(ctx.currentTime + 0.25);
+    osc2.stop(ctx.currentTime + 0.5);
+  } catch { /* AudioContext 미지원 */ }
+}
+
+// TTS 음성 알림
+function speakAccumulation(category: string, amount: number, earned: number) {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(
+    `${category} ${amount.toLocaleString()}원에 ${earned.toLocaleString()}포인트, 120% 적립되었습니다.`
+  );
+  msg.lang = "ko-KR";
+  msg.rate = 1.1;
+  const voices = window.speechSynthesis.getVoices();
+  const koVoice = voices.find((v) => v.lang.startsWith("ko"));
+  if (koVoice) msg.voice = koVoice;
+  window.speechSynthesis.speak(msg);
+}
+
 interface SpendCategory {
   id: string;
   name: string;
@@ -36,6 +77,7 @@ type ResultState = null | {
   bonus: number;
   memberCount: number;
   perMemberAmount: number;
+  advertiserReward: number;
 };
 
 export default function StoresPage() {
@@ -79,6 +121,7 @@ export default function StoresPage() {
               rate: nlResult.rate,
               memberCount: nlResult.memberCount,
               perMemberAmount: nlResult.perMemberAmount,
+              advertiserReward: nlResult.advertiser.advertiserReward,
             },
             totalAccumulation: nlResult.totalAccumulation,
             createdAt: serverTimestamp(),
@@ -97,10 +140,17 @@ export default function StoresPage() {
       bonus: nlResult.bonus,
       memberCount: nlResult.memberCount,
       perMemberAmount: nlResult.perMemberAmount,
+      advertiserReward: nlResult.advertiser.advertiserReward,
     });
     setProcessing(false);
     setAmount("");
     setMemo("");
+
+    // 신호음 + 음성 알림
+    playSignalSound();
+    setTimeout(() => {
+      speakAccumulation(category.name, spendAmount, nlResult.totalAccumulation);
+    }, 600);
   };
 
   if (loading || !user) {
@@ -126,8 +176,9 @@ export default function StoresPage() {
           <p>2. <strong className="text-white">지출데이터 단말기</strong>가 영수증을 증명합니다</p>
           <p>3. 본인 충전데이터에서 지출금액이 차감됩니다</p>
           <p>4. 비선형공식으로 <strong className="text-cyan-400">120% 증액</strong> → <strong className="text-emerald-400">다랜드 내 계좌에 적립</strong></p>
-          <p>5. 적립 포인트를 <strong className="text-white">내 은행계좌로 출금</strong> 가능 (1P = 1원)</p>
-          <p>6. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
+          <p>5. 지출비의 <strong className="text-orange-400">5%가 가입시킨 광고주</strong>에게 적립</p>
+          <p>6. 적립 포인트를 <strong className="text-white">내 은행계좌로 출금</strong> 가능 (1P = 1원)</p>
+          <p>7. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
         </div>
       </div>
 
@@ -250,6 +301,13 @@ export default function StoresPage() {
               <p>1P = 1원 (출금 수수료 무료)</p>
             </div>
 
+            {/* 광고주 적립 안내 */}
+            <div className="mt-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 text-xs text-zinc-400">
+              <div className="text-orange-400 font-bold mb-1">📢 광고주 적립 (5%)</div>
+              <p>이 지출의 5% = <span className="text-orange-400 font-bold">{result.advertiserReward.toLocaleString()}P</span>가 가입시킨 광고주에게 적립됩니다.</p>
+              <p>광고주가 회원을 많이 가입시킬수록 더 많은 금액이 지속 적립!</p>
+            </div>
+
             {/* 멤버십 분배 안내 */}
             <div className="mt-2 rounded-xl border border-purple-500/20 bg-purple-900/10 p-3 text-xs text-zinc-400">
               <div className="text-purple-400 font-bold mb-1">🔄 멤버십 회원 분배</div>
@@ -257,9 +315,14 @@ export default function StoresPage() {
               <p>각 회원도 본인 적립금에서 차감 → 비선형공식 → <span className="text-cyan-400 font-bold">120% 적립</span></p>
             </div>
 
+            {/* 음성 알림 표시 */}
+            <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2 text-[10px] text-zinc-500">
+              🔊 신호음과 함께 &quot;{result.category.name} {result.amount.toLocaleString()}원에 120% 적립되었습니다&quot; 음성 안내
+            </div>
+
             <button
               onClick={() => setResult(null)}
-              className="mt-6 rounded-full border border-purple-500/40 bg-purple-900/20 px-8 py-2.5 text-sm text-white hover:bg-purple-900/40"
+              className="mt-4 rounded-full border border-purple-500/40 bg-purple-900/20 px-8 py-2.5 text-sm text-white hover:bg-purple-900/40"
             >
               확인
             </button>

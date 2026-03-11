@@ -18,6 +18,22 @@ export interface FundZoneResult {
   unitThreshold: number;
 }
 
+export interface DistributionChain {
+  a: number; // 이탈모드 자유값 (50%)
+  b: number; // A1 자유값 - 멤버십적립 (20%)
+  c: number; // 소비자적립값 (12%)
+  d: number; // 보정값 (5%)
+  e: number; // 광고주적립값 (1%)
+  f: number; // 수수료 (12%)
+  valid: boolean;
+}
+
+export interface AdvertiserResult {
+  spendAmount: number;
+  advertiserRate: number;
+  advertiserReward: number;
+}
+
 export interface NonlinearResult {
   amount: number;
   userAccumulation: number;
@@ -30,8 +46,12 @@ export interface NonlinearResult {
   perMemberAmount: number;
   escapeMode: EscapeModeResult;
   fundZone: FundZoneResult;
+  distributionChain: DistributionChain;
+  advertiser: AdvertiserResult;
   membershipAccumulation: number;
   consumerAccumulation: number;
+  correctionValue: number;
+  correctionPool: number;
 }
 
 const DEFAULT_CONFIG = {
@@ -42,6 +62,7 @@ const DEFAULT_CONFIG = {
   distributionRounds: 5,
   roundMultipliers: [1, 1, 2, 2, 4],
   defaultMemberCount: 10,
+  advertiserRate: 0.05, // 광고주 적립 5%
 };
 
 /**
@@ -71,28 +92,53 @@ export function calculateNonlinear(amount: number, memberCount?: number): Nonlin
 
   // 비선형 분배 (5라운드)
   let distributed = 0;
-  const totalMultiplier = c.roundMultipliers.reduce((a, b) => a + b, 0);
+  const totalMultiplier = c.roundMultipliers.reduce((x, y) => x + y, 0);
   for (let i = 0; i < c.distributionRounds; i++) {
     distributed += (membershipPool / totalMultiplier) * c.roundMultipliers[i];
   }
 
-  // 이탈모드: 로그기록 데이터 이탈 → 결합모드
-  // C1:4,000,000,000(free) - a:500,000,000(f) = 3,500,000,000 + d1:500,000,000(빈)
-  const escapeAmount = amount * 0.25;
+  // 이탈모드: C1:4×거래금액(free) - a:50%(free) → 결합모드
+  const c1Pool = amount * 4; // C1 = 4배 확장
+  const escapeAmount = amount * 0.5; // a:500,000,000 = 50% of A1
   const escapeMode: EscapeModeResult = {
-    totalPool: amount * 2,
+    totalPool: c1Pool,
     loggedAmount: escapeAmount,
-    remainingPool: amount * 2 - escapeAmount,
+    remainingPool: c1Pool - escapeAmount,
     emptySlot: escapeAmount,
-    combinedPool: amount * 2,
+    combinedPool: c1Pool,
     canCombine: true,
   };
 
-  // 멤버십 적립 모드: A1(20%) + b = 멤버십 적립 (10억 단위)
-  const membershipAccumulation = amount * 0.2;
+  // a→f 분배 체인
+  const a = escapeAmount; // a:500M(free) - 이탈모드 자유값
+  const b = amount * 0.2; // b:200M - A1 자유값 (멤버십적립)
+  const cc = amount * 0.12; // c:120M - 소비자적립값
+  const d = amount * 0.05; // d:50M - 보정값
+  const e = amount * 0.01; // e:10M - 광고주적립값
+  const f = amount * 0.12; // f:120M - 수수료
+  // 검증: b+cc+d+e+f = 200+120+50+10+120 = 500M = a ✓
 
-  // 소비자 적립 (1억 단위): 300,000,000(free) - 120,000,000(free)
-  const consumerAccumulation = amount * 0.12;
+  const distributionChain: DistributionChain = {
+    a, b, c: cc, d, e, f,
+    valid: Math.abs((b + cc + d + e + f) - a) < 1,
+  };
+
+  // 멤버십 적립 모드: A1 + b = 120%
+  const membershipAccumulation = b; // 20%
+
+  // 소비자 적립
+  const consumerAccumulation = cc; // 12%
+
+  // 보정 모드: d × 10회 = 보정 풀
+  const correctionValue = d;
+  const correctionPool = correctionValue * 10;
+
+  // 광고주 적립 (회원 소비지출의 5%)
+  const advertiser: AdvertiserResult = {
+    spendAmount: amount,
+    advertiserRate: c.advertiserRate * 100,
+    advertiserReward: amount * c.advertiserRate,
+  };
 
   // 보정모드: 150% → 120%
   const correctedTotal = amount * c.correctionTarget;
@@ -127,7 +173,11 @@ export function calculateNonlinear(amount: number, memberCount?: number): Nonlin
     perMemberAmount,
     escapeMode,
     fundZone,
+    distributionChain,
+    advertiser,
     membershipAccumulation,
     consumerAccumulation,
+    correctionValue,
+    correctionPool,
   };
 }

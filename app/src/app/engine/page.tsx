@@ -53,35 +53,42 @@ const STEPS: Step[] = [
     title: "이탈모드 → 결합모드",
     desc: "로그기록 데이터를 이탈시켜 결합 가능 상태로 전환",
     icon: "🔀",
-    detail: "로그기록이 있으면 결합하는 것이 불가능하므로\n데이터를 이탈시켜 결합모드로 재진입합니다.\n\nC1:4,000,000,000(free)\n- a:500,000,000(f) = 3,500,000,000\n+ d1:500,000,000(빈)\n\n이탈된 데이터가 빈 슬롯으로 이동 → 결합 가능",
+    detail: "자유값(free)과 빈모드를 하지 않으면 결합 불가!\n\nC1:4,000,000,000(free)\n- a:500,000,000(free) = 3,500,000,000\n+ d1:500,000,000(빈로그)\n\nA1:1,000,000,000(50%) + a:500,000,000(free)\n→ 결합 할 수 있는 절대값이 된다",
     highlight: "이탈→결합",
   },
   {
-    title: "보정 모드 (안전장치)",
-    desc: "150% → 120%로 안전 보정 / e:수수료",
-    icon: "🛡️",
-    detail: "A1:1,000,000,000(20%) + b:200,000,000\n= A1:1,200,000,000 (멤버십 적립 모드/10억 단위)\n\n300,000,000(free) - 120,000,000(free)\n= 소비자 적립 (1억 단위)\n\n180,000,000 - d:50,000,000(보정모드)\n= e:130,000,000 → 수수료\n\n과도한 분배를 120%로 조정합니다.",
-    highlight: "120%",
+    title: "a→f 분배 체인",
+    desc: "이탈모드 자유값 500M을 6가지로 분배",
+    icon: "🔗",
+    detail: "a:500,000,000(free) 이탈모드 자유값에서:\n\n- b:200,000,000 → A1 멤버십적립 (20%)\n  남은: 300,000,000\n- c:120,000,000 → 소비자적립 (12%)\n  남은: 180,000,000\n- d:50,000,000 → 보정값 (5%)\n  남은: 130,000,000\n- e:10,000,000 → 광고주적립 (1%)\n= f:120,000,000 → 수수료 (12%)\n\n합계: 200+120+50+10+120 = 500M ✓",
+    highlight: "a→f",
   },
   {
-    title: "멤버십 : 펀드존",
-    desc: "120%(100%:지출원금 + 20%:증액) 적립",
-    icon: "💰",
-    detail: "멤버십:펀드존:120%\n100% : 지출원금 + 20% : 증액 = 120%\n\n1초에 20%를 적립하므로\n\n적립 우선순위 (단위 1억 이상):\n1. 은행\n2. 보험사\n3. 신용카드사\n4. 사업주\n→ 소비자 적립",
-    highlight: "펀드존",
+    title: "광고주 적립 (5%)",
+    desc: "회원 소비지출의 5%를 가입시킨 광고주에게 적립",
+    icon: "📢",
+    detail: "회원이 소비지출 할 때마다\n비선형시스템 알고리즘에 의해\n지출비의 5%를 가입시킨 광고주에게 적립!\n\n광고주가 회원을 많이 가입시킬수록\n광고주 본인에게 많은 금액이 지속 적립\n\n예: 대기업 회원 가입 → 자재비 지출 크므로\n그 5%가 광고주에게 = 큰 입금액",
+    highlight: "5% 적립",
+  },
+  {
+    title: "보정 모드 + 펀드존",
+    desc: "d:50M×10회 보정 → 120%(원금+20%증액)",
+    icon: "🛡️",
+    detail: "보정값: d:50,000,000(free) × 10회\n= 500,000,000(free) + d10:500,000,000(빈로그)\n= C10:500,000,000\n\nA1:1,000,000,000 + b:200,000,000\n= A1:1,200,000,000 (멤버십 적립 120%)\n\n펀드존: 100%원금 + 20%증액 = 120%\n적립 우선순위: 은행→보험사→신용카드사→사업주→소비자",
+    highlight: "120%",
   },
   {
     title: "멤버십 회원 분배",
     desc: "다른 회원들에게 지출금액 전달 → 모두 120%",
     icon: "👥",
-    detail: "영희의 지출금액이 다른 멤버십 회원들에게 전달됩니다.\n\n전달받은 회원들도:\n본인 적립금에서 차감 → 비선형공식 → 120% 적립\n\n한 사람의 소비가 모든 회원에게 순환합니다.",
+    detail: "영희의 지출금액이 다른 멤버십 회원들에게 전달됩니다.\n\n전달받은 회원들도:\n본인 적립금에서 차감 → 비선형공식 → 120% 적립\n\n한 사람의 소비가 모든 회원에게 순환합니다.\n\n1×10=10×10=100×10=...=10^10 (100억명!)",
     highlight: "모두 120%",
   },
   {
     title: "최종 결과 → 다랜드 내 계좌에 적립",
     desc: "10,000원 결제 → 12,000P 다랜드 계좌 적립!",
     icon: "🎉",
-    detail: "원금: 10,000P\n보너스: 2,000P\n\n합계: 12,000P (120% 적립!)\n\n✅ 다랜드 내 계좌에 12,000P 적립\n✅ 등록된 은행계좌로 출금 가능 (1P = 1원)\n✅ 다른 회원도 분배받고 120% 적립\n✅ 모두가 사용자 — 가맹점 구분 없음",
+    detail: "원금: 10,000P\n보너스: 2,000P (멤버십적립 b:20%)\n\n합계: 12,000P (120% 적립!)\n\n✅ 다랜드 내 계좌에 12,000P 적립\n✅ 등록된 은행계좌로 출금 가능 (1P = 1원)\n✅ 광고주에게 5% 적립 (500P)\n✅ 데이터에 의한 기본소득 창출\n✅ 모두가 사용자 — 가맹점 구분 없음",
     highlight: "12,000P",
   },
 ];
@@ -270,15 +277,19 @@ export default function EnginePage() {
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
                 <span className="dark-text-muted text-zinc-500">이탈모드 → 결합모드</span>
-                <span className="font-bold text-amber-400">데이터 재결합</span>
+                <span className="font-bold text-amber-400">C1:4x → 결합</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">보정 모드</span>
-                <span className="font-bold text-purple-400">150% &rarr; 120%</span>
+                <span className="dark-text-muted text-zinc-500">a→f 분배 체인</span>
+                <span className="font-bold text-purple-400">500M = b+c+d+e+f</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">펀드존</span>
-                <span className="font-bold text-cyan-400">100%원금 + 20%증액</span>
+                <span className="dark-text-muted text-zinc-500">광고주 적립</span>
+                <span className="font-bold text-orange-400">지출비의 5%</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
+                <span className="dark-text-muted text-zinc-500">보정모드 + 펀드존</span>
+                <span className="font-bold text-cyan-400">120% (원금+20%)</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
                 <span className="dark-text-muted text-zinc-500">회원 분배</span>
@@ -298,6 +309,7 @@ export default function EnginePage() {
               <div className="mb-2 text-sm font-bold text-purple-300">핵심 원리</div>
               <p>다랜드에는 가맹점이 없습니다. <strong>모두가 사용자</strong>입니다.</p>
               <p className="mt-1">사용자가 신용카드로 결제하면 지출데이터 단말기가 증명하고, 본인 충전데이터에서 차감된 금액이 비선형공식으로 분배되어 120% 증액 적립됩니다.</p>
+              <p className="mt-1">회원 소비지출의 5%가 가입시킨 광고주에게 적립됩니다. 이로서 <strong>데이터에 의한 기본소득</strong>이 창출됩니다.</p>
               <p className="mt-1">이 지출금액은 다른 멤버십 회원들에게도 전달되어, 그들도 120% 적립을 받습니다.</p>
               <p className="mt-2 text-center font-bold text-purple-400">
                 &ldquo;항아리 속의 물 총량은 같다. 바가지만 바뀔 뿐.&rdquo;
