@@ -77,6 +77,7 @@ type ResultState = null | {
   bonus: number;
   memberCount: number;
   perMemberAmount: number;
+  advertiserReward: number;
 };
 
 export default function StoresPage() {
@@ -120,6 +121,7 @@ export default function StoresPage() {
               rate: nlResult.rate,
               memberCount: nlResult.memberCount,
               perMemberAmount: nlResult.perMemberAmount,
+              advertiserReward: nlResult.advertiser.advertiserReward,
             },
             totalAccumulation: nlResult.totalAccumulation,
             createdAt: serverTimestamp(),
@@ -138,6 +140,7 @@ export default function StoresPage() {
       bonus: nlResult.bonus,
       memberCount: nlResult.memberCount,
       perMemberAmount: nlResult.perMemberAmount,
+      advertiserReward: nlResult.advertiser.advertiserReward,
     });
     setProcessing(false);
     setAmount("");
@@ -173,8 +176,9 @@ export default function StoresPage() {
           <p>2. <strong className="text-white">지출데이터 단말기</strong>가 영수증을 증명합니다</p>
           <p>3. 본인 충전데이터에서 지출금액이 차감됩니다</p>
           <p>4. 비선형공식으로 <strong className="text-cyan-400">120% 증액</strong> → <strong className="text-emerald-400">다랜드 내 계좌에 적립</strong></p>
-          <p>5. 적립 포인트를 <strong className="text-white">내 은행계좌로 출금</strong> 가능 (1P = 1원)</p>
-          <p>6. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
+          <p>5. 지출비의 <strong className="text-orange-400">5%가 가입시킨 광고주</strong>에게 적립</p>
+          <p>6. 적립 포인트를 <strong className="text-white">내 은행계좌로 출금</strong> 가능 (1P = 1원)</p>
+          <p>7. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
         </div>
       </div>
 
@@ -295,6 +299,13 @@ export default function StoresPage() {
               <div className="text-cyan-400 font-bold mb-1">🏦 다랜드 내 계좌에 적립됨</div>
               <p>적립된 포인트는 등록된 <span className="text-white font-bold">내 은행계좌로 출금</span>할 수 있습니다.</p>
               <p>1P = 1원 (출금 수수료 무료)</p>
+            </div>
+
+            {/* 광고주 적립 안내 */}
+            <div className="mt-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 text-xs text-zinc-400">
+              <div className="text-orange-400 font-bold mb-1">📢 광고주 적립 (5%)</div>
+              <p>이 지출의 5% = <span className="text-orange-400 font-bold">{result.advertiserReward.toLocaleString()}P</span>가 가입시킨 광고주에게 적립됩니다.</p>
+              <p>광고주가 회원을 많이 가입시킬수록 더 많은 금액이 지속 적립!</p>
             </div>
 
             {/* 멤버십 분배 안내 */}
