@@ -86,12 +86,12 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
         <div className="flex items-center gap-2">
           <span className="text-xl">🛡️</span>
           <div>
             <h1 className="text-lg font-bold">관리자 패널</h1>
-            <p className="text-xs dark-text-muted text-zinc-500">다랜드 시스템 관리</p>
+            <p className="text-xs dark-text-muted text-[#6B7394]">다랜드 시스템 관리</p>
           </div>
         </div>
       </div>
@@ -123,20 +123,20 @@ export default function AdminPage() {
             {/* 핵심 지표 */}
             <div className="grid grid-cols-2 gap-3">
               <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-zinc-500">총 매출</div>
-                <div className="mt-1 text-xl font-black text-emerald-400">{totalSales.toLocaleString()}원</div>
+                <div className="text-xs dark-text-muted text-[#6B7394]">총 매출</div>
+                <div className="mt-1 text-xl font-black text-[#10B981]">{totalSales.toLocaleString()}원</div>
               </div>
               <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-zinc-500">총 회원</div>
-                <div className="mt-1 text-xl font-black text-cyan-400">{totalUsers}명</div>
+                <div className="text-xs dark-text-muted text-[#6B7394]">총 회원</div>
+                <div className="mt-1 text-xl font-black text-[#3B4CCA]">{totalUsers}명</div>
               </div>
               <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-zinc-500">활성 사용자</div>
+                <div className="text-xs dark-text-muted text-[#6B7394]">활성 사용자</div>
                 <div className="mt-1 text-xl font-black text-amber-400">{totalStores}개</div>
               </div>
               <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-zinc-500">멤버십 풀</div>
-                <div className="mt-1 text-xl font-black text-purple-400">{totalPool.toLocaleString()}P</div>
+                <div className="text-xs dark-text-muted text-[#6B7394]">멤버십 풀</div>
+                <div className="mt-1 text-xl font-black text-[#3B4CCA]">{totalPool.toLocaleString()}P</div>
               </div>
             </div>
 
@@ -145,7 +145,7 @@ export default function AdminPage() {
               className="dark-card rounded-xl border p-4"
               style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
             >
-              <div className="mb-3 text-sm font-bold text-purple-400">시스템 상태</div>
+              <div className="mb-3 text-sm font-bold text-[#3B4CCA]">시스템 상태</div>
               <div className="space-y-2">
                 {[
                   { label: "비선형공식 엔진", status: "정상", color: "#10b981" },
@@ -166,7 +166,7 @@ export default function AdminPage() {
 
             {/* 최근 거래 */}
             <div>
-              <div className="mb-2 text-xs font-bold uppercase tracking-wider text-purple-400">실시간 거래</div>
+              <div className="mb-2 text-xs font-bold uppercase tracking-wider text-[#3B4CCA]">실시간 거래</div>
               <div className="space-y-2">
                 {DEMO_RECENT_TX.map((tx) => (
                   <div
@@ -183,8 +183,8 @@ export default function AdminPage() {
                       <div className="text-xs" style={{ color: "var(--text-sub)" }}>{tx.time}</div>
                     </div>
                     <div className="ml-2 text-right shrink-0">
-                      <div className="text-sm font-bold text-rose-400">-{tx.amount.toLocaleString()}원</div>
-                      <div className="text-xs font-bold text-emerald-400">+{tx.earned.toLocaleString()}P</div>
+                      <div className="text-sm font-bold text-[#EF4444]">-{tx.amount.toLocaleString()}원</div>
+                      <div className="text-xs font-bold text-[#10B981]">+{tx.earned.toLocaleString()}P</div>
                     </div>
                   </div>
                 ))}
@@ -199,7 +199,7 @@ export default function AdminPage() {
             {/* 검색 + 추가 버튼 */}
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">🔍</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#6B7394]">🔍</span>
                 <input
                   type="text"
                   placeholder="사용자/회원 이름 검색"
@@ -209,7 +209,7 @@ export default function AdminPage() {
                   style={{ borderColor: "var(--card-border)", background: "var(--input-bg)" }}
                 />
               </div>
-              <button className="shrink-0 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 px-4 text-sm font-bold text-white">
+              <button className="shrink-0 rounded-xl bg-[#FFB800] text-[#1A1F36] px-4 text-sm font-bold text-white">
                 + 추가
               </button>
             </div>
@@ -244,7 +244,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-cyan-400">{store.sales.toLocaleString()}원</div>
+                      <div className="text-sm font-bold text-[#3B4CCA]">{store.sales.toLocaleString()}원</div>
                       <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>누적 매출</div>
                     </div>
                   </div>
@@ -290,7 +290,7 @@ export default function AdminPage() {
 
             {/* 검색 */}
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">🔍</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#6B7394]">🔍</span>
               <input
                 type="text"
                 placeholder="이름, 이메일, 역할 검색"
@@ -333,13 +333,13 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-bold text-cyan-400">{u.points.toLocaleString()}P</div>
+                        <div className="text-sm font-bold text-[#3B4CCA]">{u.points.toLocaleString()}P</div>
                         <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>{u.txCount}건 거래</div>
                       </div>
                     </div>
                     <div className="mt-2 flex items-center justify-between text-xs" style={{ color: "var(--text-sub)" }}>
                       <span>가입일: {u.joined}</span>
-                      <button className="font-bold text-purple-400">상세보기</button>
+                      <button className="font-bold text-[#3B4CCA]">상세보기</button>
                     </div>
                   </div>
                 );
@@ -356,20 +356,20 @@ export default function AdminPage() {
               className="dark-card rounded-xl border p-4"
               style={{ borderColor: "var(--card-border)", background: "linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))" }}
             >
-              <div className="text-xs dark-text-muted text-zinc-500">오늘 거래 현황</div>
+              <div className="text-xs dark-text-muted text-[#6B7394]">오늘 거래 현황</div>
               <div className="mt-2 grid grid-cols-3 gap-3">
                 <div className="text-center">
-                  <div className="text-xl font-black text-cyan-400">{DEMO_RECENT_TX.length}건</div>
+                  <div className="text-xl font-black text-[#3B4CCA]">{DEMO_RECENT_TX.length}건</div>
                   <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>거래 수</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl font-black text-rose-400">
+                  <div className="text-xl font-black text-[#EF4444]">
                     {DEMO_RECENT_TX.reduce((s, t) => s + t.amount, 0).toLocaleString()}원
                   </div>
                   <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>결제 금액</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl font-black text-emerald-400">
+                  <div className="text-xl font-black text-[#10B981]">
                     {DEMO_RECENT_TX.reduce((s, t) => s + t.earned, 0).toLocaleString()}P
                   </div>
                   <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>적립 포인트</div>
@@ -395,8 +395,8 @@ export default function AdminPage() {
                       <div className="text-xs" style={{ color: "var(--text-sub)" }}>{tx.time}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-rose-400">-{tx.amount.toLocaleString()}원</div>
-                      <div className="text-xs font-bold text-emerald-400">+{tx.earned.toLocaleString()}P (120%)</div>
+                      <div className="text-sm font-bold text-[#EF4444]">-{tx.amount.toLocaleString()}원</div>
+                      <div className="text-xs font-bold text-[#10B981]">+{tx.earned.toLocaleString()}P (120%)</div>
                     </div>
                   </div>
                 </div>

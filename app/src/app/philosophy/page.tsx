@@ -63,16 +63,16 @@ export default function PhilosophyPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
         <h1 className="text-lg font-bold">자리이타 철학</h1>
-        <p className="text-xs dark-text-muted text-zinc-500">다랜드의 핵심 정신</p>
+        <p className="text-xs dark-text-muted text-[#6B7394]">다랜드의 핵심 정신</p>
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-6">
         {/* 순환 다이어그램 */}
         <div className="mb-6 rounded-2xl border border-purple-500/20 p-6"
           style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
-          <div className="mb-4 text-center text-sm font-bold text-purple-400">사용자 순환 구조</div>
+          <div className="mb-4 text-center text-sm font-bold text-[#3B4CCA]">사용자 순환 구조</div>
 
           <div className="relative mx-auto" style={{ width: 260, height: 240 }}>
             {/* 중심 */}
@@ -89,7 +89,7 @@ export default function PhilosophyPage() {
                 👩
               </div>
               <div className="mt-1 text-xs font-bold">사용자A</div>
-              <div className="text-[0.6rem] text-cyan-400">120% 적립</div>
+              <div className="text-[0.6rem] text-[#3B4CCA]">120% 적립</div>
             </div>
 
             {/* 사용자B (좌하) */}
@@ -109,7 +109,7 @@ export default function PhilosophyPage() {
                 🏢
               </div>
               <div className="mt-1 text-xs font-bold">광고주</div>
-              <div className="text-[0.6rem] text-emerald-400">120% 수익</div>
+              <div className="text-[0.6rem] text-[#10B981]">120% 수익</div>
             </div>
 
             <svg className="absolute inset-0" viewBox="0 0 260 240" fill="none">
@@ -122,7 +122,7 @@ export default function PhilosophyPage() {
             </svg>
           </div>
 
-          <p className="mt-4 text-center text-xs text-zinc-500">
+          <p className="mt-4 text-center text-xs text-[#6B7394]">
             사용자A 지출 → 멤버십 회원 분배 → 광고주 투자 → 다시 사용자에게
           </p>
         </div>
@@ -149,19 +149,19 @@ export default function PhilosophyPage() {
           style={{ borderColor: SECTIONS[activeSection].color + "40", background: "linear-gradient(135deg, " + SECTIONS[activeSection].color + "08, transparent)" }}>
           <div className="mb-2 text-3xl">{SECTIONS[activeSection].icon}</div>
           <h2 className="text-xl font-black" style={{ color: SECTIONS[activeSection].color }}>{SECTIONS[activeSection].title}</h2>
-          <p className="mt-1 text-sm text-zinc-400">{SECTIONS[activeSection].subtitle}</p>
-          <div className="mt-4 whitespace-pre-line text-sm leading-relaxed text-zinc-300">{SECTIONS[activeSection].content}</div>
+          <p className="mt-1 text-sm text-[#6B7394]">{SECTIONS[activeSection].subtitle}</p>
+          <div className="mt-4 whitespace-pre-line text-sm leading-relaxed text-[#6B7394]">{SECTIONS[activeSection].content}</div>
         </div>
 
         {/* 핵심 명언 */}
         <div className="mt-6 rounded-2xl border border-purple-500/20 p-5 text-center"
           style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(6, 182, 212, 0.08))" }}>
           <div className="text-2xl">🙏</div>
-          <p className="mt-2 text-base font-bold italic text-purple-300">&ldquo;자리이타 이타자리&rdquo;</p>
-          <p className="mt-1 text-xs text-zinc-500">스스로 이롭고 남도 이롭게 — 남이 이로우면 나도 이롭다</p>
+          <p className="mt-2 text-base font-bold italic text-[#3B4CCA]">&ldquo;자리이타 이타자리&rdquo;</p>
+          <p className="mt-1 text-xs text-[#6B7394]">스스로 이롭고 남도 이롭게 — 남이 이로우면 나도 이롭다</p>
           <div className="mx-auto mt-3 h-px w-20 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
-          <p className="mt-3 text-sm font-bold text-cyan-400">&ldquo;항아리 속의 물 총량은 같다. 바가지만 바뀔 뿐.&rdquo;</p>
-          <p className="mt-1 text-xs text-zinc-500">돈이 새로 생기는 것이 아니라, 순환하여 모두에게 돌아가는 구조</p>
+          <p className="mt-3 text-sm font-bold text-[#3B4CCA]">&ldquo;항아리 속의 물 총량은 같다. 바가지만 바뀔 뿐.&rdquo;</p>
+          <p className="mt-1 text-xs text-[#6B7394]">돈이 새로 생기는 것이 아니라, 순환하여 모두에게 돌아가는 구조</p>
         </div>
       </div>
 

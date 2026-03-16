@@ -65,7 +65,7 @@ export default function DashboardPage() {
   if (loading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-zinc-500">로딩 중...</div>
+        <div className="text-[#6B7394]">로딩 중...</div>
       </div>
     );
   }
@@ -76,50 +76,50 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
-        <div className="text-xs dark-text-muted text-zinc-500">안녕하세요</div>
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
+        <div className="text-xs dark-text-muted text-[#6B7394]">안녕하세요</div>
         <div className="text-lg font-bold">
           {user.displayName || "사용자"}님
-          <span className="ml-2 rounded-full bg-purple-900/30 px-2 py-0.5 text-xs text-purple-400">
+          <span className="ml-2 rounded-full bg-[#3B4CCA]/10 px-2 py-0.5 text-xs text-[#3B4CCA]">
             Lv.{userData?.membershipLevel || 1}
           </span>
         </div>
       </div>
 
       {/* 다랜드 내 계좌 카드 */}
-      <div className="dark-card mx-5 mt-5 rounded-2xl border border-purple-900/30 bg-gradient-to-br from-[#1a1a4e] to-[#0d0d30] p-6">
+      <div className="mx-5 mt-5 rounded-2xl bg-gradient-to-br from-[#3B4CCA] to-[#2D3A8C] p-6 shadow-lg shadow-[#3B4CCA]/20">
         <div className="flex items-center justify-between">
-          <div className="text-xs dark-text-muted text-zinc-500">다랜드 내 계좌</div>
-          <div className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] text-emerald-400">활성</span>
+          <div className="text-xs text-white/70">다랜드 내 계좌</div>
+          <div className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5">
+            <div className="h-1.5 w-1.5 rounded-full bg-[#34D399] animate-pulse" />
+            <span className="text-[10px] text-[#34D399]">활성</span>
           </div>
         </div>
-        <div className="mt-1 bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-4xl font-black text-transparent">
+        <div className="mt-1 text-white text-4xl font-black">
           {points.toLocaleString()} P
         </div>
-        <div className="mt-1 text-xs text-zinc-500">= {points.toLocaleString()}원 상당</div>
+        <div className="mt-1 text-xs text-white/60">= {points.toLocaleString()}원 상당</div>
         <div className="mt-3 flex gap-6 text-sm">
           <div>
-            <span className="text-zinc-500">총 지출 </span>
-            <span className="font-bold text-rose-400">{totalSpent.toLocaleString()}원</span>
+            <span className="text-white/60">총 지출 </span>
+            <span className="font-bold text-[#FCA5A5]">{totalSpent.toLocaleString()}원</span>
           </div>
           <div>
-            <span className="text-zinc-500">적립률 </span>
-            <span className="font-bold text-emerald-400">{rate || 120}%</span>
+            <span className="text-white/60">적립률 </span>
+            <span className="font-bold text-[#34D399]">{rate || 120}%</span>
           </div>
         </div>
         {/* 바 */}
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/5">
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/15">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-purple-500 to-rose-400 transition-all duration-1000"
+            className="h-full rounded-full bg-gradient-to-r from-[#FFB800] to-[#FCD34D] transition-all duration-1000"
             style={{ width: `${Math.min(rate || 0, 150) / 1.5}%` }}
           />
         </div>
         {/* 출금 버튼 */}
         <Link
           href="/withdraw"
-          className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 py-2.5 text-sm font-bold text-cyan-400 transition-colors hover:bg-cyan-500/20"
+          className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 py-2.5 text-sm font-bold text-white transition-colors hover:bg-white/20"
         >
           <span>🏦</span> 내 은행계좌로 출금하기
         </Link>
@@ -129,49 +129,49 @@ export default function DashboardPage() {
       <div className="mx-5 mt-5 grid grid-cols-2 gap-3">
         <Link
           href="/stores"
-          className="dark-card flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
+          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
         >
           <span className="text-2xl">💳</span>
           <div>
             <div className="text-sm font-bold">지출데이터 등록</div>
-            <div className="text-xs dark-text-muted text-zinc-500">신용카드 결제 → 120% 적립</div>
+            <div className="text-xs dark-text-muted text-[#6B7394]">신용카드 결제 → 120% 적립</div>
           </div>
         </Link>
         <Link
           href="/history"
-          className="dark-card flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
+          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
         >
           <span className="text-2xl">📋</span>
           <div>
             <div className="text-sm font-bold">포인트 내역</div>
-            <div className="text-xs dark-text-muted text-zinc-500">적립/사용 확인</div>
+            <div className="text-xs dark-text-muted text-[#6B7394]">적립/사용 확인</div>
           </div>
         </Link>
       </div>
 
       {/* 최근 거래 */}
       <div className="mx-5 mt-5">
-        <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-purple-400">최근 거래</h3>
+        <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-[#3B4CCA]">최근 거래</h3>
         {recentTxs.length === 0 ? (
-          <div className="dark-card rounded-xl border border-purple-900/10 bg-[#14143c] p-8 text-center text-sm dark-text-muted text-zinc-500">
+          <div className="dark-card rounded-xl border border-[#E8EAF0] bg-white p-8 text-center text-sm dark-text-muted text-[#6B7394]">
             아직 거래 내역이 없습니다.<br />
-            <Link href="/stores" className="mt-2 inline-block text-purple-400 hover:underline">
+            <Link href="/stores" className="mt-2 inline-block text-[#3B4CCA] hover:underline">
               첫 지출데이터 등록하기 &rarr;
             </Link>
           </div>
         ) : (
           <div className="space-y-2">
             {recentTxs.map((tx) => (
-              <div key={tx.id} className="dark-card flex items-center justify-between rounded-xl border border-purple-900/10 bg-[#14143c] px-4 py-3">
+              <div key={tx.id} className="dark-card flex items-center justify-between rounded-xl border border-[#E8EAF0] bg-white px-4 py-3">
                 <div>
                   <div className="text-sm font-medium">{tx.storeName}</div>
-                  <div className="text-xs text-zinc-500">-{tx.amount.toLocaleString()}원</div>
+                  <div className="text-xs text-[#6B7394]">-{tx.amount.toLocaleString()}원</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-bold text-emerald-400">
+                  <div className="text-sm font-bold text-[#10B981]">
                     +{tx.totalAccumulation.toLocaleString()}P
                   </div>
-                  <div className="text-xs text-zinc-500">120%</div>
+                  <div className="text-xs text-[#6B7394]">120%</div>
                 </div>
               </div>
             ))}
@@ -180,14 +180,14 @@ export default function DashboardPage() {
       </div>
 
       {/* 비선형공식 설명 배너 */}
-      <div className="dark-card mx-5 mt-5 rounded-2xl border border-purple-900/20 bg-gradient-to-r from-purple-900/20 to-cyan-900/20 p-5">
-        <div className="text-sm font-bold text-purple-300">비선형공식이란?</div>
-        <div className="mt-1 text-xs leading-relaxed dark-text-muted text-zinc-400">
+      <div className="dark-card mx-5 mt-5 rounded-2xl border border-[#E8EAF0] bg-gradient-to-r from-[#3B4CCA]/8 to-[#3B4CCA]/5 p-5">
+        <div className="text-sm font-bold text-[#3B4CCA]">비선형공식이란?</div>
+        <div className="mt-1 text-xs leading-relaxed dark-text-muted text-[#6B7394]">
           신용카드 결제 → 다랜드가 지출 인식 →<br />
-          비선형공식 → 120% 증액 → <span className="text-cyan-400 font-bold">다랜드 내 계좌에 적립</span><br />
+          비선형공식 → 120% 증액 → <span className="text-[#3B4CCA] font-bold">다랜드 내 계좌에 적립</span><br />
           적립된 포인트는 등록된 은행계좌로 출금 가능!
         </div>
-        <Link href="/engine" className="mt-3 inline-block text-xs text-purple-400 hover:underline">
+        <Link href="/engine" className="mt-3 inline-block text-xs text-[#3B4CCA] hover:underline">
           자세히 알아보기 &rarr;
         </Link>
       </div>
@@ -196,22 +196,22 @@ export default function DashboardPage() {
       <div className="mx-5 mt-3 grid grid-cols-2 gap-3">
         <Link
           href="/cms-register"
-          className="dark-card flex items-center gap-3 rounded-xl border border-cyan-900/20 bg-[#14143c] p-4 transition-colors hover:border-cyan-500/40"
+          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
         >
           <span className="text-2xl">🔄</span>
           <div>
             <div className="text-sm font-bold">CMS 가입센터</div>
-            <div className="text-xs dark-text-muted text-zinc-500">결제수단 등록</div>
+            <div className="text-xs dark-text-muted text-[#6B7394]">결제수단 등록</div>
           </div>
         </Link>
         <Link
           href="/receipt-extract"
-          className="dark-card flex items-center gap-3 rounded-xl border border-cyan-900/20 bg-[#14143c] p-4 transition-colors hover:border-cyan-500/40"
+          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
         >
           <span className="text-2xl">🧾</span>
           <div>
             <div className="text-sm font-bold">영수증 자동추출</div>
-            <div className="text-xs dark-text-muted text-zinc-500">CMS 자동인식</div>
+            <div className="text-xs dark-text-muted text-[#6B7394]">CMS 자동인식</div>
           </div>
         </Link>
       </div>
@@ -220,22 +220,22 @@ export default function DashboardPage() {
       <div className="mx-5 mt-3 grid grid-cols-2 gap-3">
         <Link
           href="/simulation"
-          className="dark-card flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
+          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
         >
           <span className="text-2xl">🎮</span>
           <div>
             <div className="text-sm font-bold">마을 시뮬레이션</div>
-            <div className="text-xs dark-text-muted text-zinc-500">게임으로 체험</div>
+            <div className="text-xs dark-text-muted text-[#6B7394]">게임으로 체험</div>
           </div>
         </Link>
         <Link
           href="/engine"
-          className="dark-card flex items-center gap-3 rounded-xl border border-purple-900/20 bg-[#14143c] p-4 transition-colors hover:border-purple-500/40"
+          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
         >
           <span className="text-2xl">⚙️</span>
           <div>
             <div className="text-sm font-bold">엔진 설명서</div>
-            <div className="text-xs dark-text-muted text-zinc-500">공식 원리 보기</div>
+            <div className="text-xs dark-text-muted text-[#6B7394]">공식 원리 보기</div>
           </div>
         </Link>
       </div>

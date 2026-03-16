@@ -23,9 +23,9 @@ export default function CardPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
         <h1 className="text-lg font-bold">비선형카드</h1>
-        <p className="text-xs dark-text-muted text-zinc-500">쓸수록 쌓이는 120%</p>
+        <p className="text-xs dark-text-muted text-[#6B7394]">쓸수록 쌓이는 120%</p>
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-6">
@@ -37,18 +37,18 @@ export default function CardPage() {
               style={{ backfaceVisibility: "hidden", background: "linear-gradient(135deg, #1a0a3e 0%, #4a1a8a 40%, #0a2a5e 100%)", boxShadow: "0 20px 40px rgba(168, 85, 247, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
               <div className="flex items-center justify-between">
                 <div className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-lg font-black text-transparent">다랜드</div>
-                <div className="text-xs text-purple-300/60">NONLINEAR</div>
+                <div className="text-xs text-[#3B4CCA]/60">NONLINEAR</div>
               </div>
               <div className="mt-4 h-8 w-11 rounded" style={{ background: "linear-gradient(135deg, #ffd700 0%, #daa520 50%, #b8860b 100%)" }} />
               <div className="mt-4 text-base font-bold tracking-[0.2em] text-white/80">**** **** **** 1215</div>
               <div className="mt-2 flex items-end justify-between">
                 <div>
-                  <div className="text-[0.55rem] uppercase text-purple-300/50">CARD HOLDER</div>
+                  <div className="text-[0.55rem] uppercase text-[#3B4CCA]/50">CARD HOLDER</div>
                   <div className="text-sm font-bold text-white/90">{userName}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[0.55rem] uppercase text-purple-300/50">비선형신용카드</div>
-                  <div className="text-sm font-bold text-cyan-400">120%</div>
+                  <div className="text-[0.55rem] uppercase text-[#3B4CCA]/50">비선형신용카드</div>
+                  <div className="text-sm font-bold text-[#3B4CCA]">120%</div>
                 </div>
               </div>
             </div>
@@ -56,9 +56,9 @@ export default function CardPage() {
               style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", background: "linear-gradient(135deg, #0a0a2e 0%, #1a1a4e 50%, #0d0d30 100%)", boxShadow: "0 20px 40px rgba(168, 85, 247, 0.3)" }}>
               <div className="mt-6 h-10 w-full" style={{ background: "rgba(0,0,0,0.6)" }} />
               <div className="p-5">
-                <div className="text-[0.55rem] text-zinc-500">CVV</div>
+                <div className="text-[0.55rem] text-[#6B7394]">CVV</div>
                 <div className="mt-1 inline-block rounded bg-white/90 px-3 py-1 text-sm font-bold text-black">***</div>
-                <div className="mt-4 text-[0.55rem] leading-relaxed text-zinc-500">
+                <div className="mt-4 text-[0.55rem] leading-relaxed text-[#6B7394]">
                   이 카드는 비선형공식 기반 신용카드입니다.<br />
                   결제 금액의 120%가 포인트로 적립됩니다.<br />
                   본인 충전데이터에서 차감 후 비선형공식 분배됩니다.
@@ -68,20 +68,20 @@ export default function CardPage() {
           </div>
         </div>
 
-        <p className="mb-6 text-center text-xs text-zinc-600">카드를 탭하면 뒤집을 수 있어요</p>
+        <p className="mb-6 text-center text-xs text-[#9CA3C1]">카드를 탭하면 뒤집을 수 있어요</p>
 
         <div className="mb-4 rounded-2xl border border-cyan-500/20 p-5 text-center"
           style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(168, 85, 247, 0.05))" }}>
-          <div className="text-xs text-zinc-500">다랜드 내 계좌 잔액</div>
-          <div className="mt-1 text-4xl font-black text-cyan-400">{balance.toLocaleString()}P</div>
-          <div className="mt-1 text-xs text-zinc-500">= {balance.toLocaleString()}원 상당 (1P = 1원)</div>
-          <a href="/withdraw" className="mt-3 inline-flex items-center gap-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-4 py-1.5 text-xs font-bold text-cyan-400 hover:bg-cyan-500/20 transition-colors">
+          <div className="text-xs text-[#6B7394]">다랜드 내 계좌 잔액</div>
+          <div className="mt-1 text-4xl font-black text-[#3B4CCA]">{balance.toLocaleString()}P</div>
+          <div className="mt-1 text-xs text-[#6B7394]">= {balance.toLocaleString()}원 상당 (1P = 1원)</div>
+          <a href="/withdraw" className="mt-3 inline-flex items-center gap-1 rounded-full bg-[#3B4CCA]/8 border border-[#3B4CCA]/20 px-4 py-1.5 text-xs font-bold text-[#3B4CCA] hover:bg-[#3B4CCA]/12 transition-colors">
             🏦 내 은행계좌로 출금
           </a>
         </div>
 
         <div className="space-y-3">
-          <div className="text-sm font-bold text-zinc-400">비선형카드 특징</div>
+          <div className="text-sm font-bold text-[#6B7394]">비선형카드 특징</div>
           {[
             { icon: "💳", title: "신용카드 결제 → 120% 적립", desc: "어디서든 신용카드로 결제하면 다랜드가 지출을 인식하고, 120%가 다랜드 내 계좌에 적립됩니다.", color: "#06b6d4" },
             { icon: "🧾", title: "지출데이터 단말기 증명", desc: "영수증이 지출데이터 단말기를 통해 자동으로 증명되어 비선형공식에 입력됩니다.", color: "#a855f7" },
@@ -95,7 +95,7 @@ export default function CardPage() {
                 style={{ background: item.color + "20" }}>{item.icon}</div>
               <div>
                 <div className="text-sm font-bold" style={{ color: item.color }}>{item.title}</div>
-                <div className="mt-0.5 text-xs text-zinc-400">{item.desc}</div>
+                <div className="mt-0.5 text-xs text-[#6B7394]">{item.desc}</div>
               </div>
             </div>
           ))}
@@ -103,7 +103,7 @@ export default function CardPage() {
 
         <div className="mt-6 rounded-2xl border border-purple-500/20 p-5"
           style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
-          <div className="mb-3 text-sm font-bold text-purple-400">비선형카드 결제 흐름</div>
+          <div className="mb-3 text-sm font-bold text-[#3B4CCA]">비선형카드 결제 흐름</div>
           <div className="space-y-3">
             {[
               { step: "1", text: "신용카드로 어디서든 결제", sub: "예: 50,000원 결제" },
@@ -119,7 +119,7 @@ export default function CardPage() {
                 </div>
                 <div>
                   <div className="text-sm font-bold">{s.text}</div>
-                  <div className="text-xs text-zinc-500">{s.sub}</div>
+                  <div className="text-xs text-[#6B7394]">{s.sub}</div>
                 </div>
               </div>
             ))}

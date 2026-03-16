@@ -124,9 +124,9 @@ export default function EnginePage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
         <h1 className="text-lg font-bold">비선형공식 엔진</h1>
-        <p className="text-xs dark-text-muted text-zinc-500">120% 적립의 원리</p>
+        <p className="text-xs dark-text-muted text-[#6B7394]">120% 적립의 원리</p>
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-6">
@@ -134,7 +134,7 @@ export default function EnginePage() {
         {activeStep === -1 && !showFormula && (
           <button
             onClick={goNext}
-            className="mb-6 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 py-4 text-base font-bold text-white shadow-lg shadow-purple-500/20 transition-transform hover:scale-[1.02] active:scale-95"
+            className="mb-6 w-full rounded-2xl bg-[#FFB800] text-[#1A1F36] py-4 text-base font-bold text-white shadow-lg shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95"
           >
             비선형공식 실행하기
           </button>
@@ -150,15 +150,15 @@ export default function EnginePage() {
                 style={{ background: i <= activeStep ? "linear-gradient(90deg, #a855f7, #06b6d4)" : "rgba(255,255,255,0.1)" }}
               />
             ))}
-            <span className="ml-1 text-xs text-zinc-500">{activeStep + 1}/{STEPS.length}</span>
+            <span className="ml-1 text-xs text-[#6B7394]">{activeStep + 1}/{STEPS.length}</span>
           </div>
         )}
 
         {/* 인풋 표시 */}
         {activeStep >= 0 && (
-          <div className="mb-4 rounded-2xl border border-cyan-500/30 p-4 text-center dark-card bg-[#14143c]">
-            <div className="text-xs dark-text-muted text-zinc-500">입력</div>
-            <div className="mt-1 text-2xl font-black text-cyan-400">신용카드 10,000원 결제</div>
+          <div className="mb-4 rounded-2xl border border-[#3B4CCA]/20 p-4 text-center dark-card bg-white">
+            <div className="text-xs dark-text-muted text-[#6B7394]">입력</div>
+            <div className="mt-1 text-2xl font-black text-[#3B4CCA]">신용카드 10,000원 결제</div>
           </div>
         )}
 
@@ -204,7 +204,7 @@ export default function EnginePage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 text-xs dark-text-muted text-zinc-500">{step.desc}</p>
+                  <p className="mt-0.5 text-xs dark-text-muted text-[#6B7394]">{step.desc}</p>
                   {i === activeStep && (
                     <>
                       <div
@@ -220,7 +220,7 @@ export default function EnginePage() {
                       {!showFormula && (
                         <button
                           onClick={goNext}
-                          className="mt-3 w-full rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 py-3 text-sm font-bold text-white shadow-md shadow-purple-500/20 transition-transform hover:scale-[1.02] active:scale-95"
+                          className="mt-3 w-full rounded-xl bg-[#FFB800] text-[#1A1F36] py-3 text-sm font-bold text-white shadow-md shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95"
                         >
                           {i < STEPS.length - 1 ? "다음 단계 →" : "최종 결과 보기 →"}
                         </button>
@@ -240,7 +240,7 @@ export default function EnginePage() {
 
         {/* 처음부터 다시 */}
         {showFormula && (
-          <button onClick={reset} className="mt-4 w-full rounded-2xl border border-purple-500/30 py-3 text-sm font-bold text-purple-400">
+          <button onClick={reset} className="mt-4 w-full rounded-2xl border border-purple-500/30 py-3 text-sm font-bold text-[#3B4CCA]">
             처음부터 다시 보기
           </button>
         )}
@@ -249,51 +249,51 @@ export default function EnginePage() {
         {showFormula && (
           <div className="mt-6 rounded-2xl border border-purple-500/30 p-6 text-center"
             style={{ background: "linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))" }}>
-            <div className="text-sm font-bold text-purple-400">비선형공식 요약</div>
+            <div className="text-sm font-bold text-[#3B4CCA]">비선형공식 요약</div>
             <div className="mt-4 space-y-2 text-sm">
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">신용카드 결제</span>
-                <span className="font-bold text-rose-400">10,000원</span>
+                <span className="dark-text-muted text-[#6B7394]">신용카드 결제</span>
+                <span className="font-bold text-[#EF4444]">10,000원</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">지출데이터 증명</span>
-                <span className="font-bold text-cyan-400">✅ 완료</span>
+                <span className="dark-text-muted text-[#6B7394]">지출데이터 증명</span>
+                <span className="font-bold text-[#3B4CCA]">✅ 완료</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">충전데이터 차감</span>
-                <span className="font-bold text-rose-400">-10,000P</span>
+                <span className="dark-text-muted text-[#6B7394]">충전데이터 차감</span>
+                <span className="font-bold text-[#EF4444]">-10,000P</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">A1: 본인 적립 (50%)</span>
+                <span className="dark-text-muted text-[#6B7394]">A1: 본인 적립 (50%)</span>
                 <span className="font-bold text-amber-400">5,000P</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">B1: 회원 분배 (50%)</span>
+                <span className="dark-text-muted text-[#6B7394]">B1: 회원 분배 (50%)</span>
                 <span className="font-bold text-amber-400">5,000P</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">멤버십 풀 (x10)</span>
-                <span className="font-bold text-cyan-400">50,000P</span>
+                <span className="dark-text-muted text-[#6B7394]">멤버십 풀 (x10)</span>
+                <span className="font-bold text-[#3B4CCA]">50,000P</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">이탈모드 → 결합모드</span>
+                <span className="dark-text-muted text-[#6B7394]">이탈모드 → 결합모드</span>
                 <span className="font-bold text-amber-400">C1:4x → 결합</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">a→f 분배 체인</span>
-                <span className="font-bold text-purple-400">500M = b+c+d+e+f</span>
+                <span className="dark-text-muted text-[#6B7394]">a→f 분배 체인</span>
+                <span className="font-bold text-[#3B4CCA]">500M = b+c+d+e+f</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">광고주 적립</span>
+                <span className="dark-text-muted text-[#6B7394]">광고주 적립</span>
                 <span className="font-bold text-orange-400">지출비의 5%</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">보정모드 + 펀드존</span>
-                <span className="font-bold text-cyan-400">120% (원금+20%)</span>
+                <span className="dark-text-muted text-[#6B7394]">보정모드 + 펀드존</span>
+                <span className="font-bold text-[#3B4CCA]">120% (원금+20%)</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-black/10 px-4 py-2">
-                <span className="dark-text-muted text-zinc-500">회원 분배</span>
-                <span className="font-bold text-emerald-400">모두 120%</span>
+                <span className="dark-text-muted text-[#6B7394]">회원 분배</span>
+                <span className="font-bold text-[#10B981]">모두 120%</span>
               </div>
               <div className="mt-3 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
               <div className="flex items-center justify-between px-4 py-3">
@@ -305,13 +305,13 @@ export default function EnginePage() {
               </div>
             </div>
 
-            <div className="mt-5 rounded-xl bg-black/10 p-4 text-left text-xs leading-relaxed dark-text-muted text-zinc-400">
-              <div className="mb-2 text-sm font-bold text-purple-300">핵심 원리</div>
+            <div className="mt-5 rounded-xl bg-black/10 p-4 text-left text-xs leading-relaxed dark-text-muted text-[#6B7394]">
+              <div className="mb-2 text-sm font-bold text-[#3B4CCA]">핵심 원리</div>
               <p>다랜드에는 가맹점이 없습니다. <strong>모두가 사용자</strong>입니다.</p>
               <p className="mt-1">사용자가 신용카드로 결제하면 지출데이터 단말기가 증명하고, 본인 충전데이터에서 차감된 금액이 비선형공식으로 분배되어 120% 증액 적립됩니다.</p>
               <p className="mt-1">회원 소비지출의 5%가 가입시킨 광고주에게 적립됩니다. 이로서 <strong>데이터에 의한 기본소득</strong>이 창출됩니다.</p>
               <p className="mt-1">이 지출금액은 다른 멤버십 회원들에게도 전달되어, 그들도 120% 적립을 받습니다.</p>
-              <p className="mt-2 text-center font-bold text-purple-400">
+              <p className="mt-2 text-center font-bold text-[#3B4CCA]">
                 &ldquo;항아리 속의 물 총량은 같다. 바가지만 바뀔 뿐.&rdquo;
               </p>
             </div>

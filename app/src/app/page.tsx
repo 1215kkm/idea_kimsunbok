@@ -22,7 +22,7 @@ export default function LoginPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg text-zinc-500">로딩 중...</div>
+        <div className="text-lg text-[#6B7394]">로딩 중...</div>
       </div>
     );
   }
@@ -56,11 +56,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6">
       {/* 로고 */}
-      <div className="mb-2 text-sm tracking-widest dark-text-muted text-zinc-500">비선형공식 리워드 플랫폼</div>
-      <h1 className="mb-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-rose-400 bg-clip-text text-5xl font-black text-transparent">
+      <div className="mb-2 text-sm tracking-widest dark-text-muted text-[#6B7394]">비선형공식 리워드 플랫폼</div>
+      <h1 className="mb-1 text-[#3B4CCA] text-5xl font-black">
         다랜드
       </h1>
-      <p className="mb-10 text-sm dark-text-muted text-zinc-500">쓸수록 쌓이는 120%의 마법</p>
+      <p className="mb-10 text-sm dark-text-muted text-[#6B7394]">쓸수록 쌓이는 120%의 마법</p>
 
       {/* 폼 */}
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
@@ -71,7 +71,7 @@ export default function LoginPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#14143c] px-4 py-3.5 text-sm placeholder-zinc-500 outline-none focus:border-purple-500"
+            className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3.5 text-sm placeholder-[#9CA3C1] outline-none focus:border-[#3B4CCA]"
           />
         )}
         <input
@@ -80,7 +80,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#14143c] px-4 py-3.5 text-sm placeholder-zinc-500 outline-none focus:border-purple-500"
+          className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3.5 text-sm placeholder-[#9CA3C1] outline-none focus:border-[#3B4CCA]"
         />
         <input
           type="password"
@@ -88,15 +88,15 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#14143c] px-4 py-3.5 text-sm placeholder-zinc-500 outline-none focus:border-purple-500"
+          className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3.5 text-sm placeholder-[#9CA3C1] outline-none focus:border-[#3B4CCA]"
         />
 
-        {error && <p className="text-center text-sm text-rose-400">{error}</p>}
+        {error && <p className="text-center text-sm text-[#EF4444]">{error}</p>}
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-500/20 transition-transform hover:scale-[1.02] disabled:opacity-50"
+          className="w-full rounded-xl bg-[#FFB800] py-3.5 text-sm font-bold text-[#1A1F36] shadow-lg shadow-[#FFB800]/30 transition-transform hover:scale-[1.02] hover:bg-[#E5A600] disabled:opacity-50"
         >
           {submitting ? "처리 중..." : isSignUp ? "회원가입" : "로그인"}
         </button>
@@ -104,7 +104,7 @@ export default function LoginPage() {
 
       <button
         onClick={() => { setIsSignUp(!isSignUp); setError(""); }}
-        className="mt-6 text-sm dark-text-muted text-zinc-500 hover:text-purple-400"
+        className="mt-6 text-sm dark-text-muted text-[#6B7394] hover:text-[#3B4CCA]"
       >
         {isSignUp ? "이미 계정이 있으신가요? 로그인" : "계정이 없으신가요? 회원가입"}
       </button>
@@ -112,9 +112,9 @@ export default function LoginPage() {
       {/* 데모 로그인 */}
       <div className="mt-8 w-full max-w-sm">
         <div className="flex items-center gap-3 mb-4">
-          <div className="h-px flex-1 bg-zinc-700" />
-          <span className="text-xs text-zinc-500">또는</span>
-          <div className="h-px flex-1 bg-zinc-700" />
+          <div className="h-px flex-1 bg-[#E8EAF0]" />
+          <span className="text-xs text-[#6B7394]">또는</span>
+          <div className="h-px flex-1 bg-[#E8EAF0]" />
         </div>
         <button
           onClick={async () => {
@@ -129,11 +129,11 @@ export default function LoginPage() {
             }
           }}
           disabled={submitting}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-800/50 py-3.5 text-sm font-medium text-zinc-300 transition-all hover:border-purple-500/50 hover:bg-zinc-800 hover:text-white disabled:opacity-50"
+          className="w-full rounded-xl border border-[#E8EAF0] bg-[#F0F2F8] py-3.5 text-sm font-medium text-[#6B7394] transition-all hover:border-[#3B4CCA]/30 hover:bg-[#F0F2F8] hover:text-[#1A1F36] disabled:opacity-50"
         >
           🎮 데모 아이디로 체험하기
         </button>
-        <p className="mt-2 text-center text-xs text-zinc-600">가입 없이 바로 둘러볼 수 있어요</p>
+        <p className="mt-2 text-center text-xs text-[#9CA3C1]">가입 없이 바로 둘러볼 수 있어요</p>
       </div>
     </div>
   );

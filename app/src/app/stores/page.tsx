@@ -154,28 +154,28 @@ export default function StoresPage() {
   };
 
   if (loading || !user) {
-    return <div className="flex min-h-screen items-center justify-center text-zinc-500">로딩 중...</div>;
+    return <div className="flex min-h-screen items-center justify-center text-[#6B7394]">로딩 중...</div>;
   }
 
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
         <h1 className="text-lg font-bold">지출데이터 등록</h1>
-        <p className="text-xs dark-text-muted text-zinc-500">신용카드 결제 → 지출데이터 단말기 증명 → 120% 적립</p>
+        <p className="text-xs dark-text-muted text-[#6B7394]">신용카드 결제 → 지출데이터 단말기 증명 → 120% 적립</p>
       </div>
 
       {/* 안내 배너 */}
       <div className="mx-5 mt-4 rounded-2xl border border-cyan-500/20 p-4"
         style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}>
-        <div className="flex items-center gap-2 text-sm font-bold text-cyan-400">
+        <div className="flex items-center gap-2 text-sm font-bold text-[#3B4CCA]">
           <span>💡</span> 이용 방법
         </div>
-        <div className="mt-2 space-y-1 text-xs text-zinc-400 leading-relaxed">
+        <div className="mt-2 space-y-1 text-xs text-[#6B7394] leading-relaxed">
           <p>1. 어디서든 <strong className="text-white">신용카드로 결제</strong>합니다</p>
           <p>2. <strong className="text-white">지출데이터 단말기</strong>가 영수증을 증명합니다</p>
           <p>3. 본인 충전데이터에서 지출금액이 차감됩니다</p>
-          <p>4. 비선형공식으로 <strong className="text-cyan-400">120% 증액</strong> → <strong className="text-emerald-400">다랜드 내 계좌에 적립</strong></p>
+          <p>4. 비선형공식으로 <strong className="text-[#3B4CCA]">120% 증액</strong> → <strong className="text-[#10B981]">다랜드 내 계좌에 적립</strong></p>
           <p>5. 지출비의 <strong className="text-orange-400">5%가 가입시킨 광고주</strong>에게 적립</p>
           <p>6. 적립 포인트를 <strong className="text-white">내 은행계좌로 출금</strong> 가능 (1P = 1원)</p>
           <p>7. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
@@ -184,18 +184,18 @@ export default function StoresPage() {
 
       {/* 카테고리 선택 */}
       <div className="px-5 pt-4">
-        <div className="text-xs font-bold uppercase tracking-wider text-purple-400 mb-3">판매자(사업주) & 소비자 지출종류</div>
+        <div className="text-xs font-bold uppercase tracking-wider text-[#3B4CCA] mb-3">판매자(사업주) & 소비자 지출종류</div>
       </div>
       <div className="grid grid-cols-4 gap-2 px-5">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.id}
             onClick={() => { setModal({ category: cat }); setAmount(""); setMemo(""); }}
-            className="dark-card flex flex-col items-center gap-2 rounded-2xl border border-purple-900/20 bg-[#14143c] p-4 text-center transition-all hover:border-purple-500/40 hover:-translate-y-1 active:scale-95"
+            className="dark-card flex flex-col items-center gap-2 rounded-2xl border border-[#E8EAF0] bg-white p-4 text-center transition-all hover:border-[#3B4CCA]/30 hover:-translate-y-1 active:scale-95"
           >
             <span className="text-3xl">{cat.icon}</span>
             <div className="text-sm font-bold">{cat.name}</div>
-            <div className="text-[10px] text-zinc-500">{cat.examples}</div>
+            <div className="text-[10px] text-[#6B7394]">{cat.examples}</div>
           </button>
         ))}
       </div>
@@ -203,46 +203,46 @@ export default function StoresPage() {
       {/* 지출 등록 모달 */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-6 backdrop-blur-sm">
-          <div className="dark-modal-bg w-full max-w-sm rounded-2xl border border-purple-900/40 bg-gradient-to-b from-[#1a1a4e] to-[#0d0d30] p-6">
+          <div className="dark-modal-bg w-full max-w-sm rounded-2xl border border-purple-900/40 bg-gradient-to-b from-[#3B4CCA] to-[#2D3A8C] p-6">
             <div className="text-center">
               <div className="text-5xl">{modal.category.icon}</div>
               <h2 className="mt-2 text-xl font-bold">{modal.category.name} 지출 등록</h2>
-              <p className="text-xs text-zinc-500 mt-1">신용카드 결제 영수증 기준</p>
+              <p className="text-xs text-[#6B7394] mt-1">신용카드 결제 영수증 기준</p>
             </div>
 
             <div className="mt-5 space-y-3">
               {/* 금액 입력 */}
               <div>
-                <label className="text-xs text-zinc-500 mb-1 block">결제 금액 (원)</label>
+                <label className="text-xs text-[#6B7394] mb-1 block">결제 금액 (원)</label>
                 <input
                   type="number"
                   placeholder="결제 금액 입력"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#0d0d30] px-4 py-3 text-lg font-bold text-center placeholder-zinc-600 outline-none focus:border-purple-500/50"
+                  className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-lg font-bold text-center placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50"
                 />
               </div>
 
               {/* 메모 입력 */}
               <div>
-                <label className="text-xs text-zinc-500 mb-1 block">메모 (선택)</label>
+                <label className="text-xs text-[#6B7394] mb-1 block">메모 (선택)</label>
                 <input
                   type="text"
                   placeholder={modal.category.examples}
                   value={memo}
                   onChange={(e) => setMemo(e.target.value)}
-                  className="dark-input w-full rounded-xl border border-purple-900/30 bg-[#0d0d30] px-4 py-2.5 text-sm placeholder-zinc-600 outline-none focus:border-purple-500/50"
+                  className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-2.5 text-sm placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50"
                 />
               </div>
 
               {/* 미리보기 */}
               {amount && parseInt(amount) > 0 && (
-                <div className="rounded-xl bg-purple-900/20 border border-purple-500/20 p-3 text-center">
-                  <div className="text-xs text-zinc-500">비선형공식 적용 시</div>
-                  <div className="text-2xl font-black text-emerald-400 mt-1">
+                <div className="rounded-xl bg-[#3B4CCA]/8 border border-purple-500/20 p-3 text-center">
+                  <div className="text-xs text-[#6B7394]">비선형공식 적용 시</div>
+                  <div className="text-2xl font-black text-[#10B981] mt-1">
                     +{Math.round(parseInt(amount) * 1.2).toLocaleString()}P
                   </div>
-                  <div className="text-xs text-purple-400 mt-1">120% 증액 적립</div>
+                  <div className="text-xs text-[#3B4CCA] mt-1">120% 증액 적립</div>
                 </div>
               )}
 
@@ -253,7 +253,7 @@ export default function StoresPage() {
                   if (a > 0) handleRegister(modal.category, a);
                 }}
                 disabled={processing || !amount || parseInt(amount) <= 0}
-                className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 py-3 text-sm font-bold text-white disabled:opacity-50"
+                className="w-full rounded-xl bg-[#FFB800] text-[#1A1F36] py-3 text-sm font-bold text-white disabled:opacity-50"
               >
                 {processing ? "지출데이터 단말기 증명 중..." : "지출데이터 등록"}
               </button>
@@ -261,7 +261,7 @@ export default function StoresPage() {
 
             <button
               onClick={() => { setModal(null); setAmount(""); setMemo(""); }}
-              className="mt-4 w-full text-center text-sm text-zinc-500 hover:text-zinc-300"
+              className="mt-4 w-full text-center text-sm text-[#6B7394] hover:text-[#6B7394]"
             >
               취소
             </button>
@@ -274,13 +274,13 @@ export default function StoresPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-6 backdrop-blur-md">
           <div className="w-full max-w-sm text-center">
             <div className="text-4xl">✅</div>
-            <div className="mt-2 text-sm text-zinc-400">지출데이터 증명 → 다랜드 내 계좌에 적립 완료</div>
+            <div className="mt-2 text-sm text-[#6B7394]">지출데이터 증명 → 다랜드 내 계좌에 적립 완료</div>
 
-            <div className="mt-2 text-lg font-bold text-rose-400">
+            <div className="mt-2 text-lg font-bold text-[#EF4444]">
               {result.category.icon} {result.category.name} -{result.amount.toLocaleString()}원
             </div>
 
-            <div className="my-4 text-xs text-purple-400">── 비선형공식 실행 ──</div>
+            <div className="my-4 text-xs text-[#3B4CCA]">── 비선형공식 실행 ──</div>
 
             <div className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-6xl font-black text-transparent">
               +{result.earned.toLocaleString()}P
@@ -290,39 +290,39 @@ export default function StoresPage() {
               120% 증액 적립!
             </div>
 
-            <div className="mt-3 text-xs text-zinc-500">
+            <div className="mt-3 text-xs text-[#6B7394]">
               원금 {result.amount.toLocaleString()}P + 보너스 {result.bonus.toLocaleString()}P
             </div>
 
             {/* 다랜드 계좌 안내 */}
-            <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 text-xs text-zinc-400">
-              <div className="text-cyan-400 font-bold mb-1">🏦 다랜드 내 계좌에 적립됨</div>
+            <div className="mt-4 rounded-xl border border-cyan-500/20 bg-[#3B4CCA]/5 p-3 text-xs text-[#6B7394]">
+              <div className="text-[#3B4CCA] font-bold mb-1">🏦 다랜드 내 계좌에 적립됨</div>
               <p>적립된 포인트는 등록된 <span className="text-white font-bold">내 은행계좌로 출금</span>할 수 있습니다.</p>
               <p>1P = 1원 (출금 수수료 무료)</p>
             </div>
 
             {/* 광고주 적립 안내 */}
-            <div className="mt-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 text-xs text-zinc-400">
+            <div className="mt-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 text-xs text-[#6B7394]">
               <div className="text-orange-400 font-bold mb-1">📢 광고주 적립 (5%)</div>
               <p>이 지출의 5% = <span className="text-orange-400 font-bold">{result.advertiserReward.toLocaleString()}P</span>가 가입시킨 광고주에게 적립됩니다.</p>
               <p>광고주가 회원을 많이 가입시킬수록 더 많은 금액이 지속 적립!</p>
             </div>
 
             {/* 멤버십 분배 안내 */}
-            <div className="mt-2 rounded-xl border border-purple-500/20 bg-purple-900/10 p-3 text-xs text-zinc-400">
-              <div className="text-purple-400 font-bold mb-1">🔄 멤버십 회원 분배</div>
+            <div className="mt-2 rounded-xl border border-purple-500/20 bg-purple-900/10 p-3 text-xs text-[#6B7394]">
+              <div className="text-[#3B4CCA] font-bold mb-1">🔄 멤버십 회원 분배</div>
               <p>이 지출금액이 {result.memberCount}명의 멤버십 회원에게 전달됩니다.</p>
-              <p>각 회원도 본인 적립금에서 차감 → 비선형공식 → <span className="text-cyan-400 font-bold">120% 적립</span></p>
+              <p>각 회원도 본인 적립금에서 차감 → 비선형공식 → <span className="text-[#3B4CCA] font-bold">120% 적립</span></p>
             </div>
 
             {/* 음성 알림 표시 */}
-            <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2 text-[10px] text-zinc-500">
+            <div className="mt-3 rounded-xl border border-[#10B981]/20 bg-emerald-500/5 p-2 text-[10px] text-[#6B7394]">
               🔊 신호음과 함께 &quot;{result.category.name} {result.amount.toLocaleString()}원에 120% 적립되었습니다&quot; 음성 안내
             </div>
 
             <button
               onClick={() => setResult(null)}
-              className="mt-4 rounded-full border border-purple-500/40 bg-purple-900/20 px-8 py-2.5 text-sm text-white hover:bg-purple-900/40"
+              className="mt-4 rounded-full border border-purple-500/40 bg-[#3B4CCA]/8 px-8 py-2.5 text-sm text-white hover:bg-purple-900/40"
             >
               확인
             </button>

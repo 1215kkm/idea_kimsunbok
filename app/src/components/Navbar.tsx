@@ -18,7 +18,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="dark-navbar fixed bottom-0 left-0 right-0 z-50 border-t border-purple-900/30 bg-[#0d0d30]/95 backdrop-blur-md">
+    <nav className="dark-navbar fixed bottom-0 left-0 right-0 z-50 border-t border-[#E8EAF0] bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-md items-center justify-around py-2">
         {links.map((l) => (
           <Link
@@ -26,8 +26,8 @@ export default function Navbar() {
             href={l.href}
             className={`flex flex-col items-center gap-0.5 px-4 py-1 text-xs transition-colors ${
               pathname === l.href
-                ? "text-purple-400"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "text-[#3B4CCA] font-bold"
+                : "text-[#6B7394] hover:text-[#3B4CCA]"
             }`}
           >
             <span className="text-xl">{l.icon}</span>
@@ -36,7 +36,7 @@ export default function Navbar() {
         ))}
         <button
           onClick={signOut}
-          className="flex flex-col items-center gap-0.5 px-4 py-1 text-xs text-zinc-500 hover:text-zinc-300"
+          className="flex flex-col items-center gap-0.5 px-4 py-1 text-xs text-[#6B7394] hover:text-[#3B4CCA]"
         >
           <span className="text-xl">👋</span>
           로그아웃

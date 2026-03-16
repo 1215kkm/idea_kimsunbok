@@ -20,9 +20,9 @@ export default function SimulationPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
         <h1 className="text-lg font-bold">다랜드 마을 시뮬레이션</h1>
-        <p className="text-xs dark-text-muted text-zinc-500">비선형공식 체험 게임</p>
+        <p className="text-xs dark-text-muted text-[#6B7394]">비선형공식 체험 게임</p>
       </div>
 
       {/* 게임 iframe */}

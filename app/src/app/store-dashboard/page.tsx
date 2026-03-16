@@ -86,12 +86,12 @@ export default function MembershipDistributionPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="dark-header border-b border-purple-900/20 bg-[#0d0d30]/80 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
         <div className="flex items-center gap-2">
           <span className="text-xl">🔄</span>
           <div>
             <h1 className="text-lg font-bold">멤버십 분배 현황</h1>
-            <p className="text-xs dark-text-muted text-zinc-500">회원간 지출데이터 전달 & 120% 적립</p>
+            <p className="text-xs dark-text-muted text-[#6B7394]">회원간 지출데이터 전달 & 120% 적립</p>
           </div>
         </div>
       </div>
@@ -102,25 +102,25 @@ export default function MembershipDistributionPage() {
           style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-lg">💡</span>
-            <div className="text-sm font-bold text-purple-400">분배 원리</div>
+            <div className="text-sm font-bold text-[#3B4CCA]">분배 원리</div>
           </div>
           <div className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            다른 회원이 신용카드로 결제하면, 그 <span className="font-bold text-cyan-400">지출금액이 멤버십 회원들에게 전달</span>됩니다.
-            전달받은 회원은 본인 적립금에서 차감 → 비선형공식 → <span className="font-bold text-emerald-400">120% 증액 적립</span>됩니다.
+            다른 회원이 신용카드로 결제하면, 그 <span className="font-bold text-[#3B4CCA]">지출금액이 멤버십 회원들에게 전달</span>됩니다.
+            전달받은 회원은 본인 적립금에서 차감 → 비선형공식 → <span className="font-bold text-[#10B981]">120% 증액 적립</span>됩니다.
           </div>
         </div>
 
         {/* 요약 카드 */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-            <div className="text-xs dark-text-muted text-zinc-500">받은 분배 적립</div>
-            <div className="mt-1 text-xl font-black text-emerald-400">+{totalReceivedAccumulation.toLocaleString()}P</div>
-            <div className="text-[10px] text-zinc-500">다른 회원 지출에서</div>
+            <div className="text-xs dark-text-muted text-[#6B7394]">받은 분배 적립</div>
+            <div className="mt-1 text-xl font-black text-[#10B981]">+{totalReceivedAccumulation.toLocaleString()}P</div>
+            <div className="text-[10px] text-[#6B7394]">다른 회원 지출에서</div>
           </div>
           <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-            <div className="text-xs dark-text-muted text-zinc-500">내 지출 → 회원 분배</div>
-            <div className="mt-1 text-xl font-black text-cyan-400">{totalSentAccumulation.toLocaleString()}P</div>
-            <div className="text-[10px] text-zinc-500">회원들에게 전달됨</div>
+            <div className="text-xs dark-text-muted text-[#6B7394]">내 지출 → 회원 분배</div>
+            <div className="mt-1 text-xl font-black text-[#3B4CCA]">{totalSentAccumulation.toLocaleString()}P</div>
+            <div className="text-[10px] text-[#6B7394]">회원들에게 전달됨</div>
           </div>
         </div>
 
@@ -162,17 +162,17 @@ export default function MembershipDistributionPage() {
               <div key={d.id} className="dark-card flex items-center justify-between rounded-xl border px-4 py-3"
                 style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-500/10 text-lg">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3B4CCA]/10 text-lg">
                     {tab === "received" ? "📥" : "📤"}
                   </div>
                   <div>
                     <div className="text-sm font-medium">
                       {tab === "received"
-                        ? <><span className="text-zinc-400">{d.userName}</span>님 지출 분배</>
-                        : <><span className="text-zinc-400">{d.categoryName}</span> 지출 → 회원 분배</>
+                        ? <><span className="text-[#6B7394]">{d.userName}</span>님 지출 분배</>
+                        : <><span className="text-[#6B7394]">{d.categoryName}</span> 지출 → 회원 분배</>
                       }
                     </div>
-                    <div className="text-xs dark-text-muted text-zinc-500">
+                    <div className="text-xs dark-text-muted text-[#6B7394]">
                       {formatDate(d)} {formatTime(d)}
                     </div>
                   </div>
@@ -180,17 +180,17 @@ export default function MembershipDistributionPage() {
                 <div className="text-right">
                   {tab === "received" ? (
                     <>
-                      <div className="text-sm font-bold text-emerald-400">
+                      <div className="text-sm font-bold text-[#10B981]">
                         +{Math.round(d.amount * 0.05 * 1.2).toLocaleString()}P
                       </div>
-                      <div className="text-[10px] text-zinc-500">120% 적립</div>
+                      <div className="text-[10px] text-[#6B7394]">120% 적립</div>
                     </>
                   ) : (
                     <>
-                      <div className="text-sm font-bold text-cyan-400">
+                      <div className="text-sm font-bold text-[#3B4CCA]">
                         {d.amount.toLocaleString()}원
                       </div>
-                      <div className="text-[10px] text-emerald-400">
+                      <div className="text-[10px] text-[#10B981]">
                         → 회원들 120% 적립
                       </div>
                     </>
@@ -204,13 +204,13 @@ export default function MembershipDistributionPage() {
         {/* 순환 다이어그램 */}
         <div className="mt-6 rounded-2xl border border-purple-500/20 p-5 text-center"
           style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
-          <div className="text-sm font-bold text-purple-400 mb-3">멤버십 분배 구조</div>
-          <div className="text-xs leading-relaxed text-zinc-400 font-mono space-y-1">
+          <div className="text-sm font-bold text-[#3B4CCA] mb-3">멤버십 분배 구조</div>
+          <div className="text-xs leading-relaxed text-[#6B7394] font-mono space-y-1">
             <p>회원A 신용카드 결제 (-10,000원)</p>
-            <p className="text-purple-400">↓ 지출데이터 단말기 증명</p>
-            <p className="text-cyan-400">↓ 비선형공식 → 회원A: +12,000P (120%)</p>
-            <p className="text-purple-400">↓ 지출금액 → 멤버십 회원들에게 전달</p>
-            <p className="text-emerald-400">↓ 회원B,C,D... 각자 적립금 차감 → 120% 적립</p>
+            <p className="text-[#3B4CCA]">↓ 지출데이터 단말기 증명</p>
+            <p className="text-[#3B4CCA]">↓ 비선형공식 → 회원A: +12,000P (120%)</p>
+            <p className="text-[#3B4CCA]">↓ 지출금액 → 멤버십 회원들에게 전달</p>
+            <p className="text-[#10B981]">↓ 회원B,C,D... 각자 적립금 차감 → 120% 적립</p>
             <p className="text-amber-400 font-bold mt-2">= 모든 사용자가 120% 증액!</p>
           </div>
         </div>

@@ -30,7 +30,7 @@ export default function FloatingControls() {
           <button
             onClick={increaseFontSize}
             disabled={fontSize >= 28}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-lg font-black shadow-lg transition-transform active:scale-90 disabled:opacity-30"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-[#10B981] text-white text-lg font-black shadow-lg transition-transform active:scale-90 disabled:opacity-30"
             title="글자 크게"
           >
             A+
@@ -40,14 +40,14 @@ export default function FloatingControls() {
           <button
             onClick={decreaseFontSize}
             disabled={fontSize <= 12}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-500 text-white text-sm font-black shadow-lg transition-transform active:scale-90 disabled:opacity-30"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EF4444] text-white text-sm font-black shadow-lg transition-transform active:scale-90 disabled:opacity-30"
             title="글자 작게"
           >
             A-
           </button>
 
           {/* 현재 크기 표시 */}
-          <div className="flex h-8 items-center justify-center rounded-full bg-black/50 px-3 text-xs text-white backdrop-blur-sm">
+          <div className="flex h-8 items-center justify-center rounded-full bg-[#1A1F36]/60 px-3 text-xs text-white backdrop-blur-sm">
             {fontSize}px
           </div>
         </div>
@@ -56,7 +56,7 @@ export default function FloatingControls() {
       {/* 메인 토글 버튼 */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 transition-all active:scale-90"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#3B4CCA] text-white shadow-xl shadow-[#3B4CCA]/15 transition-all active:scale-90"
         style={{ transform: open ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.3s" }}
       >
         <span className="text-2xl font-bold">+</span>
