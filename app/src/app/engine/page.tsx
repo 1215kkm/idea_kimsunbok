@@ -134,7 +134,7 @@ export default function EnginePage() {
         {activeStep === -1 && !showFormula && (
           <button
             onClick={goNext}
-            className="mb-6 w-full rounded-2xl bg-[#FFB800] text-[#1A1F36] py-4 text-base font-bold text-white shadow-lg shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95"
+            className="mb-6 w-full rounded-2xl bg-[#FFB800] py-4 text-base font-bold text-[#1A1F36] shadow-lg shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95"
           >
             비선형공식 실행하기
           </button>
@@ -220,7 +220,7 @@ export default function EnginePage() {
                       {!showFormula && (
                         <button
                           onClick={goNext}
-                          className="mt-3 w-full rounded-xl bg-[#FFB800] text-[#1A1F36] py-3 text-sm font-bold text-white shadow-md shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95"
+                          className="mt-3 w-full rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] shadow-md shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95"
                         >
                           {i < STEPS.length - 1 ? "다음 단계 →" : "최종 결과 보기 →"}
                         </button>

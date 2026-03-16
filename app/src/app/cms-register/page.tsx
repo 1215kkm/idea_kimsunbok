@@ -63,7 +63,7 @@ export default function CMSRegisterPage() {
               >
                 {i + 1}
               </div>
-              <span className={`text-xs ${i <= step ? "text-white" : "text-[#9CA3C1]"}`}>{label}</span>
+              <span className={`text-xs ${i <= step ? "text-[#3B4CCA] font-bold" : "text-[#9CA3C1]"}`}>{label}</span>
               {i < 2 && <div className="h-px flex-1 bg-[#F0F2F8]" />}
             </div>
           ))}
@@ -103,7 +103,7 @@ export default function CMSRegisterPage() {
             {selectedMethod && (
               <button
                 onClick={() => setStep(1)}
-                className="mt-4 w-full rounded-xl bg-[#FFB800] text-[#1A1F36] py-3 text-sm font-bold text-white"
+                className="mt-4 w-full rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36]"
               >
                 다음 단계 →
               </button>
@@ -122,14 +122,14 @@ export default function CMSRegisterPage() {
                 <label className="text-xs text-[#6B7394] mb-1 block">소비자 회원 고유번호</label>
                 <div className="flex items-center gap-2 rounded-xl border border-[#E8EAF0] bg-white px-4 py-3">
                   <span className="text-xs text-[#3B4CCA] font-mono">NL-</span>
-                  <span className="text-sm font-mono text-white">{user.uid.slice(0, 12).toUpperCase()}</span>
+                  <span className="text-sm font-mono text-[#1A1F36]">{user.uid.slice(0, 12).toUpperCase()}</span>
                   <span className="ml-auto text-[10px] text-[#10B981]">자동생성</span>
                 </div>
               </div>
 
               {/* 설명 */}
               <div className="rounded-xl bg-purple-900/10 border border-purple-500/10 p-3 text-xs text-[#6B7394] leading-relaxed space-y-2">
-                <p><strong className="text-white">비선형시스템 계좌</strong>에 소비자 회원의 고유번호에 의해 회원이 본인 계좌로 출금 가능합니다.</p>
+                <p><strong className="text-[#1A1F36]">비선형시스템 계좌</strong>에 소비자 회원의 고유번호에 의해 회원이 본인 계좌로 출금 가능합니다.</p>
                 <p>결제수단: <span className="text-[#3B4CCA]">{PAYMENT_METHODS.find(m => m.id === selectedMethod)?.name}</span></p>
               </div>
 
@@ -172,7 +172,7 @@ export default function CMSRegisterPage() {
               <button
                 onClick={() => { setStep(2); handleComplete(); }}
                 disabled={!agreed}
-                className="flex-1 rounded-xl bg-[#FFB800] text-[#1A1F36] py-3 text-sm font-bold text-white disabled:opacity-40"
+                className="flex-1 rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] disabled:opacity-40"
               >
                 가입 완료 →
               </button>
@@ -196,7 +196,7 @@ export default function CMSRegisterPage() {
                 <div className="h-px bg-[#F0F2F8]" />
                 <div className="flex justify-between">
                   <span className="text-[#6B7394]">결제수단</span>
-                  <span className="text-white font-bold">{PAYMENT_METHODS.find(m => m.id === selectedMethod)?.name}</span>
+                  <span className="text-[#1A1F36] font-bold">{PAYMENT_METHODS.find(m => m.id === selectedMethod)?.name}</span>
                 </div>
                 <div className="h-px bg-[#F0F2F8]" />
                 <div className="flex justify-between">
@@ -214,12 +214,12 @@ export default function CMSRegisterPage() {
             <div className="mt-4 rounded-xl border border-cyan-500/20 bg-[#3B4CCA]/5 p-3 text-xs text-[#6B7394] leading-relaxed">
               <p className="text-[#3B4CCA] font-bold mb-1">이용 안내</p>
               <p>소비자가 신용(현금)카드로 상품을 결제한 후 지출데이터가 소비자 단말기(스마트폰) & 은행결제계좌로 지출 영수증이 전달됩니다.</p>
-              <p className="mt-1">비선형 시스템 & CMS 자동인식하는 <strong className="text-white">영수증 금액 추출 모드</strong>에 의해 비선형시스템에 소비자 본인의 충전된 데이터에 차감하여 비선형공식 분배 알고리즘에 의해 <strong className="text-[#3B4CCA]">120%(free) 적립</strong>됩니다.</p>
+              <p className="mt-1">비선형 시스템 & CMS 자동인식하는 <strong className="text-[#1A1F36]">영수증 금액 추출 모드</strong>에 의해 비선형시스템에 소비자 본인의 충전된 데이터에 차감하여 비선형공식 분배 알고리즘에 의해 <strong className="text-[#3B4CCA]">120%(free) 적립</strong>됩니다.</p>
             </div>
 
             <button
               onClick={() => router.push("/receipt-extract")}
-              className="mt-4 w-full rounded-xl bg-[#FFB800] text-[#1A1F36] py-3 text-sm font-bold text-white"
+              className="mt-4 w-full rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36]"
             >
               영수증 자동 추출 모드 →
             </button>

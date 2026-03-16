@@ -135,7 +135,7 @@ export default function WithdrawPage() {
               </button>
             ) : (
               <button onClick={() => { setStep("register"); setSelectedBank(null); setAccountNumber(""); }}
-                className="w-full rounded-2xl bg-[#FFB800] text-[#1A1F36] py-4 text-base font-bold text-white shadow-lg shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95">
+                className="w-full rounded-2xl bg-[#FFB800] py-4 text-base font-bold text-[#1A1F36] shadow-lg shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95">
                 은행계좌 등록하기
               </button>
             )}
@@ -144,7 +144,7 @@ export default function WithdrawPage() {
             <div className="rounded-2xl border border-purple-500/20 p-4 text-xs leading-relaxed text-[#6B7394]"
               style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
               <div className="mb-2 text-sm font-bold text-[#3B4CCA]">출금 안내</div>
-              <p>1. 다랜드 내 계좌의 포인트는 <strong className="text-white">1P = 1원</strong>입니다.</p>
+              <p>1. 다랜드 내 계좌의 포인트는 <strong className="text-[#1A1F36]">1P = 1원</strong>입니다.</p>
               <p>2. 등록된 은행계좌로 출금 요청하면, 영업일 기준 1~2일 내 입금됩니다.</p>
               <p>3. 최소 출금 금액: <strong className="text-[#3B4CCA]">1,000P</strong></p>
               <p>4. 출금 수수료: <strong className="text-[#10B981]">무료</strong></p>
@@ -201,7 +201,7 @@ export default function WithdrawPage() {
 
             <button onClick={handleRegisterBank}
               disabled={!selectedBank || !accountNumber}
-              className="w-full rounded-xl bg-[#FFB800] text-[#1A1F36] py-3 text-sm font-bold text-white disabled:opacity-50">
+              className="w-full rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] disabled:opacity-50">
               계좌 등록 완료
             </button>
             <button onClick={() => setStep("main")}
@@ -316,7 +316,7 @@ export default function WithdrawPage() {
             </div>
 
             <Link href="/dashboard"
-              className="block w-full rounded-xl border border-purple-500/30 bg-[#3B4CCA]/8 py-3 text-sm font-bold text-white hover:bg-purple-900/40">
+              className="block w-full rounded-xl border border-purple-500/30 bg-[#3B4CCA]/8 py-3 text-sm font-bold text-[#3B4CCA] hover:bg-[#3B4CCA]/15">
               대시보드로 돌아가기
             </Link>
           </div>

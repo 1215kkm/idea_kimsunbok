@@ -245,7 +245,7 @@ export default function ReceiptExtractPage() {
       <div className="mx-auto max-w-lg px-5 py-6">
         {/* 접근성 안내 */}
         <div className="mb-4 rounded-xl border border-[#10B981]/20 bg-emerald-500/5 p-3 text-xs text-[#6B7394]">
-          <span className="text-[#10B981] font-bold">♿ 접근성:</span> 시각장애인/중증장애인을 위해 적립 시 <strong className="text-white">신호음 + 음성</strong>으로 &quot;{"{"}금액{"}"} 120% 적립되었습니다&quot; 알려드립니다. 음성 ON/OFF 전환 가능.
+          <span className="text-[#10B981] font-bold">♿ 접근성:</span> 시각장애인/중증장애인을 위해 적립 시 <strong className="text-[#1A1F36]">신호음 + 음성</strong>으로 &quot;{"{"}금액{"}"} 120% 적립되었습니다&quot; 알려드립니다. 음성 ON/OFF 전환 가능.
         </div>
 
         {/* 모드 선택 */}
@@ -339,7 +339,7 @@ export default function ReceiptExtractPage() {
             <canvas ref={canvasRef} className="hidden" />
             <button
               onClick={capturePhoto}
-              className="mt-4 w-full rounded-xl bg-[#FFB800] text-[#1A1F36] py-4 text-sm font-bold text-white"
+              className="mt-4 w-full rounded-xl bg-[#FFB800] py-4 text-sm font-bold text-[#1A1F36]"
             >
               📷 촬영하기
             </button>
@@ -401,7 +401,7 @@ export default function ReceiptExtractPage() {
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between text-sm">
                   <span className="text-[#6B7394]">{label}</span>
-                  <span className="font-bold text-white">{value}</span>
+                  <span className="font-bold text-[#1A1F36]">{value}</span>
                 </div>
               ))}
             </div>
@@ -418,7 +418,7 @@ export default function ReceiptExtractPage() {
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => { processReceipt(0); goToList(); }}
-                className="flex-1 rounded-xl bg-[#FFB800] text-[#1A1F36] py-3 text-sm font-bold text-white"
+                className="flex-1 rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36]"
               >
                 차감 & 120% 적립 실행
               </button>

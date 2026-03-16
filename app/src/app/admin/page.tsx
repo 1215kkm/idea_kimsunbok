@@ -209,7 +209,7 @@ export default function AdminPage() {
                   style={{ borderColor: "var(--card-border)", background: "var(--input-bg)" }}
                 />
               </div>
-              <button className="shrink-0 rounded-xl bg-[#FFB800] text-[#1A1F36] px-4 text-sm font-bold text-white">
+              <button className="shrink-0 rounded-xl bg-[#FFB800] px-4 text-sm font-bold text-[#1A1F36]">
                 + 추가
               </button>
             </div>

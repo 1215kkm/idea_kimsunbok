@@ -172,12 +172,12 @@ export default function StoresPage() {
           <span>💡</span> 이용 방법
         </div>
         <div className="mt-2 space-y-1 text-xs text-[#6B7394] leading-relaxed">
-          <p>1. 어디서든 <strong className="text-white">신용카드로 결제</strong>합니다</p>
-          <p>2. <strong className="text-white">지출데이터 단말기</strong>가 영수증을 증명합니다</p>
+          <p>1. 어디서든 <strong className="text-[#1A1F36]">신용카드로 결제</strong>합니다</p>
+          <p>2. <strong className="text-[#1A1F36]">지출데이터 단말기</strong>가 영수증을 증명합니다</p>
           <p>3. 본인 충전데이터에서 지출금액이 차감됩니다</p>
           <p>4. 비선형공식으로 <strong className="text-[#3B4CCA]">120% 증액</strong> → <strong className="text-[#10B981]">다랜드 내 계좌에 적립</strong></p>
           <p>5. 지출비의 <strong className="text-orange-400">5%가 가입시킨 광고주</strong>에게 적립</p>
-          <p>6. 적립 포인트를 <strong className="text-white">내 은행계좌로 출금</strong> 가능 (1P = 1원)</p>
+          <p>6. 적립 포인트를 <strong className="text-[#1A1F36]">내 은행계좌로 출금</strong> 가능 (1P = 1원)</p>
           <p>7. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
         </div>
       </div>
@@ -253,7 +253,7 @@ export default function StoresPage() {
                   if (a > 0) handleRegister(modal.category, a);
                 }}
                 disabled={processing || !amount || parseInt(amount) <= 0}
-                className="w-full rounded-xl bg-[#FFB800] text-[#1A1F36] py-3 text-sm font-bold text-white disabled:opacity-50"
+                className="w-full rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] disabled:opacity-50"
               >
                 {processing ? "지출데이터 단말기 증명 중..." : "지출데이터 등록"}
               </button>
@@ -297,7 +297,7 @@ export default function StoresPage() {
             {/* 다랜드 계좌 안내 */}
             <div className="mt-4 rounded-xl border border-cyan-500/20 bg-[#3B4CCA]/5 p-3 text-xs text-[#6B7394]">
               <div className="text-[#3B4CCA] font-bold mb-1">🏦 다랜드 내 계좌에 적립됨</div>
-              <p>적립된 포인트는 등록된 <span className="text-white font-bold">내 은행계좌로 출금</span>할 수 있습니다.</p>
+              <p>적립된 포인트는 등록된 <span className="text-[#1A1F36] font-bold">내 은행계좌로 출금</span>할 수 있습니다.</p>
               <p>1P = 1원 (출금 수수료 무료)</p>
             </div>
 
@@ -322,7 +322,7 @@ export default function StoresPage() {
 
             <button
               onClick={() => setResult(null)}
-              className="mt-4 rounded-full border border-purple-500/40 bg-[#3B4CCA]/8 px-8 py-2.5 text-sm text-white hover:bg-purple-900/40"
+              className="mt-4 rounded-full border border-purple-500/40 bg-[#3B4CCA]/8 px-8 py-2.5 text-sm text-[#3B4CCA] hover:bg-[#3B4CCA]/12"
             >
               확인
             </button>
