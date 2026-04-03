@@ -1,0 +1,56 @@
+name: PR Auto Review Request
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+
+jobs:
+  notify-review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate diff summary
+        id: diff
+        run: |
+          FILES_CHANGED=$(git diff --name-only origin/main...HEAD | head -30)
+          LINES_ADDED=$(git diff --stat origin/main...HEAD | tail -1)
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$FILES_CHANGED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "stats=$LINES_ADDED" >> $GITHUB_OUTPUT
+
+      - name: Comment PR summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const files = `${{ steps.diff.outputs.files }}`;
+            const stats = `${{ steps.diff.outputs.stats }}`;
+            const body = [
+              '## 📋 PR 변경 요약',
+              '',
+              '### 변경된 파일',
+              '```',
+              files,
+              '```',
+              '',
+              `### 통계: ${stats}`,
+              '',
+              '---',
+              '> 🤖 Cowork(코워크)에서 이 PR을 리뷰할 준비가 되었습니다.',
+              '> `git pull` 후 로컬 빌드 테스트를 진행합니다.'
+            ].join('\n');
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
