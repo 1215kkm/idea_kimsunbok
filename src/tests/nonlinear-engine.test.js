@@ -118,10 +118,10 @@ describe('비선형공식 분배 엔진', () => {
       expect(result.accumulationRate).toBe(120);
     });
 
-    test('원금 100% + 수수료 20% 분리 확인', () => {
+    test('원금 100% + 수수료 12% (f값) 분리 확인', () => {
       const result = engine.combinedModule(10000);
       expect(result.principal).toBe(10000);    // 100% 원금
-      expect(result.feeIncome).toBe(2000);      // 20% 수수료
+      expect(result.feeIncome).toBe(1200);      // 12% 수수료 (f값)
       expect(result.totalAccumulation).toBe(12000); // 120% 합계
     });
 
@@ -238,6 +238,116 @@ describe('비선형공식 분배 엔진', () => {
       const result = engine.combinedModule(1);
       expect(result.totalAccumulation).toBe(1.2);
       expect(result.accumulationRate).toBe(120);
+    });
+  });
+
+  // ============================================
+  // 광고주 적립 모듈 테스트 (NEW)
+  // ============================================
+  describe('광고주 적립 모듈 (5%)', () => {
+    test('10000원 지출 → 광고주 적립 500원 (5%)', () => {
+      const result = engine.advertiserAccumulationModule(10000);
+      expect(result.advertiserReward).toBe(500);
+      expect(result.advertiserRate).toBe(5);
+    });
+
+    test('10억원 지출 → 광고주 적립 5천만 (5%)', () => {
+      const result = engine.advertiserAccumulationModule(1000000000);
+      expect(result.advertiserReward).toBe(50000000);
+    });
+
+    test('0원 이하 지출 시 에러', () => {
+      expect(() => engine.advertiserAccumulationModule(0)).toThrow('소비지출 금액은 0보다 커야 합니다');
+      expect(() => engine.advertiserAccumulationModule(-100)).toThrow('소비지출 금액은 0보다 커야 합니다');
+    });
+  });
+
+  // ============================================
+  // a→f 분배 체인 테스트 (NEW)
+  // ============================================
+  describe('a→f 분배 체인', () => {
+    test('10억원 → a:5억, b:2억, c:1.2억, d:5천만, e:1천만, f:1.2억', () => {
+      const result = engine.combinedModule(1000000000);
+      const chain = result.distributionChain;
+      expect(chain.a).toBe(500000000);
+      expect(chain.b).toBe(200000000);
+      expect(chain.c).toBe(120000000);
+      expect(chain.d).toBe(50000000);
+      expect(chain.e).toBe(10000000);
+      expect(chain.f).toBe(120000000);
+    });
+
+    test('b+c+d+e+f = a 검증 (모든 금액)', () => {
+      const amounts = [1000, 10000, 100000, 1000000, 1000000000];
+      for (const amount of amounts) {
+        const result = engine.combinedModule(amount);
+        expect(result.distributionChain.valid).toBe(true);
+        const chain = result.distributionChain;
+        expect(chain.b + chain.c + chain.d + chain.e + chain.f).toBeCloseTo(chain.a, 0);
+      }
+    });
+
+    test('비율 검증: b=20%, c=12%, d=5%, e=1%, f=12%', () => {
+      const amount = 100000;
+      const result = engine.combinedModule(amount);
+      const chain = result.distributionChain;
+      expect(chain.b / amount).toBeCloseTo(0.2, 5);
+      expect(chain.c / amount).toBeCloseTo(0.12, 5);
+      expect(chain.d / amount).toBeCloseTo(0.05, 5);
+      expect(chain.e / amount).toBeCloseTo(0.01, 5);
+      expect(chain.f / amount).toBeCloseTo(0.12, 5);
+    });
+  });
+
+  // ============================================
+  // 이탈모드 수치 테스트 (NEW)
+  // ============================================
+  describe('이탈모드 수치 보정', () => {
+    test('C1 = 4×거래금액', () => {
+      const result = engine.combinedModule(1000000000);
+      expect(result.escape.totalPool).toBe(4000000000);
+    });
+
+    test('이탈액 = 50% (= a값)', () => {
+      const result = engine.combinedModule(1000000000);
+      expect(result.escape.loggedAmount).toBe(500000000);
+      expect(result.distributionChain.a).toBe(500000000);
+    });
+
+    test('이탈 후 결합 가능', () => {
+      const result = engine.escapeMode(4000000000, 500000000);
+      expect(result.canCombine).toBe(true);
+      expect(result.combinedPool).toBe(4000000000);
+      expect(result.remainingPool).toBe(3500000000);
+      expect(result.emptySlot).toBe(500000000);
+    });
+  });
+
+  // ============================================
+  // 보정모드 + 펀드존 테스트 (NEW)
+  // ============================================
+  describe('보정모드 + 펀드존', () => {
+    test('보정값 d × 10회 = 보정풀', () => {
+      const result = engine.combinedModule(1000000000);
+      expect(result.correctionValue).toBe(50000000);
+      expect(result.correctionPool).toBe(500000000);
+    });
+
+    test('펀드존: 120% = 원금100% + 증액20%', () => {
+      const result = engine.fundZoneModule(1000000000);
+      expect(result.principal).toBe(1000000000);
+      expect(result.augmentRate).toBe(20);
+      expect(result.augmentedAmount).toBe(200000000);
+      expect(result.totalAccumulation).toBe(1200000000);
+      expect(result.rate).toBe(120);
+    });
+
+    test('펀드존 우선순위: bank > insurance > creditcard > business > consumer', () => {
+      expect(engine.fundZoneModule(1000, 'bank').priority).toBe(1);
+      expect(engine.fundZoneModule(1000, 'insurance').priority).toBe(2);
+      expect(engine.fundZoneModule(1000, 'creditcard').priority).toBe(3);
+      expect(engine.fundZoneModule(1000, 'business').priority).toBe(4);
+      expect(engine.fundZoneModule(1000, 'consumer').priority).toBe(5);
     });
   });
 });
