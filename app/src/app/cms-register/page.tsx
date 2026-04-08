@@ -89,6 +89,21 @@ export default function CMSRegisterPage() {
               </p>
             </div>
 
+            {/* 효성CMS 파트너십 안내 */}
+            <div className="mb-4 rounded-xl border border-[#3B4CCA]/20 bg-[#3B4CCA]/5 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center rounded-full bg-[#3B4CCA] px-2 py-0.5 text-[9px] font-bold text-white">효성CMS 파트너</span>
+                <span className="text-[9px] text-[#6B7394]">450만 파트너사 네트워크</span>
+              </div>
+              <p className="text-[10px] text-[#6B7394] leading-relaxed">
+                다랜드는 <strong className="text-[#1A1F36]">효성CMS 파트너 회사</strong>로서, 450만 파트너사를 보유한 효성CMS의 안정적인 금융 인프라를 통해 서비스 이용료를 처리합니다. 금융허브 기능은 모두 효성CMS에서 담당합니다.
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full border border-[#10B981]/30 bg-[#10B981]/10 px-2 py-0.5 text-[9px] text-[#10B981] font-bold">글로벌 서비스</span>
+                <span className="text-[9px] text-[#6B7394]">국내외 신용(현금)카드 사용 가능</span>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               {PAYMENT_METHODS.map((method) => (
                 <button
@@ -145,14 +160,35 @@ export default function CMSRegisterPage() {
                 </div>
               </div>
 
+              {/* 다랜드 역할 한정 안내 */}
+              <div className="mb-3 rounded-xl border border-[#3B4CCA]/20 bg-[#3B4CCA]/5 p-3">
+                <div className="text-xs font-bold text-[#3B4CCA] mb-2">다랜드의 역할</div>
+                <p className="text-[10px] text-[#6B7394] leading-relaxed mb-2">
+                  다랜드는 소비자의 지출금액을 충전된 데이터에서 차감하여 비선형 공식으로 <strong className="text-[#3B4CCA]">120% 증액 적립하는 역할만 수행</strong>합니다. 그 외 판매자 & 소비자가 자체적으로 적립금액을 집행합니다.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center rounded-full bg-purple-100 border border-purple-200 px-2 py-0.5 text-[9px] text-purple-700 font-bold">특허 출원 완료</span>
+                  <span className="text-[9px] text-[#6B7394]">피타고라스 공식 기반 수학적 산식</span>
+                </div>
+              </div>
+
               {/* CMS/비선형 분리 안내 */}
               <div className="mb-3 rounded-xl bg-amber-50 border border-amber-200 p-3">
                 <div className="text-xs font-bold text-amber-800 mb-1">CMS 청구 범위 안내</div>
                 <div className="space-y-1 text-[10px] text-amber-700 leading-relaxed">
                   <p>- CMS 자동이체 대상: <strong>소비자가 실제 지출하는 ASP 서비스 이용료</strong></p>
                   <p>- CMS 자동이체 비대상: 다랜드 내부 멤버십 비선형시스템 운영 관련 금액</p>
+                  <p>- 금융허브 기능: 효성CMS에서 처리 (다랜드 자체 처리 아님)</p>
                   <p>- 비선형 리워드 적립은 다랜드 내부 시스템에서 별도 처리됩니다.</p>
                 </div>
+              </div>
+
+              {/* 간단한 운영 안내 */}
+              <div className="mb-3 rounded-xl bg-[#10B981]/5 border border-[#10B981]/20 p-3">
+                <div className="text-xs font-bold text-[#10B981] mb-1">간단한 운영 구조</div>
+                <p className="text-[10px] text-[#6B7394] leading-relaxed">
+                  판매자 = 또 다른 소비자로서, 일반 쇼핑몰 & 회원제 운영 시스템보다 더 간단하게 운영할 수 있습니다.
+                </p>
               </div>
 
               {/* 지출종류 안내 */}
@@ -273,6 +309,13 @@ export default function CMSRegisterPage() {
             <h2 className="text-xl font-bold mb-2 text-[#1A1F36]">CMS 자동이체 등록 완료</h2>
             <p className="text-sm text-[#6B7394] mb-4">ASP 서비스 이용을 위한 CMS 자동이체가 등록되었습니다.</p>
 
+            {/* 파트너십 뱃지 */}
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
+              <span className="inline-flex items-center rounded-full bg-[#3B4CCA] px-3 py-1 text-[10px] font-bold text-white">효성CMS 파트너</span>
+              <span className="inline-flex items-center rounded-full border border-purple-300 bg-purple-50 px-3 py-1 text-[10px] font-bold text-purple-700">특허 출원 기술</span>
+              <span className="inline-flex items-center rounded-full border border-[#10B981]/30 bg-[#10B981]/10 px-3 py-1 text-[10px] font-bold text-[#10B981]">글로벌 서비스</span>
+            </div>
+
             {/* CMS 청구 정보 카드 */}
             <div className="rounded-2xl border border-[#E8EAF0] bg-white p-5 text-left mb-4">
               <div className="text-xs font-bold text-[#3B4CCA] mb-3">CMS 자동이체 정보</div>
@@ -289,7 +332,17 @@ export default function CMSRegisterPage() {
                 <div className="h-px bg-[#F0F2F8]" />
                 <div className="flex justify-between">
                   <span className="text-[#6B7394]">청구 방식</span>
-                  <span className="text-[#1A1F36] font-bold">CMS 자동이체</span>
+                  <span className="text-[#1A1F36] font-bold">효성CMS 자동이체</span>
+                </div>
+                <div className="h-px bg-[#F0F2F8]" />
+                <div className="flex justify-between">
+                  <span className="text-[#6B7394]">CMS 파트너</span>
+                  <span className="text-[#1A1F36] font-bold">효성CMS (450만사)</span>
+                </div>
+                <div className="h-px bg-[#F0F2F8]" />
+                <div className="flex justify-between">
+                  <span className="text-[#6B7394]">서비스 범위</span>
+                  <span className="text-[#10B981] font-bold">글로벌 (국내외 카드)</span>
                 </div>
                 <div className="h-px bg-[#F0F2F8]" />
                 <div className="flex justify-between">
@@ -301,14 +354,21 @@ export default function CMSRegisterPage() {
 
             {/* 비선형 리워드 안내 (별도 분리) */}
             <div className="rounded-2xl border border-purple-500/20 bg-white p-5 text-left mb-4">
-              <div className="text-xs font-bold text-purple-600 mb-3">비선형 리워드 시스템 (별도 운영)</div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-bold text-purple-600">비선형 리워드 시스템 (별도 운영)</span>
+                <span className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-[8px] font-bold text-purple-600">특허 출원</span>
+              </div>
               <div className="space-y-2 text-[11px] text-[#6B7394] leading-relaxed">
                 <p>ASP 서비스 이용료 납부 시, 다랜드 내부 비선형 공식에 의해 <strong className="text-[#3B4CCA]">120% 증액 적립</strong>이 별도로 진행됩니다.</p>
+                <p>비선형 공식은 <strong className="text-[#1A1F36]">피타고라스 공식에 근거한 수학적 산식</strong>으로 특허 출원이 완료되었습니다.</p>
                 <p>비선형 리워드는 CMS 자동이체와 별개의 내부 시스템으로 운영되며, CMS 청구 금액에는 포함되지 않습니다.</p>
               </div>
               <div className="mt-3 flex justify-between items-center rounded-xl bg-purple-50 px-3 py-2">
                 <span className="text-[10px] text-purple-600">적립 방식</span>
                 <span className="text-xs text-purple-700 font-bold">비선형 공식 120% 증액 (내부)</span>
+              </div>
+              <div className="mt-2 text-[10px] text-[#6B7394] leading-relaxed">
+                다랜드의 역할: 지출금액 차감 → 120% 증액 적립만 수행. 금융허브 기능은 효성CMS에서 처리.
               </div>
             </div>
 
