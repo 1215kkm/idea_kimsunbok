@@ -26,7 +26,8 @@ export default function CMSRegisterPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
-  const [agreed, setAgreed] = useState(false);
+  const [aspAgreed, setAspAgreed] = useState(false);
+  const [cmsAgreed, setCmsAgreed] = useState(false);
   const [registered, setRegistered] = useState(false);
 
   useEffect(() => {
@@ -45,17 +46,17 @@ export default function CMSRegisterPage() {
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
       <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
-        <h1 className="text-lg font-bold">CMS 온라인 가입센터</h1>
-        <p className="text-xs text-[#6B7394]">CMS 가상계좌에 의한 소비자 가입</p>
+        <h1 className="text-lg font-bold">CMS 자동이체 - ASP 서비스 등록</h1>
+        <p className="text-xs text-[#6B7394]">ASP 서비스 이용료 결제를 위한 CMS 자동이체 등록</p>
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-6">
         {/* 진행 단계 */}
-        <div className="mb-6 flex items-center gap-2">
-          {["결제수단", "계좌연동", "완료"].map((label, i) => (
-            <div key={label} className="flex flex-1 items-center gap-2">
+        <div className="mb-6 flex items-center gap-1">
+          {["결제수단", "ASP 약관", "계좌연동", "완료"].map((label, i) => (
+            <div key={label} className="flex flex-1 items-center gap-1">
               <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
                 style={{
                   background: i <= step ? "linear-gradient(135deg, #a855f7, #06b6d4)" : "rgba(255,255,255,0.1)",
                   color: i <= step ? "white" : "#71717a",
@@ -63,8 +64,8 @@ export default function CMSRegisterPage() {
               >
                 {i + 1}
               </div>
-              <span className={`text-xs ${i <= step ? "text-[#3B4CCA] font-bold" : "text-[#9CA3C1]"}`}>{label}</span>
-              {i < 2 && <div className="h-px flex-1 bg-[#F0F2F8]" />}
+              <span className={`text-[10px] ${i <= step ? "text-[#3B4CCA] font-bold" : "text-[#9CA3C1]"}`}>{label}</span>
+              {i < 3 && <div className="h-px flex-1 bg-[#F0F2F8]" />}
             </div>
           ))}
         </div>
@@ -76,8 +77,31 @@ export default function CMSRegisterPage() {
               style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}>
               <div className="text-sm font-bold text-[#3B4CCA] mb-2">결제수단 선택</div>
               <p className="text-xs text-[#6B7394] leading-relaxed">
-                CMS 가상계좌에 의한 소비자 가입 회원의 결제수단을 선택해주세요.
+                ASP 서비스 이용료를 결제할 수단을 선택해주세요.
               </p>
+            </div>
+
+            {/* ASP 서비스 안내 */}
+            <div className="mb-4 rounded-xl bg-[#F7F8FC] border border-[#E8EAF0] p-3">
+              <div className="text-xs font-bold text-[#1A1F36] mb-1">ASP(Application Service Provider) 서비스란?</div>
+              <p className="text-[10px] text-[#6B7394] leading-relaxed">
+                고가의 소프트웨어 구입 및 유지비 대신, 사내 네트워크 망을 통해 다랜드 서버에 접속하여 원하는 시스템을 이용하고 매월 서비스 이용료를 지불하는 방식입니다.
+              </p>
+            </div>
+
+            {/* 효성CMS 파트너십 안내 */}
+            <div className="mb-4 rounded-xl border border-[#3B4CCA]/20 bg-[#3B4CCA]/5 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center rounded-full bg-[#3B4CCA] px-2 py-0.5 text-[9px] font-bold text-white">효성CMS 파트너</span>
+                <span className="text-[9px] text-[#6B7394]">450만 파트너사 네트워크</span>
+              </div>
+              <p className="text-[10px] text-[#6B7394] leading-relaxed">
+                다랜드는 <strong className="text-[#1A1F36]">효성CMS 파트너 회사</strong>로서, 450만 파트너사를 보유한 효성CMS의 안정적인 금융 인프라를 통해 서비스 이용료를 처리합니다. 금융허브 기능은 모두 효성CMS에서 담당합니다.
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full border border-[#10B981]/30 bg-[#10B981]/10 px-2 py-0.5 text-[9px] text-[#10B981] font-bold">글로벌 서비스</span>
+                <span className="text-[9px] text-[#6B7394]">국내외 신용(현금)카드 사용 가능</span>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -111,31 +135,65 @@ export default function CMSRegisterPage() {
           </div>
         )}
 
-        {/* Step 1: 비선형시스템 계좌 연동 */}
+        {/* Step 1: ASP 서비스 이용 약관 동의 */}
         {step === 1 && !registered && (
           <div>
             <div className="mb-4 rounded-2xl border border-purple-500/20 p-4 bg-white">
-              <div className="text-sm font-bold text-[#3B4CCA] mb-3">비선형시스템 계좌 연동</div>
+              <div className="text-sm font-bold text-[#3B4CCA] mb-3">ASP 서비스 이용 약관</div>
 
-              {/* 고유번호 */}
-              <div className="mb-3">
-                <label className="text-xs text-[#6B7394] mb-1 block">소비자 회원 고유번호</label>
-                <div className="flex items-center gap-2 rounded-xl border border-[#E8EAF0] bg-white px-4 py-3">
-                  <span className="text-xs text-[#3B4CCA] font-mono">NL-</span>
-                  <span className="text-sm font-mono text-[#1A1F36]">{user.uid.slice(0, 12).toUpperCase()}</span>
-                  <span className="ml-auto text-[10px] text-[#10B981]">자동생성</span>
+              {/* ASP 서비스 수수료 안내 */}
+              <div className="mb-3 rounded-xl bg-[#F7F8FC] border border-[#E8EAF0] p-3">
+                <div className="text-xs font-bold text-[#1A1F36] mb-2">서비스 이용료 구조</div>
+                <div className="space-y-2 text-[11px] text-[#6B7394] leading-relaxed">
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#3B4CCA] font-bold mt-0.5">1.</span>
+                    <span>CMS 자동이체는 <strong className="text-[#1A1F36]">ASP 서비스 이용료(소비자 지출 비용)</strong>만 청구합니다.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#3B4CCA] font-bold mt-0.5">2.</span>
+                    <span>ASP 서비스 이용료는 거래 금액의 <strong className="text-[#3B4CCA]">1%</strong>로 산정되며, 매월 자동이체됩니다.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-[#3B4CCA] font-bold mt-0.5">3.</span>
+                    <span>ASP 이용료 납부 시 비선형 공식에 의해 <strong className="text-[#3B4CCA]">120% 증액 적립</strong>되어 비용 부담이 상쇄됩니다.</span>
+                  </div>
                 </div>
               </div>
 
-              {/* 설명 */}
-              <div className="rounded-xl bg-purple-900/10 border border-purple-500/10 p-3 text-xs text-[#6B7394] leading-relaxed space-y-2">
-                <p><strong className="text-[#1A1F36]">비선형시스템 계좌</strong>에 소비자 회원의 고유번호에 의해 회원이 본인 계좌로 출금 가능합니다.</p>
-                <p>결제수단: <span className="text-[#3B4CCA]">{PAYMENT_METHODS.find(m => m.id === selectedMethod)?.name}</span></p>
+              {/* 다랜드 역할 한정 안내 */}
+              <div className="mb-3 rounded-xl border border-[#3B4CCA]/20 bg-[#3B4CCA]/5 p-3">
+                <div className="text-xs font-bold text-[#3B4CCA] mb-2">다랜드의 역할</div>
+                <p className="text-[10px] text-[#6B7394] leading-relaxed mb-2">
+                  다랜드는 소비자의 지출금액을 충전된 데이터에서 차감하여 비선형 공식으로 <strong className="text-[#3B4CCA]">120% 증액 적립하는 역할만 수행</strong>합니다. 그 외 판매자 & 소비자가 자체적으로 적립금액을 집행합니다.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center rounded-full bg-purple-100 border border-purple-200 px-2 py-0.5 text-[9px] text-purple-700 font-bold">특허 출원 완료</span>
+                  <span className="text-[9px] text-[#6B7394]">피타고라스 공식 기반 수학적 산식</span>
+                </div>
+              </div>
+
+              {/* CMS/비선형 분리 안내 */}
+              <div className="mb-3 rounded-xl bg-amber-50 border border-amber-200 p-3">
+                <div className="text-xs font-bold text-amber-800 mb-1">CMS 청구 범위 안내</div>
+                <div className="space-y-1 text-[10px] text-amber-700 leading-relaxed">
+                  <p>- CMS 자동이체 대상: <strong>소비자가 실제 지출하는 ASP 서비스 이용료</strong></p>
+                  <p>- CMS 자동이체 비대상: 다랜드 내부 멤버십 비선형시스템 운영 관련 금액</p>
+                  <p>- 금융허브 기능: 효성CMS에서 처리 (다랜드 자체 처리 아님)</p>
+                  <p>- 비선형 리워드 적립은 다랜드 내부 시스템에서 별도 처리됩니다.</p>
+                </div>
+              </div>
+
+              {/* 간단한 운영 안내 */}
+              <div className="mb-3 rounded-xl bg-[#10B981]/5 border border-[#10B981]/20 p-3">
+                <div className="text-xs font-bold text-[#10B981] mb-1">간단한 운영 구조</div>
+                <p className="text-[10px] text-[#6B7394] leading-relaxed">
+                  판매자 = 또 다른 소비자로서, 일반 쇼핑몰 & 회원제 운영 시스템보다 더 간단하게 운영할 수 있습니다.
+                </p>
               </div>
 
               {/* 지출종류 안내 */}
-              <div className="mt-3 rounded-xl bg-[#3B4CCA]/5 border border-cyan-500/10 p-3">
-                <div className="text-xs font-bold text-[#3B4CCA] mb-2">판매자(또다른 소비자) & 소비자 지출종류</div>
+              <div className="mb-3 rounded-xl bg-[#3B4CCA]/5 border border-cyan-500/10 p-3">
+                <div className="text-xs font-bold text-[#3B4CCA] mb-2">ASP 서비스 적용 지출종류</div>
                 <div className="grid grid-cols-2 gap-1 text-[10px] text-[#6B7394]">
                   <span>a: 식자재</span>
                   <span>b: 인건비</span>
@@ -148,16 +206,16 @@ export default function CMSRegisterPage() {
                 </div>
               </div>
 
-              {/* 동의 */}
-              <label className="mt-4 flex items-start gap-2 cursor-pointer">
+              {/* 동의 체크박스 */}
+              <label className="mt-3 flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
+                  checked={aspAgreed}
+                  onChange={(e) => setAspAgreed(e.target.checked)}
                   className="mt-1 accent-purple-500"
                 />
                 <span className="text-xs text-[#6B7394] leading-relaxed">
-                  CMS 자동이체 약관에 동의하며, 비선형시스템 계좌를 통해 결제수단을 등록합니다.
+                  ASP 서비스 이용 약관에 동의하며, CMS 자동이체가 서비스 이용료에만 적용됨을 확인합니다. 내부 비선형 리워드 시스템은 CMS 청구 대상이 아님을 이해합니다.
                 </span>
               </label>
             </div>
@@ -170,8 +228,72 @@ export default function CMSRegisterPage() {
                 ← 이전
               </button>
               <button
-                onClick={() => { setStep(2); handleComplete(); }}
-                disabled={!agreed}
+                onClick={() => setStep(2)}
+                disabled={!aspAgreed}
+                className="flex-1 rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] disabled:opacity-40"
+              >
+                다음 단계 →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: 서비스 계좌 연동 */}
+        {step === 2 && !registered && (
+          <div>
+            <div className="mb-4 rounded-2xl border border-purple-500/20 p-4 bg-white">
+              <div className="text-sm font-bold text-[#3B4CCA] mb-3">서비스 이용 계좌 연동</div>
+
+              {/* 결제수단 확인 */}
+              <div className="mb-3">
+                <label className="text-xs text-[#6B7394] mb-1 block">선택된 결제수단</label>
+                <div className="flex items-center gap-2 rounded-xl border border-[#E8EAF0] bg-white px-4 py-3">
+                  <span className="text-lg">{PAYMENT_METHODS.find(m => m.id === selectedMethod)?.icon}</span>
+                  <span className="text-sm font-bold text-[#1A1F36]">{PAYMENT_METHODS.find(m => m.id === selectedMethod)?.name}</span>
+                  <span className="ml-auto text-[10px] text-[#10B981]">선택완료</span>
+                </div>
+              </div>
+
+              {/* ASP 서비스 요금 안내 */}
+              <div className="mb-3">
+                <label className="text-xs text-[#6B7394] mb-1 block">ASP 서비스 이용료율</label>
+                <div className="flex items-center gap-2 rounded-xl border border-[#E8EAF0] bg-white px-4 py-3">
+                  <span className="text-sm text-[#3B4CCA] font-bold">1%</span>
+                  <span className="text-xs text-[#6B7394]">/ 월 거래 금액 기준</span>
+                  <span className="ml-auto text-[10px] text-[#10B981]">자동산정</span>
+                </div>
+              </div>
+
+              {/* CMS 자동이체 동의 */}
+              <div className="rounded-xl bg-[#F7F8FC] border border-[#E8EAF0] p-3 text-xs text-[#6B7394] leading-relaxed space-y-2">
+                <p><strong className="text-[#1A1F36]">CMS 자동이체 안내</strong></p>
+                <p>선택하신 결제수단으로 매월 ASP 서비스 이용료가 자동이체됩니다. 청구 금액은 해당 월의 거래 금액 합계 x 1%로 산정됩니다.</p>
+              </div>
+
+              {/* CMS 동의 */}
+              <label className="mt-4 flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cmsAgreed}
+                  onChange={(e) => setCmsAgreed(e.target.checked)}
+                  className="mt-1 accent-purple-500"
+                />
+                <span className="text-xs text-[#6B7394] leading-relaxed">
+                  CMS 자동이체 약관에 동의하며, 매월 ASP 서비스 이용료가 자동이체됨을 확인합니다.
+                </span>
+              </label>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setStep(1)}
+                className="flex-1 rounded-xl border border-purple-500/30 py-3 text-sm text-[#6B7394]"
+              >
+                ← 이전
+              </button>
+              <button
+                onClick={() => { setStep(3); handleComplete(); }}
+                disabled={!cmsAgreed}
                 className="flex-1 rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] disabled:opacity-40"
               >
                 가입 완료 →
@@ -180,41 +302,81 @@ export default function CMSRegisterPage() {
           </div>
         )}
 
-        {/* Step 2: 완료 */}
+        {/* Step 3: 완료 */}
         {registered && (
           <div className="text-center py-8">
             <div className="text-6xl mb-4">✅</div>
-            <h2 className="text-xl font-bold mb-2">CMS 가입 완료</h2>
-            <p className="text-sm text-[#6B7394] mb-4">비선형시스템 계좌가 생성되었습니다.</p>
+            <h2 className="text-xl font-bold mb-2 text-[#1A1F36]">CMS 자동이체 등록 완료</h2>
+            <p className="text-sm text-[#6B7394] mb-4">ASP 서비스 이용을 위한 CMS 자동이체가 등록되었습니다.</p>
 
-            <div className="rounded-2xl border border-purple-500/20 bg-white p-5 text-left">
+            {/* 파트너십 뱃지 */}
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
+              <span className="inline-flex items-center rounded-full bg-[#3B4CCA] px-3 py-1 text-[10px] font-bold text-white">효성CMS 파트너</span>
+              <span className="inline-flex items-center rounded-full border border-purple-300 bg-purple-50 px-3 py-1 text-[10px] font-bold text-purple-700">특허 출원 기술</span>
+              <span className="inline-flex items-center rounded-full border border-[#10B981]/30 bg-[#10B981]/10 px-3 py-1 text-[10px] font-bold text-[#10B981]">글로벌 서비스</span>
+            </div>
+
+            {/* CMS 청구 정보 카드 */}
+            <div className="rounded-2xl border border-[#E8EAF0] bg-white p-5 text-left mb-4">
+              <div className="text-xs font-bold text-[#3B4CCA] mb-3">CMS 자동이체 정보</div>
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-[#6B7394]">회원 고유번호</span>
-                  <span className="font-mono text-[#3B4CCA]">NL-{user.uid.slice(0, 12).toUpperCase()}</span>
-                </div>
-                <div className="h-px bg-[#F0F2F8]" />
                 <div className="flex justify-between">
                   <span className="text-[#6B7394]">결제수단</span>
                   <span className="text-[#1A1F36] font-bold">{PAYMENT_METHODS.find(m => m.id === selectedMethod)?.name}</span>
                 </div>
                 <div className="h-px bg-[#F0F2F8]" />
                 <div className="flex justify-between">
-                  <span className="text-[#6B7394]">계좌 상태</span>
-                  <span className="text-[#10B981] font-bold">활성</span>
+                  <span className="text-[#6B7394]">서비스 이용료율</span>
+                  <span className="text-[#3B4CCA] font-bold">거래액의 1% / 월</span>
                 </div>
                 <div className="h-px bg-[#F0F2F8]" />
                 <div className="flex justify-between">
-                  <span className="text-[#6B7394]">적립 방식</span>
-                  <span className="text-[#3B4CCA] font-bold">120% 증액 적립</span>
+                  <span className="text-[#6B7394]">청구 방식</span>
+                  <span className="text-[#1A1F36] font-bold">효성CMS 자동이체</span>
+                </div>
+                <div className="h-px bg-[#F0F2F8]" />
+                <div className="flex justify-between">
+                  <span className="text-[#6B7394]">CMS 파트너</span>
+                  <span className="text-[#1A1F36] font-bold">효성CMS (450만사)</span>
+                </div>
+                <div className="h-px bg-[#F0F2F8]" />
+                <div className="flex justify-between">
+                  <span className="text-[#6B7394]">서비스 범위</span>
+                  <span className="text-[#10B981] font-bold">글로벌 (국내외 카드)</span>
+                </div>
+                <div className="h-px bg-[#F0F2F8]" />
+                <div className="flex justify-between">
+                  <span className="text-[#6B7394]">등록 상태</span>
+                  <span className="text-[#10B981] font-bold">활성</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 rounded-xl border border-cyan-500/20 bg-[#3B4CCA]/5 p-3 text-xs text-[#6B7394] leading-relaxed">
+            {/* 비선형 리워드 안내 (별도 분리) */}
+            <div className="rounded-2xl border border-purple-500/20 bg-white p-5 text-left mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs font-bold text-purple-600">비선형 리워드 시스템 (별도 운영)</span>
+                <span className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-[8px] font-bold text-purple-600">특허 출원</span>
+              </div>
+              <div className="space-y-2 text-[11px] text-[#6B7394] leading-relaxed">
+                <p>ASP 서비스 이용료 납부 시, 다랜드 내부 비선형 공식에 의해 <strong className="text-[#3B4CCA]">120% 증액 적립</strong>이 별도로 진행됩니다.</p>
+                <p>비선형 공식은 <strong className="text-[#1A1F36]">피타고라스 공식에 근거한 수학적 산식</strong>으로 특허 출원이 완료되었습니다.</p>
+                <p>비선형 리워드는 CMS 자동이체와 별개의 내부 시스템으로 운영되며, CMS 청구 금액에는 포함되지 않습니다.</p>
+              </div>
+              <div className="mt-3 flex justify-between items-center rounded-xl bg-purple-50 px-3 py-2">
+                <span className="text-[10px] text-purple-600">적립 방식</span>
+                <span className="text-xs text-purple-700 font-bold">비선형 공식 120% 증액 (내부)</span>
+              </div>
+              <div className="mt-2 text-[10px] text-[#6B7394] leading-relaxed">
+                다랜드의 역할: 지출금액 차감 → 120% 증액 적립만 수행. 금융허브 기능은 효성CMS에서 처리.
+              </div>
+            </div>
+
+            {/* 이용 안내 */}
+            <div className="rounded-xl border border-cyan-500/20 bg-[#3B4CCA]/5 p-3 text-xs text-[#6B7394] leading-relaxed text-left">
               <p className="text-[#3B4CCA] font-bold mb-1">이용 안내</p>
               <p>소비자가 신용(현금)카드로 상품을 결제한 후 지출데이터가 소비자 단말기(스마트폰) & 은행결제계좌로 지출 영수증이 전달됩니다.</p>
-              <p className="mt-1">비선형 시스템 & CMS 자동인식하는 <strong className="text-[#1A1F36]">영수증 금액 추출 모드</strong>에 의해 비선형시스템에 소비자 본인의 충전된 데이터에 차감하여 비선형공식 분배 알고리즘에 의해 <strong className="text-[#3B4CCA]">120%(free) 적립</strong>됩니다.</p>
+              <p className="mt-1">CMS 자동이체로 ASP 서비스 이용료가 청구되며, 비선형시스템에서 별도로 <strong className="text-[#3B4CCA]">120%(free) 적립</strong>이 진행됩니다.</p>
             </div>
 
             <button

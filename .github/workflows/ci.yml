@@ -114,7 +114,7 @@ jobs:
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: context.payload.pull_request.number,
               body
             });
 
@@ -123,23 +123,30 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // PR 승인
-            await github.rest.pulls.createReview({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              event: 'APPROVE',
-              body: '✅ 자동 리뷰 통과 - 빌드 성공'
-            });
+            const prNumber = context.payload.pull_request.number;
 
-            // 머지
+            // PR 승인 시도 (GITHUB_TOKEN 권한 제한으로 실패할 수 있음)
+            try {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                event: 'APPROVE',
+                body: '✅ 자동 리뷰 통과 - 빌드 성공'
+              });
+              console.log('✅ 자동 승인 완료');
+            } catch (e) {
+              console.log('⚠️ 자동 승인 실패 (권한 제한):', e.message);
+            }
+
+            // 머지 시도
             try {
               await github.rest.pulls.merge({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: context.issue.number,
+                pull_number: prNumber,
                 merge_method: 'squash',
-                commit_title: `${context.payload.pull_request.title} (#${context.issue.number})`
+                commit_title: `${context.payload.pull_request.title} (#${prNumber})`
               });
               console.log('✅ 자동 머지 완료');
             } catch (e) {
@@ -147,8 +154,8 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: `⚠️ 자동 머지 실패: ${e.message}\n수동으로 머지해주세요.`
+                issue_number: prNumber,
+                body: `⚠️ 자동 머지 실패: ${e.message}\nCowork의 수동 리뷰 & 머지가 필요합니다.`
               });
             }
 
@@ -157,10 +164,21 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.pulls.createReview({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              event: 'REQUEST_CHANGES',
-              body: '❌ 빌드 실패 - 로그를 확인하고 수정해주세요.'
-            });
+            const prNumber = context.payload.pull_request.number;
+            try {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                event: 'REQUEST_CHANGES',
+                body: '❌ 빌드 실패 - 로그를 확인하고 수정해주세요.'
+              });
+            } catch (e) {
+              console.log('⚠️ 리뷰 작성 실패:', e.message);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: '❌ 빌드 실패 - 로그를 확인하고 수정해주세요.'
+              });
+            }
