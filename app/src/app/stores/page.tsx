@@ -3,9 +3,10 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, doc, getDoc, runTransaction, serverTimestamp } from "firebase/firestore";
+import { collection, doc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import { calculateNonlinear } from "@/lib/nonlinear-engine";
+import { saveTransaction as saveDemoTx } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
 
 // Web Audio API 신호음
@@ -108,10 +109,11 @@ export default function StoresPage() {
           transaction.set(userRef, { totalPoints: currentPoints + nlResult.totalAccumulation }, { merge: true });
           const txRef = doc(collection(db!, "transactions"));
           transaction.set(txRef, {
-            userId: user.uid,
+            consumerId: user.uid,
             userName: user.displayName || "사용자",
             category: category.id,
             categoryName: category.name,
+            storeName: memo || category.name,
             amount: spendAmount,
             memo: memo || category.examples,
             nonlinearResult: {
@@ -130,6 +132,25 @@ export default function StoresPage() {
       } catch {
         // Firestore 오류 시에도 UI는 보여줌
       }
+    } else {
+      // 데모 모드: localStorage에 거래 누적 + 잔액 증가
+      saveDemoTx(user, {
+        category: category.id,
+        categoryName: category.name,
+        storeName: memo || category.name,
+        amount: spendAmount,
+        memo: memo || category.examples,
+        totalAccumulation: nlResult.totalAccumulation,
+        nonlinearResult: {
+          principal: nlResult.principal,
+          bonus: nlResult.bonus,
+          totalAccumulation: nlResult.totalAccumulation,
+          rate: nlResult.rate,
+          memberCount: nlResult.memberCount,
+          perMemberAmount: nlResult.perMemberAmount,
+          advertiserReward: nlResult.advertiser.advertiserReward,
+        },
+      });
     }
 
     setModal(null);

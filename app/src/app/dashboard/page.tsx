@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { doc, getDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
+import { getTransactions as getDemoTxs, getBalance as getDemoBalance, getStats as getDemoStats } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -34,7 +35,28 @@ export default function DashboardPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!user || !isConfigured || !db) return;
+    if (!user) return;
+    if (!isConfigured || !db) {
+      // 데모 모드: localStorage 기반
+      const demoTxs = getDemoTxs(user);
+      const demoStats = getDemoStats(user);
+      setUserData({
+        name: user.displayName || "사용자",
+        totalPoints: getDemoBalance(user),
+        membershipLevel: 1,
+      });
+      setRecentTxs(
+        demoTxs.slice(0, 5).map((t) => ({
+          id: t.id,
+          storeName: t.storeName || t.categoryName || "지출",
+          amount: t.amount,
+          totalAccumulation: t.totalAccumulation,
+          createdAt: t.createdAt,
+        }))
+      );
+      setTotalSpent(demoStats.spent);
+      return;
+    }
     const fetchData = async () => {
       try {
         const userSnap = await getDoc(doc(db!, "users", user.uid));

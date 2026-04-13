@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function LoginPage() {
-  const { user, loading, signIn, signUp, demoSignIn } = useAuth();
+  const { user, loading, signIn, signUp, demoSignIn, isDemo } = useAuth();
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState("");
@@ -32,21 +32,40 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    // 클라이언트 측 기본 검증
+    if (!email.includes("@")) {
+      setError("올바른 이메일 형식을 입력해주세요.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("비밀번호는 6자 이상이어야 합니다.");
+      return;
+    }
+    if (isSignUp && !name.trim()) {
+      setError("이름을 입력해주세요.");
+      return;
+    }
     setSubmitting(true);
     try {
       if (isSignUp) {
-        await signUp(email, password, name);
+        await signUp(email, password, name.trim());
       } else {
         await signIn(email, password);
       }
     } catch (err: any) {
       const code = err?.code || "";
-      if (code === "auth/user-not-found" || code === "auth/invalid-credential")
+      if (code === "auth/user-not-found" || code === "auth/invalid-credential" || code === "auth/wrong-password")
         setError("이메일 또는 비밀번호가 틀렸습니다.");
       else if (code === "auth/email-already-in-use")
-        setError("이미 가입된 이메일입니다.");
+        setError("이미 가입된 이메일입니다. 로그인을 해주세요.");
       else if (code === "auth/weak-password")
         setError("비밀번호는 6자 이상이어야 합니다.");
+      else if (code === "auth/invalid-email")
+        setError("올바른 이메일 형식이 아닙니다.");
+      else if (code === "auth/network-request-failed")
+        setError("네트워크 연결을 확인해주세요.");
+      else if (code === "auth/too-many-requests")
+        setError("잠시 후 다시 시도해주세요.");
       else setError("오류가 발생했습니다. 다시 시도해 주세요.");
     } finally {
       setSubmitting(false);
@@ -60,7 +79,16 @@ export default function LoginPage() {
       <h1 className="mb-1 text-[#3B4CCA] text-5xl font-black">
         다랜드
       </h1>
-      <p className="mb-10 text-sm dark-text-muted text-[#6B7394]">쓸수록 쌓이는 120%의 마법</p>
+      <p className="mb-6 text-sm dark-text-muted text-[#6B7394]">쓸수록 쌓이는 120%의 마법</p>
+
+      {/* 베타 안내 배너 (데모 모드일 때만) */}
+      {isDemo && (
+        <div className="mb-6 w-full max-w-sm rounded-xl border border-[#3B4CCA]/20 bg-[#3B4CCA]/5 px-4 py-3 text-xs leading-relaxed text-[#6B7394]">
+          <div className="mb-1 font-bold text-[#3B4CCA]">🧪 베타 체험 모드</div>
+          <p>입력하신 이메일로 가입 후, 거래내역과 적립 포인트가 <strong className="text-[#1A1F36]">이 브라우저에만 저장</strong>됩니다.</p>
+          <p className="mt-1">같은 이메일로 다시 로그인하면 내역을 이어볼 수 있습니다.</p>
+        </div>
+      )}
 
       {/* 폼 */}
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">

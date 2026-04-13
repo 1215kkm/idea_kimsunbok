@@ -3,17 +3,37 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db, isConfigured } from "@/lib/firebase";
+import { getBalance as getDemoBalance } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
 
 export default function CardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [balance] = useState(128400);
+  const [balance, setBalance] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
   }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (!isConfigured || !db) {
+      setBalance(getDemoBalance(user));
+      return;
+    }
+    const fetch = async () => {
+      try {
+        const snap = await getDoc(doc(db!, "users", user.uid));
+        if (snap.exists()) setBalance(snap.data().totalPoints || 0);
+      } catch {
+        // Firestore 미연결
+      }
+    };
+    fetch();
+  }, [user]);
 
   if (loading || !user) {
     return <div className="flex min-h-screen items-center justify-center dark-text-muted">로딩 중...</div>;

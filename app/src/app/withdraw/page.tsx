@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
+import { getBalance as getDemoBalance, deductBalance as deductDemoBalance } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -36,8 +37,10 @@ export default function WithdrawPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!user || !isConfigured || !db) {
-      setBalance(128400);
+    if (!user) return;
+    if (!isConfigured || !db) {
+      // 데모 모드: localStorage 기반 잔액
+      setBalance(getDemoBalance(user));
       return;
     }
     const fetch = async () => {
@@ -45,7 +48,7 @@ export default function WithdrawPage() {
         const snap = await getDoc(doc(db!, "users", user.uid));
         if (snap.exists()) setBalance(snap.data().totalPoints || 0);
       } catch {
-        setBalance(128400);
+        // Firestore 미연결
       }
     };
     fetch();
@@ -62,6 +65,10 @@ export default function WithdrawPage() {
     if (!amt || amt <= 0 || amt > balance) return;
     setProcessing(true);
     setTimeout(() => {
+      if (!isConfigured || !db) {
+        // 데모 모드: localStorage에서 차감
+        if (user) deductDemoBalance(user, amt);
+      }
       setBalance((prev) => prev - amt);
       setProcessing(false);
       setStep("complete");
