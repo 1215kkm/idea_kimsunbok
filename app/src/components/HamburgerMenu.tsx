@@ -15,8 +15,10 @@ const menuItems = [
   { href: "/simulation", label: "시뮬레이션", icon: "🎮", desc: "다랜드 체험" },
   { href: "/engine", label: "엔진 설명", icon: "⚙️", desc: "비선형공식 원리" },
   { href: "/advertiser", label: "광고주", icon: "🏢", desc: "광고주 120% 수익" },
+  { href: "/advertiser/invite", label: "리워드 초대", icon: "🎁", desc: "초대하고 +20,000P 수익" },
   { href: "/philosophy", label: "자리이타", icon: "🙏", desc: "다랜드 핵심 철학" },
   { href: "/admin", label: "관리자", icon: "🛡️", desc: "시스템 관리 패널" },
+  { href: "/account/leave", label: "회원 탈퇴", icon: "👋", desc: "탈퇴 및 환불" },
 ];
 
 export default function HamburgerMenu() {

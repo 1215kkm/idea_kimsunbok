@@ -2,22 +2,44 @@
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, Suspense } from "react";
+import {
+  resolveInviteCode,
+  processInviteReward,
+} from "@/lib/demo-store";
+import { calculateInviteReward } from "@/lib/nonlinear-engine";
 
-export default function LoginPage() {
+function LoginPageInner() {
   const { user, loading, signIn, signUp, demoSignIn, isDemo } = useAuth();
   const router = useRouter();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const searchParams = useSearchParams();
+  const inviteCode = searchParams.get("invite");
+  const [isSignUp, setIsSignUp] = useState(!!inviteCode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [inviteProcessed, setInviteProcessed] = useState(false);
 
   useEffect(() => {
-    if (user) router.push("/dashboard");
-  }, [user, router]);
+    if (!user || inviteProcessed) return;
+    if (inviteCode && user.email) {
+      const inviterEmail = resolveInviteCode(inviteCode);
+      if (inviterEmail && inviterEmail !== user.email.toLowerCase()) {
+        const reward = calculateInviteReward(100_000);
+        processInviteReward(
+          inviterEmail,
+          user.email,
+          reward.distributedToNewUser,
+          reward.advertiserNetGain,
+        );
+        setInviteProcessed(true);
+      }
+    }
+    router.push("/dashboard");
+  }, [user, router, inviteCode, inviteProcessed]);
 
   if (loading) {
     return (
@@ -80,6 +102,14 @@ export default function LoginPage() {
         다랜드
       </h1>
       <p className="mb-6 text-sm dark-text-muted text-[#6B7394]">쓸수록 쌓이는 120%의 마법</p>
+
+      {/* 초대 코드 배너 */}
+      {inviteCode && (
+        <div className="mb-4 w-full max-w-sm rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 px-4 py-3 text-xs leading-relaxed text-[#6B7394]">
+          <div className="mb-1 font-bold text-[#10B981]">🎁 초대 코드 적용됨</div>
+          <p>회원가입을 완료하면 <strong className="text-[#1A1F36]">100,000P</strong>가 자동으로 지급됩니다!</p>
+        </div>
+      )}
 
       {/* 베타 안내 배너 (데모 모드일 때만) */}
       {isDemo && (
@@ -164,5 +194,19 @@ export default function LoginPage() {
         <p className="mt-2 text-center text-xs text-[#9CA3C1]">가입 없이 바로 둘러볼 수 있어요</p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-lg text-[#6B7394]">로딩 중...</div>
+        </div>
+      }
+    >
+      <LoginPageInner />
+    </Suspense>
   );
 }

@@ -125,3 +125,154 @@ export function getStats(user: { email?: string | null } | null | undefined): {
   }
   return { spent, earned, count: list.length };
 }
+
+// --- 회원 탈퇴 ---
+
+const WITHDRAW_LOG_KEY = "daland-demo-withdrawal-log";
+
+export interface WithdrawalLog {
+  email: string;
+  refundAmount: number;
+  systemProfit: number;
+  reason: string;
+  timestamp: number;
+}
+
+/** 회원 탈퇴 처리: 거래내역·잔액 삭제 + 환불 로그 기록 */
+export function withdrawUser(
+  user: { email?: string | null },
+  refundAmount: number,
+  systemProfit: number,
+  reason: string = "",
+): WithdrawalLog | null {
+  if (!isBrowser()) return null;
+  const key = emailKey(user);
+  if (!key) return null;
+
+  const log: WithdrawalLog = {
+    email: key,
+    refundAmount,
+    systemProfit,
+    reason,
+    timestamp: Date.now(),
+  };
+
+  try {
+    // 환불 로그 누적
+    const raw = localStorage.getItem(WITHDRAW_LOG_KEY);
+    const logs: WithdrawalLog[] = raw ? JSON.parse(raw) : [];
+    logs.unshift(log);
+    localStorage.setItem(WITHDRAW_LOG_KEY, JSON.stringify(logs));
+
+    // 회원 데이터 삭제
+    localStorage.removeItem(TX_KEY(key));
+    localStorage.removeItem(BAL_KEY(key));
+  } catch {
+    // 무시
+  }
+
+  return log;
+}
+
+// --- 초대 코드 ---
+
+const INVITE_KEY = (email: string) => `daland-demo-invites-${email}`;
+
+export interface InviteRecord {
+  inviterEmail: string;
+  inviteeEmail: string;
+  amount: number;
+  bonus: number;
+  timestamp: number;
+}
+
+/** 초대 코드 생성 (이메일 기반 단순 해시) */
+export function generateInviteCode(user: { email?: string | null }): string | null {
+  const key = emailKey(user);
+  if (!key) return null;
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = ((hash << 5) - hash + key.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash).toString(36).toUpperCase();
+}
+
+/** 초대 코드 → 초대자 이메일 역조회 (같은 브라우저 내에서만 동작) */
+export function resolveInviteCode(code: string): string | null {
+  if (!isBrowser()) return null;
+  try {
+    const allKeys = Object.keys(localStorage);
+    for (const k of allKeys) {
+      if (!k.startsWith("daland-demo-balance-")) continue;
+      const email = k.replace("daland-demo-balance-", "");
+      const expected = generateInviteCode({ email });
+      if (expected === code) return email;
+    }
+  } catch {
+    // 무시
+  }
+  return null;
+}
+
+/** 초대 리워드 기록 + 잔액 반영 (광고주: +bonus, 신규: +amount) */
+export function processInviteReward(
+  inviterEmail: string,
+  inviteeEmail: string,
+  amount: number,
+  bonus: number,
+): InviteRecord | null {
+  if (!isBrowser()) return null;
+
+  const record: InviteRecord = {
+    inviterEmail: inviterEmail.toLowerCase(),
+    inviteeEmail: inviteeEmail.toLowerCase(),
+    amount,
+    bonus,
+    timestamp: Date.now(),
+  };
+
+  try {
+    // 광고주(초대자) 잔액 +bonus
+    const inviterBal = localStorage.getItem(BAL_KEY(record.inviterEmail));
+    const newBal = (inviterBal ? parseInt(inviterBal, 10) : 0) + bonus;
+    localStorage.setItem(BAL_KEY(record.inviterEmail), String(newBal));
+
+    // 신규 가입자 잔액 +amount
+    const inviteeBal = localStorage.getItem(BAL_KEY(record.inviteeEmail));
+    const newInviteeBal = (inviteeBal ? parseInt(inviteeBal, 10) : 0) + amount;
+    localStorage.setItem(BAL_KEY(record.inviteeEmail), String(newInviteeBal));
+
+    // 초대 기록 저장
+    const raw = localStorage.getItem(INVITE_KEY(record.inviterEmail));
+    const list: InviteRecord[] = raw ? JSON.parse(raw) : [];
+    list.unshift(record);
+    localStorage.setItem(INVITE_KEY(record.inviterEmail), JSON.stringify(list));
+  } catch {
+    // 무시
+  }
+
+  return record;
+}
+
+/** 초대자의 초대 기록 목록 조회 */
+export function getInviteRecords(user: { email?: string | null } | null | undefined): InviteRecord[] {
+  if (!isBrowser()) return [];
+  const key = emailKey(user);
+  if (!key) return [];
+  try {
+    const raw = localStorage.getItem(INVITE_KEY(key));
+    return raw ? (JSON.parse(raw) as InviteRecord[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 잔액 직접 추가 (초대 보너스 등) */
+export function addBalance(user: { email?: string | null }, amount: number): number {
+  if (!isBrowser()) return 0;
+  const key = emailKey(user);
+  if (!key) return 0;
+  const next = getBalance(user) + amount;
+  localStorage.setItem(BAL_KEY(key), String(next));
+  return next;
+}
