@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const saved = localStorage.getItem("daland-demo-user");
         if (saved) {
           const parsed = JSON.parse(saved);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setUser({ ...DEMO_USER, displayName: parsed.displayName, email: parsed.email } as User);
         }
       } catch {

@@ -7,13 +7,15 @@ import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import Navbar from "@/components/Navbar";
 
+type FirestoreTimestamp = { toDate: () => Date };
+
 interface Distribution {
   id: string;
   userName: string;
   categoryName: string;
   amount: number;
   totalAccumulation: number;
-  createdAt: any;
+  createdAt: FirestoreTimestamp | number | null;
 }
 
 // 데모 데이터
@@ -43,6 +45,7 @@ export default function MembershipDistributionPage() {
   useEffect(() => {
     if (!user) return;
     if (!isConfigured || !db) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDistributions(DEMO_DISTRIBUTIONS);
       return;
     }
@@ -66,19 +69,24 @@ export default function MembershipDistributionPage() {
 
   const totalReceived = distributions.reduce((s, d) => s + Math.round(d.amount * 0.05), 0);
   const totalReceivedAccumulation = Math.round(totalReceived * 1.2);
-  const totalSent = distributions.reduce((s, d) => s + d.amount, 0);
   const totalSentAccumulation = distributions.reduce((s, d) => s + d.totalAccumulation, 0);
+
+  const toDate = (raw: Distribution["createdAt"]): Date => {
+    if (raw && typeof raw === "object" && "toDate" in raw) return raw.toDate();
+    if (typeof raw === "number") return new Date(raw);
+    return new Date();
+  };
 
   const formatTime = (d: Distribution) => {
     try {
-      const date = d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt);
+      const date = toDate(d.createdAt);
       return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
     } catch { return "--:--"; }
   };
 
   const formatDate = (d: Distribution) => {
     try {
-      const date = d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt);
+      const date = toDate(d.createdAt);
       return `${date.getMonth() + 1}/${date.getDate()}`;
     } catch { return "--/--"; }
   };

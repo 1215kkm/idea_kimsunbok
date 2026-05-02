@@ -41,6 +41,7 @@ export default function WithdrawPage() {
     if (!user) return;
     if (!isConfigured || !db) {
       // 데모 모드: localStorage 기반 잔액
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBalance(getDemoBalance(user));
       return;
     }

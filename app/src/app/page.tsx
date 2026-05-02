@@ -79,8 +79,8 @@ function LoginPageInner() {
       } else {
         await signIn(email, password);
       }
-    } catch (err: any) {
-      const code = err?.code || "";
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || "";
       if (code === "auth/user-not-found" || code === "auth/invalid-credential" || code === "auth/wrong-password")
         setError("이메일 또는 비밀번호가 틀렸습니다.");
       else if (code === "auth/email-already-in-use")

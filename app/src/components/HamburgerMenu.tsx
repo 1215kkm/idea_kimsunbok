@@ -4,22 +4,23 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import Icon from "@/components/Icon";
 
 const menuItems = [
-  { href: "/dashboard", label: "홈", icon: "🏠", desc: "대시보드" },
-  { href: "/stores", label: "지출등록", icon: "💳", desc: "신용카드 지출 & 120% 적립" },
-  { href: "/withdraw", label: "출금", icon: "🏦", desc: "다랜드 계좌 → 내 은행계좌" },
-  { href: "/card", label: "비선형카드", icon: "🪪", desc: "카드 잔액 & 충전데이터" },
-  { href: "/history", label: "내역", icon: "📋", desc: "포인트 기록" },
-  { href: "/store-dashboard", label: "멤버십 분배", icon: "🔄", desc: "회원간 분배 현황" },
-  { href: "/simulation", label: "시뮬레이션", icon: "🎮", desc: "다랜드 체험" },
-  { href: "/engine", label: "엔진 설명", icon: "⚙️", desc: "비선형공식 원리" },
-  { href: "/quantity-mode", label: "총량유지 모드", icon: "🔗", desc: "락(고리) + 데이터노동" },
-  { href: "/advertiser", label: "광고주", icon: "🏢", desc: "광고주 120% 수익" },
-  { href: "/advertiser/invite", label: "리워드 초대", icon: "🎁", desc: "초대하고 +20,000P 수익" },
-  { href: "/philosophy", label: "자리이타", icon: "🙏", desc: "다랜드 핵심 철학" },
-  { href: "/admin", label: "관리자", icon: "🛡️", desc: "시스템 관리 패널" },
-  { href: "/account/leave", label: "회원 탈퇴", icon: "👋", desc: "탈퇴 및 환불" },
+  { href: "/dashboard", label: "홈", icon: "home", desc: "대시보드" },
+  { href: "/stores", label: "지출등록", icon: "credit_card", desc: "신용카드 지출 & 120% 적립" },
+  { href: "/withdraw", label: "출금", icon: "account_balance", desc: "다랜드 계좌 → 내 은행계좌" },
+  { href: "/card", label: "비선형카드", icon: "badge", desc: "카드 잔액 & 충전데이터" },
+  { href: "/history", label: "내역", icon: "list_alt", desc: "포인트 기록" },
+  { href: "/store-dashboard", label: "멤버십 분배", icon: "swap_horiz", desc: "회원간 분배 현황" },
+  { href: "/simulation", label: "시뮬레이션", icon: "sports_esports", desc: "다랜드 체험" },
+  { href: "/engine", label: "엔진 설명", icon: "settings", desc: "비선형공식 원리" },
+  { href: "/quantity-mode", label: "총량유지 모드", icon: "link", desc: "락(고리) + 데이터노동" },
+  { href: "/advertiser", label: "광고주", icon: "business", desc: "광고주 120% 수익" },
+  { href: "/advertiser/invite", label: "리워드 초대", icon: "card_giftcard", desc: "초대하고 +20,000P 수익" },
+  { href: "/philosophy", label: "자리이타", icon: "self_improvement", desc: "다랜드 핵심 철학" },
+  { href: "/admin", label: "관리자", icon: "admin_panel_settings", desc: "시스템 관리 패널" },
+  { href: "/account/leave", label: "회원 탈퇴", icon: "logout", desc: "탈퇴 및 환불" },
 ];
 
 export default function HamburgerMenu() {
@@ -85,7 +86,11 @@ export default function HamburgerMenu() {
                   background: pathname === item.href ? "var(--primary-bg, rgba(59, 76, 202, 0.08))" : "transparent",
                 }}
               >
-                <span className="text-xl">{item.icon}</span>
+                <Icon
+                  name={item.icon}
+                  size={22}
+                  className={pathname === item.href ? "text-[#3B4CCA]" : "text-[#6B7394]"}
+                />
                 <div>
                   <div className="text-sm font-bold">{item.label}</div>
                   <div className="text-xs" style={{ color: "var(--text-muted)" }}>{item.desc}</div>
@@ -105,7 +110,7 @@ export default function HamburgerMenu() {
             className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors hover:bg-[#EF4444]/8"
             style={{ color: "var(--text-muted)" }}
           >
-            <span className="text-xl">👋</span>
+            <Icon name="logout" size={22} />
             <span>로그아웃</span>
           </button>
         </div>

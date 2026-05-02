@@ -13,7 +13,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" data-theme="light">
       <body className="antialiased">
         <AuthProvider>
           <ThemeProvider>

@@ -21,6 +21,7 @@ export default function CardPage() {
   useEffect(() => {
     if (!user) return;
     if (!isConfigured || !db) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBalance(getDemoBalance(user));
       return;
     }
