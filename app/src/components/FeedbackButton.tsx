@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 // 피드백 수신 이메일 (배포 전 교체 가능)
-const FEEDBACK_EMAIL = "feedback@dataland.kr";
+const FEEDBACK_EMAIL = "rute20002@gmail.com";
 
 export default function FeedbackButton() {
   const { user } = useAuth();

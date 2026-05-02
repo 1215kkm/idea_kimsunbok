@@ -108,6 +108,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* 데모 모드 안내 배너 */}
+      {!isConfigured && (
+        <div className="mx-5 mt-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-relaxed text-[#6B7394]">
+          <span className="font-bold text-amber-700">🧪 베타 데모 모드</span> — 본인 데이터는 이 브라우저에 저장됩니다. 회원 간 분배·초대는 시뮬레이션입니다 (실거래 X).
+        </div>
+      )}
+
       {/* 다랜드 내 계좌 카드 */}
       <div className="mx-5 mt-5 rounded-2xl bg-gradient-to-br from-[#3B4CCA] to-[#2D3A8C] p-6 shadow-lg shadow-[#3B4CCA]/20">
         <div className="flex items-center justify-between">
