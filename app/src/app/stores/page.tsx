@@ -3,9 +3,10 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, doc, getDoc, runTransaction, serverTimestamp } from "firebase/firestore";
+import { collection, doc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import { calculateNonlinear } from "@/lib/nonlinear-engine";
+import { saveTransaction as saveDemoTx } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
 
 // Web Audio API 신호음
@@ -108,10 +109,11 @@ export default function StoresPage() {
           transaction.set(userRef, { totalPoints: currentPoints + nlResult.totalAccumulation }, { merge: true });
           const txRef = doc(collection(db!, "transactions"));
           transaction.set(txRef, {
-            userId: user.uid,
+            consumerId: user.uid,
             userName: user.displayName || "사용자",
             category: category.id,
             categoryName: category.name,
+            storeName: memo || category.name,
             amount: spendAmount,
             memo: memo || category.examples,
             nonlinearResult: {
@@ -130,6 +132,25 @@ export default function StoresPage() {
       } catch {
         // Firestore 오류 시에도 UI는 보여줌
       }
+    } else {
+      // 데모 모드: localStorage에 거래 누적 + 잔액 증가
+      saveDemoTx(user, {
+        category: category.id,
+        categoryName: category.name,
+        storeName: memo || category.name,
+        amount: spendAmount,
+        memo: memo || category.examples,
+        totalAccumulation: nlResult.totalAccumulation,
+        nonlinearResult: {
+          principal: nlResult.principal,
+          bonus: nlResult.bonus,
+          totalAccumulation: nlResult.totalAccumulation,
+          rate: nlResult.rate,
+          memberCount: nlResult.memberCount,
+          perMemberAmount: nlResult.perMemberAmount,
+          advertiserReward: nlResult.advertiser.advertiserReward,
+        },
+      });
     }
 
     setModal(null);
@@ -162,7 +183,7 @@ export default function StoresPage() {
       {/* 헤더 */}
       <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
         <h1 className="text-lg font-bold">지출데이터 등록</h1>
-        <p className="text-xs dark-text-muted text-[#6B7394]">신용카드 결제 → 지출데이터 단말기 증명 → 120% 적립</p>
+        <p className="text-xs dark-text-muted text-[#6B7394]">신용카드 결제 → 지출데이터 단말기 증명 → 120% 재충전</p>
       </div>
 
       {/* 안내 배너 */}
@@ -175,7 +196,7 @@ export default function StoresPage() {
           <p>1. 어디서든 <strong className="text-[#1A1F36]">신용카드로 결제</strong>합니다</p>
           <p>2. <strong className="text-[#1A1F36]">지출데이터 단말기</strong>가 영수증을 증명합니다</p>
           <p>3. 본인 충전데이터에서 지출금액이 차감됩니다</p>
-          <p>4. 비선형공식으로 <strong className="text-[#3B4CCA]">120% 증액</strong> → <strong className="text-[#10B981]">다랜드 내 계좌에 적립</strong></p>
+          <p>4. 비선형공식으로 <strong className="text-[#3B4CCA]">120% 증액</strong> → <strong className="text-[#10B981]">다랜드 내 계좌에 재충전</strong> (은행 직행 X)</p>
           <p>5. 지출비의 <strong className="text-orange-400">5%가 가입시킨 광고주</strong>에게 적립</p>
           <p>6. 적립 포인트를 <strong className="text-[#1A1F36]">내 은행계좌로 출금</strong> 가능 (1P = 1원)</p>
           <p>7. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
@@ -274,7 +295,7 @@ export default function StoresPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-6 backdrop-blur-md">
           <div className="w-full max-w-sm text-center">
             <div className="text-4xl">✅</div>
-            <div className="mt-2 text-sm text-[#6B7394]">지출데이터 증명 → 다랜드 내 계좌에 적립 완료</div>
+            <div className="mt-2 text-sm text-[#6B7394]">지출데이터 증명 → 다랜드 내 계좌에 재충전 완료 (총량 유지)</div>
 
             <div className="mt-2 text-lg font-bold text-[#EF4444]">
               {result.category.icon} {result.category.name} -{result.amount.toLocaleString()}원

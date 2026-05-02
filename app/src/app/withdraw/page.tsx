@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
+import { getBalance as getDemoBalance, deductBalance as deductDemoBalance } from "@/lib/demo-store";
+import { calculateWithdrawalRefund } from "@/lib/nonlinear-engine";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -36,8 +38,10 @@ export default function WithdrawPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!user || !isConfigured || !db) {
-      setBalance(128400);
+    if (!user) return;
+    if (!isConfigured || !db) {
+      // 데모 모드: localStorage 기반 잔액
+      setBalance(getDemoBalance(user));
       return;
     }
     const fetch = async () => {
@@ -45,7 +49,7 @@ export default function WithdrawPage() {
         const snap = await getDoc(doc(db!, "users", user.uid));
         if (snap.exists()) setBalance(snap.data().totalPoints || 0);
       } catch {
-        setBalance(128400);
+        // Firestore 미연결
       }
     };
     fetch();
@@ -62,6 +66,10 @@ export default function WithdrawPage() {
     if (!amt || amt <= 0 || amt > balance) return;
     setProcessing(true);
     setTimeout(() => {
+      if (!isConfigured || !db) {
+        // 데모 모드: localStorage에서 차감
+        if (user) deductDemoBalance(user, amt);
+      }
       setBalance((prev) => prev - amt);
       setProcessing(false);
       setStep("complete");
@@ -257,16 +265,49 @@ export default function WithdrawPage() {
         )}
 
         {/* 출금 확인 */}
-        {step === "confirm" && registeredBank && (
+        {step === "confirm" && registeredBank && (() => {
+          const amt = parseInt(withdrawAmount);
+          const refund = calculateWithdrawalRefund(amt);
+          return (
           <div className="space-y-4 text-center">
             <div className="text-lg font-bold">출금 확인</div>
+
+            {/* 락(고리) 메커니즘 안내 */}
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-left">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-base">🔗</span>
+                <span className="text-sm font-bold text-amber-700">비선형공식 락(고리) 적용</span>
+              </div>
+              <div className="space-y-1.5 text-xs text-[#6B7394]">
+                <div className="flex justify-between">
+                  <span>출금 신청 금액</span>
+                  <span className="font-bold text-[#1A1F36]">{amt.toLocaleString()}P</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>비선형공식 {refund.rate}% 확보</span>
+                  <span className="font-bold text-[#10B981]">{refund.securedPool.toLocaleString()}P</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>본인 계좌로 이체 (100%)</span>
+                  <span className="font-bold text-[#3B4CCA]">{refund.refundAmount.toLocaleString()}원</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>다랜드 시스템 수익 (20%)</span>
+                  <span className="font-bold text-amber-600">+{refund.systemProfit.toLocaleString()}P</span>
+                </div>
+              </div>
+              <div className="mt-2 rounded-lg bg-white/70 px-2 py-1.5 text-[11px] leading-relaxed text-[#6B7394]">
+                지출 전에 락(고리)을 걸어 비선형공식으로 분배 → 시스템 총량을 유지하면서 출금이 처리됩니다.
+              </div>
+            </div>
+
             <div className="rounded-2xl border border-purple-500/20 p-5"
               style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
               <div className="text-xs text-[#6B7394] mb-2">출금 정보</div>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-[#6B7394]">출금 금액</span>
-                  <span className="font-bold text-[#3B4CCA]">{parseInt(withdrawAmount).toLocaleString()}원</span>
+                  <span className="font-bold text-[#3B4CCA]">{amt.toLocaleString()}원</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-[#6B7394]">입금 은행</span>
@@ -283,7 +324,7 @@ export default function WithdrawPage() {
                 <div className="h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
                 <div className="flex justify-between text-sm">
                   <span className="font-bold">출금 후 잔액</span>
-                  <span className="font-bold text-[#3B4CCA]">{(balance - parseInt(withdrawAmount)).toLocaleString()}P</span>
+                  <span className="font-bold text-[#3B4CCA]">{(balance - amt).toLocaleString()}P</span>
                 </div>
               </div>
             </div>
@@ -295,24 +336,38 @@ export default function WithdrawPage() {
             <button onClick={() => setStep("amount")} disabled={processing}
               className="w-full text-center text-sm text-[#6B7394] hover:text-[#6B7394]">뒤로</button>
           </div>
-        )}
+          );
+        })()}
 
         {/* 출금 완료 */}
-        {step === "complete" && registeredBank && (
+        {step === "complete" && registeredBank && (() => {
+          const amt = parseInt(withdrawAmount);
+          const refund = calculateWithdrawalRefund(amt);
+          return (
           <div className="text-center space-y-4">
             <div className="text-5xl">✅</div>
             <div className="text-xl font-bold">출금 신청 완료!</div>
             <div className="rounded-2xl border border-[#10B981]/20 bg-emerald-500/5 p-5">
-              <div className="text-3xl font-black text-[#10B981]">{parseInt(withdrawAmount).toLocaleString()}원</div>
+              <div className="text-3xl font-black text-[#10B981]">{amt.toLocaleString()}원</div>
               <div className="mt-2 text-sm text-[#6B7394]">
                 {registeredBank.bank.name} {maskedAccount}
               </div>
               <div className="mt-1 text-xs text-[#6B7394]">영업일 기준 1~2일 내 입금 예정</div>
             </div>
 
+            <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-left">
+              <div className="mb-1 flex items-center gap-2">
+                <span>🔗</span>
+                <span className="font-bold text-amber-700">총량유지 모드 처리됨</span>
+              </div>
+              <div className="text-[#6B7394]">
+                비선형공식으로 {refund.securedPool.toLocaleString()}P 확보 → {refund.refundAmount.toLocaleString()}원 이체, {refund.systemProfit.toLocaleString()}P 시스템 수익으로 귀속
+              </div>
+            </div>
+
             <div className="rounded-xl bg-purple-900/10 border border-purple-500/20 p-3 text-xs text-[#6B7394]">
               <p>다랜드 내 계좌 잔액: <strong className="text-[#3B4CCA]">{balance.toLocaleString()}P</strong></p>
-              <p className="mt-1">앞으로도 신용카드를 사용하시면 자동으로 120% 증액 적립됩니다!</p>
+              <p className="mt-1">앞으로도 신용카드를 사용하시면 자동으로 120% 증액 재충전됩니다!</p>
             </div>
 
             <Link href="/dashboard"
@@ -320,7 +375,8 @@ export default function WithdrawPage() {
               대시보드로 돌아가기
             </Link>
           </div>
-        )}
+          );
+        })()}
       </div>
 
       <Navbar />

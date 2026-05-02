@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>다랜드 — 실제 운영을 위한 작업 가이드</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 18mm;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    color: #1A1F36;
+    line-height: 1.65;
+    font-size: 11pt;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+  h1 {
+    font-size: 22pt;
+    color: #3B4CCA;
+    border-bottom: 3px solid #3B4CCA;
+    padding-bottom: 8px;
+    margin: 0 0 6px;
+  }
+  h2 {
+    font-size: 15pt;
+    color: #1A1F36;
+    border-left: 5px solid #FFB800;
+    padding-left: 10px;
+    margin-top: 28px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12pt;
+    color: #3B4CCA;
+    margin-top: 18px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  p { margin: 4px 0 8px; }
+  .subtitle {
+    color: #6B7394;
+    font-size: 10pt;
+    margin-bottom: 18px;
+  }
+  .tag {
+    display: inline-block;
+    background: #FFB800;
+    color: #1A1F36;
+    font-size: 9pt;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 4px;
+  }
+  .box {
+    background: #F7F8FC;
+    border: 1px solid #E8EAF0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 8px 0 14px;
+    page-break-inside: avoid;
+  }
+  .box.blue { background: #EEF0FB; border-color: #C9D0F0; }
+  .box.gold { background: #FFF7DF; border-color: #F0D896; }
+  .box.green { background: #E8F7EE; border-color: #B4DFC3; }
+  .box.pink { background: #FDE8EE; border-color: #F2BFC8; }
+  ol, ul { margin: 6px 0 10px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 14px;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: #3B4CCA;
+    color: #fff;
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 700;
+  }
+  td {
+    border: 1px solid #E8EAF0;
+    padding: 7px 10px;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #FAFBFE; }
+  .priority-high { color: #EF4444; font-weight: 700; }
+  .priority-mid { color: #F59E0B; font-weight: 700; }
+  .priority-low { color: #10B981; font-weight: 700; }
+  .role-creator { background: #3B4CCA; color: white; padding: 2px 8px; border-radius: 4px; font-size: 9pt; }
+  .role-operator { background: #10B981; color: white; padding: 2px 8px; border-radius: 4px; font-size: 9pt; }
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 14px;
+  }
+  .flow-item {
+    flex: 1 1 140px;
+    background: #fff;
+    border: 1px solid #E8EAF0;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    font-size: 9.5pt;
+  }
+  .flow-item .num {
+    display: inline-block;
+    background: #3B4CCA;
+    color: white;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    border-radius: 50%;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .page-break { page-break-before: always; }
+  .footer {
+    margin-top: 30px;
+    padding-top: 10px;
+    border-top: 1px solid #E8EAF0;
+    color: #9CA3C1;
+    font-size: 9pt;
+    text-align: center;
+  }
+  strong { color: #1A1F36; }
+  code {
+    background: #EEF0FB;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9.5pt;
+    font-family: 'D2Coding', Consolas, monospace;
+    color: #3B4CCA;
+  }
+</style>
+</head>
+<body>
+
+<h1>다랜드 — 실제 운영을 위한 작업 가이드</h1>
+<p class="subtitle">비선형공식 120% 리워드 플랫폼 · 현 상태 진단과 남은 과제 · 2026.04</p>
+
+<div class="box blue">
+  <strong>한 줄 요약</strong> — 지금 만들어진 건 "기능 미리보기용 프로토타입"입니다.
+  실제 돈이 오가는 운영을 하려면 <strong>기술(배포/보안/자동화)</strong>과
+  <strong>사업(법·제휴·자금관리)</strong> 두 축의 작업이 필요합니다.
+</div>
+
+<h2>1. 지금 프로그램은 어떻게 돌아가나요?</h2>
+
+<h3>현재 모드 — 베타 체험 모드 (Demo)</h3>
+<ul>
+  <li>사용자 데이터가 <strong>각자의 브라우저 안(localStorage)에만 저장</strong>됩니다.</li>
+  <li>다른 기기에서 로그인하면 내역이 보이지 않습니다. (같은 브라우저 = 같은 계정)</li>
+  <li>포인트 출금은 실제 은행 이체가 아닌 <strong>가짜(시뮬레이션)</strong>입니다.</li>
+  <li>회원가입도 "이메일을 이 브라우저에 기록"하는 수준 — 비밀번호가 서버에서 검증되지 않습니다.</li>
+</ul>
+<p>→ <strong>테스터가 UX를 체험하고 피드백 주기에는 충분</strong>하지만, 실제 운영은 불가능합니다.</p>
+
+<h3>현재 구현되어 있는 기능</h3>
+<table>
+  <tr><th>기능</th><th>상태</th><th>비고</th></tr>
+  <tr><td>회원가입/로그인</td><td class="priority-low">● 완성</td><td>Firebase 연동 전제, 데모 모드 자동 전환</td></tr>
+  <tr><td>비선형공식 계산기</td><td class="priority-low">● 완성</td><td>120% 적립 · 광고주 5% 분배</td></tr>
+  <tr><td>지출 등록 / 거래내역</td><td class="priority-low">● 완성</td><td>데모 모드에서도 영구 저장</td></tr>
+  <tr><td>잔액/대시보드</td><td class="priority-low">● 완성</td><td>회원별 격리</td></tr>
+  <tr><td>영수증 OCR 자동 추출</td><td class="priority-mid">◐ 부분</td><td>화면만 있고 실제 OCR 미연결</td></tr>
+  <tr><td>CMS 가입센터</td><td class="priority-mid">◐ 부분</td><td>UI만, 효성CMS API 미연결</td></tr>
+  <tr><td>출금(은행 이체)</td><td class="priority-high">○ 미구현</td><td>setTimeout 가짜 처리 중</td></tr>
+  <tr><td>관리자 패널</td><td class="priority-high">○ 미구현</td><td>하드코딩 데모 데이터만 표시</td></tr>
+  <tr><td>광고주/매장 실데이터</td><td class="priority-high">○ 미구현</td><td>계약/등록 시스템 필요</td></tr>
+</table>
+
+<h2>2. 실제 운영 시 사용자 흐름</h2>
+
+<h3>소비자(일반 회원) 관점</h3>
+<div class="flow">
+  <div class="flow-item"><div class="num">1</div>앱/웹 가입 · 본인인증(KYC)</div>
+  <div class="flow-item"><div class="num">2</div>본인 은행계좌 등록</div>
+  <div class="flow-item"><div class="num">3</div>신용카드로 평소처럼 결제</div>
+  <div class="flow-item"><div class="num">4</div>영수증 자동 인식 → 등록</div>
+  <div class="flow-item"><div class="num">5</div>120% 포인트 적립 (비선형공식)</div>
+  <div class="flow-item"><div class="num">6</div>포인트를 은행계좌로 출금</div>
+</div>
+
+<h3>광고주 관점</h3>
+<ol>
+  <li>광고주 계약 체결 → 다랜드에 회원으로 가입</li>
+  <li>본인이 가입시킨 회원들의 지출 5%가 광고주 계좌에 지속 적립</li>
+  <li>정산 주기(주/월)에 실제 입금</li>
+</ol>
+
+<h3>운영자(다랜드 본사) 관점</h3>
+<ol>
+  <li>회원 가입·본인인증 승인</li>
+  <li>거래 데이터 검증 (영수증 실재성·중복·부정 탐지)</li>
+  <li>비선형공식에 따라 포인트 자동 분배 (Cloud Function)</li>
+  <li>효성CMS와 연동해 회원 충전금 정산</li>
+  <li>출금 요청 승인 → 은행 펌뱅킹으로 실제 이체</li>
+  <li>매일/매월 회계 정산, 특허/세무/고객지원 대응</li>
+</ol>
+
+<div class="page-break"></div>
+
+<h2>3. 제작자(개발자)의 남은 할 일</h2>
+<p class="subtitle"><span class="role-creator">제작자</span> = 코드를 작성하고 시스템을 구축하는 사람 (현재 당신)</p>
+
+<h3>Phase 1 — 즉시(이번 주) : 배포와 실 DB 연결</h3>
+<table>
+  <tr><th>#</th><th>작업</th><th>우선순위</th><th>예상 난이도</th></tr>
+  <tr><td>1</td><td>Vercel 배포 URL 확인 → 테스터에게 공유</td><td class="priority-high">높음</td><td>낮음</td></tr>
+  <tr><td>2</td><td>Firebase 프로젝트 생성 + Auth/Firestore 활성화</td><td class="priority-high">높음</td><td>낮음</td></tr>
+  <tr><td>3</td><td>.env.local에 Firebase 키 주입 + Vercel 환경변수 등록</td><td class="priority-high">높음</td><td>낮음</td></tr>
+  <tr><td>4</td><td>firestore.rules 배포 (<code>firebase deploy --only firestore:rules</code>)</td><td class="priority-high">높음</td><td>낮음</td></tr>
+  <tr><td>5</td><td>FeedbackButton 이메일 주소 실운영 주소로 교체</td><td class="priority-mid">중간</td><td>낮음</td></tr>
+</table>
+
+<h3>Phase 2 — 단기(1~3주) : 핵심 기능 실연동</h3>
+<table>
+  <tr><th>#</th><th>작업</th><th>우선순위</th><th>설명</th></tr>
+  <tr><td>6</td><td>API Routes 구축<br/>(<code>/api/transactions</code>, <code>/api/withdraw</code>)</td><td class="priority-high">높음</td><td>서버 측 검증·로깅</td></tr>
+  <tr><td>7</td><td>Cloud Functions: 지출 → 비선형 분배 자동화</td><td class="priority-high">높음</td><td>포인트 지급 신뢰성</td></tr>
+  <tr><td>8</td><td>관리자 패널: 실제 출금 승인 플로우</td><td class="priority-high">높음</td><td>운영팀이 사용할 화면</td></tr>
+  <tr><td>9</td><td>영수증 OCR 통합 (Google Vision / CLOVA OCR)</td><td class="priority-mid">중간</td><td>수동 입력 → 자동 추출</td></tr>
+  <tr><td>10</td><td>본인인증(KYC) 연동 — PASS·NICE·KCB</td><td class="priority-high">높음</td><td>전자금융법 요구사항</td></tr>
+  <tr><td>11</td><td>은행 펌뱅킹/오픈뱅킹 API 연동 (실제 출금 실행)</td><td class="priority-high">높음</td><td>운영자가 발급받은 API키 사용</td></tr>
+</table>
+
+<h3>Phase 3 — 중기(1~3개월) : 안정·보안·확장</h3>
+<ul>
+  <li>부정거래 탐지: 영수증 중복·금액 이상 탐지 규칙</li>
+  <li>자동화된 회계 리포트 (일/월 단위 지출·적립·출금 총액)</li>
+  <li>에러 모니터링 (Sentry), 성능 모니터링 (Vercel Analytics)</li>
+  <li>PWA / 모바일 앱 빌드 (사용자 설치)</li>
+  <li>시뮬레이션 페이지 정상화 (현재 iframe 깨짐)</li>
+  <li>CI/CD 테스트 강화 — 현재 <code>auto-review-and-merge</code> 외 E2E 테스트 추가</li>
+  <li>DB 백업 · 재해 복구 시나리오</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>4. 운영자(사업·법률·재무)의 남은 할 일</h2>
+<p class="subtitle"><span class="role-operator">운영자</span> = 사업을 실제로 돌리는 사람 (법인 대표·기획자·재무담당)</p>
+
+<h3>A. 법·제도 준비 (필수)</h3>
+<div class="box pink">
+  <strong>⚠️ 주의</strong> — 포인트를 현금으로 출금해주는 순간 "선불전자지급수단 발행업"으로 분류될 가능성이 매우 큽니다.
+  등록 없이 서비스를 열면 <strong>전자금융거래법 위반</strong>이 됩니다.
+</div>
+<table>
+  <tr><th>#</th><th>작업</th><th>담당기관</th></tr>
+  <tr><td>1</td><td>법인 설립 + 사업자등록 (아직이면)</td><td>세무서</td></tr>
+  <tr><td>2</td><td>전자금융업 등록 (선불전자지급수단 발행)</td><td>금융위원회 / 금감원</td></tr>
+  <tr><td>3</td><td>개인정보처리방침 · 이용약관 · 환불정책 작성/공시</td><td>법률자문</td></tr>
+  <tr><td>4</td><td>통신판매업 신고 (광고주 수수료 수취 모델이면)</td><td>관할 구청</td></tr>
+  <tr><td>5</td><td>특허 출원 완료 확인 + 상표 등록</td><td>특허청 / 변리사</td></tr>
+  <tr><td>6</td><td>정보보호 인증 (ISMS-P) — 중장기</td><td>KISA</td></tr>
+</table>
+
+<h3>B. 파트너십·계약</h3>
+<ul>
+  <li><strong>효성CMS</strong> 공식 파트너십 계약 — 자동이체·대행수납 연동</li>
+  <li><strong>은행</strong> 법인계좌 + 펌뱅킹 계약 (출금 실행용)</li>
+  <li><strong>본인인증 기관</strong> (PASS/KCB/NICE) 위탁 계약</li>
+  <li><strong>OCR 제공사</strong> 계약 (CLOVA, Google Vision 등)</li>
+  <li><strong>광고주 모집</strong> — 표준 계약서, 정산 주기, 수수료율 확정</li>
+  <li><strong>가맹점 / 결제 파트너</strong> (장기) — 직접 가맹 모델 or 기존 카드사 데이터 활용 모델</li>
+</ul>
+
+<h3>C. 자금·회계</h3>
+<div class="box gold">
+  <strong>자금 흐름 핵심</strong> — 회원의 지출 원금은 효성CMS를 통해 다랜드 계좌에 수납되고,
+  비선형공식 120% 중 "초과 20%는 광고주 수수료 + 회원 충성도 재투자"에서 충당됩니다.
+  <strong>자금 불일치 시 즉시 지급불능(파산) 리스크</strong>이므로, 회계·준비금 관리가 기술보다 더 중요합니다.
+</div>
+<ol>
+  <li>초기 운영자금 확보 (회원수 N명 × 평균 출금금액 × 여유분)</li>
+  <li>회원 충전금(예수금) 별도 계좌 보관 — 전자금융법상 분리보관 의무</li>
+  <li>세무사/회계사 월간 정산 계약</li>
+  <li>매일의 입금-출금-적립 내역 대조</li>
+  <li>광고주 정산 시스템 (월 마감)</li>
+</ol>
+
+<h3>D. 운영팀·고객지원</h3>
+<ul>
+  <li>운영자 역할 분담: 출금 승인자 / 부정거래 감시자 / 고객상담</li>
+  <li>고객센터 채널 (카카오톡 채널, 이메일, 1:1 문의)</li>
+  <li>운영 매뉴얼 작성 — 출금 승인 기준, 부정거래 대응 절차, 환불 기준</li>
+  <li>약관 위반·부정 계정 처리 워크플로우</li>
+</ul>
+
+<h3>E. 마케팅·성장</h3>
+<ul>
+  <li>베타 테스터 모집 (지인 20~50명 → 피드백 반영)</li>
+  <li>1차 정식 오픈 전 보도자료 · 랜딩페이지 준비</li>
+  <li>광고주 확보 영업 자료 (사업 소개서, 수익 시뮬레이션)</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>5. 권장 로드맵 (현실적인 순서)</h2>
+
+<table>
+  <tr><th>단계</th><th>기간</th><th>제작자 할 일</th><th>운영자 할 일</th></tr>
+  <tr>
+    <td><strong>① 베타</strong><br/>지금</td>
+    <td>1~2주</td>
+    <td>Vercel URL 공유, 피드백 버튼 이메일 세팅</td>
+    <td>지인 테스터 20명 모집, 피드백 수집</td>
+  </tr>
+  <tr>
+    <td><strong>② 실데이터</strong><br/>0→1</td>
+    <td>2~4주</td>
+    <td>Firebase 실연동, API Routes, 관리자 패널</td>
+    <td>법인/사업자등록, 개인정보처리방침 초안</td>
+  </tr>
+  <tr>
+    <td><strong>③ 제한운영</strong><br/>초청제</td>
+    <td>1~2개월</td>
+    <td>KYC · OCR · 은행 API 연동</td>
+    <td>전자금융업 등록 신청, 효성CMS 계약, 준비금 확보</td>
+  </tr>
+  <tr>
+    <td><strong>④ 정식오픈</strong></td>
+    <td>3개월+</td>
+    <td>모니터링·자동화·모바일앱</td>
+    <td>광고주 영업, 운영팀 구성, 정식 마케팅</td>
+  </tr>
+</table>
+
+<h2>6. 지금 당장(오늘/이번 주) 할 3가지</h2>
+<div class="box green">
+  <ol>
+    <li><strong>Vercel 배포 URL 확인</strong> → 지인 5명에게 링크 전달하고 5분씩 써보게 하기</li>
+    <li><strong>FeedbackButton의 이메일 주소</strong>를 실제 받을 주소로 교체 (파일: <code>app/src/components/FeedbackButton.tsx:6</code>)</li>
+    <li><strong>법률 자문 상담 1시간 예약</strong> — "포인트를 현금 출금하는 서비스"의 전자금융업 해당 여부 확인 (이게 사업 가능 여부를 결정)</li>
+  </ol>
+</div>
+
+<div class="footer">
+  다랜드(Dataland) — 비선형공식 120% 리워드 플랫폼<br/>
+  이 문서는 현재 코드베이스(브랜치 claude/review-cms-asp-requirements-PIxoV, 커밋 c602862) 기준으로 작성되었습니다.
+</div>
+
+</body>
+</html>

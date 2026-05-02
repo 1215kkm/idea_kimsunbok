@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
+import { getTransactions as getDemoTxs, getStats as getDemoStats } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
 
 interface Transaction {
   id: string;
-  storeName: string;
+  storeName?: string;
+  categoryName?: string;
   amount: number;
   totalAccumulation: number;
   nonlinearResult: {
@@ -31,7 +33,22 @@ export default function HistoryPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!user || !isConfigured || !db) return;
+    if (!user) return;
+    if (!isConfigured || !db) {
+      // 데모 모드: localStorage에서 본인 거래 불러오기
+      const list = getDemoTxs(user).map((t) => ({
+        id: t.id,
+        storeName: t.storeName || t.categoryName,
+        categoryName: t.categoryName,
+        amount: t.amount,
+        totalAccumulation: t.totalAccumulation,
+        nonlinearResult: t.nonlinearResult,
+        createdAt: t.createdAt,
+      })) as Transaction[];
+      setTxs(list);
+      setStats(getDemoStats(user));
+      return;
+    }
     const fetchTxs = async () => {
       try {
         const q = query(
@@ -102,7 +119,7 @@ export default function HistoryPage() {
                 className="dark-card rounded-xl border border-[#E8EAF0] bg-white px-4 py-3"
               >
                 <div className="flex items-center justify-between">
-                  <div className="font-medium">{tx.storeName}</div>
+                  <div className="font-medium">{tx.storeName || tx.categoryName || "지출"}</div>
                   <div className="text-sm font-bold text-[#10B981]">
                     +{tx.totalAccumulation.toLocaleString()}P
                   </div>

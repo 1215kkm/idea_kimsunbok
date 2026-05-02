@@ -181,3 +181,56 @@ export function calculateNonlinear(amount: number, memberCount?: number): Nonlin
     correctionPool,
   };
 }
+
+// --- 회원 탈퇴 환불 ---
+
+export interface WithdrawalRefundResult {
+  balance: number;
+  securedPool: number;
+  refundAmount: number;
+  systemProfit: number;
+  rate: number;
+}
+
+/**
+ * 탈퇴를 "시스템 지출"로 간주하여 비선형공식으로 120% 확보한 뒤
+ * 원금(100%)만 회원에게 환불하고 20%는 시스템 수익으로 귀속시킨다.
+ */
+export function calculateWithdrawalRefund(balance: number): WithdrawalRefundResult {
+  const rate = DEFAULT_CONFIG.correctionTarget; // 1.2
+  const securedPool = Math.round(balance * rate);
+  const refundAmount = balance;
+  const systemProfit = securedPool - refundAmount;
+  return { balance, securedPool, refundAmount, systemProfit, rate: rate * 100 };
+}
+
+// --- 리워드 광고(초대) 영업 모델 ---
+
+export interface InviteRewardResult {
+  baseAmount: number;
+  distributedToNewUser: number;
+  advertiserSpend: number;
+  advertiserSecured: number;
+  advertiserNetGain: number;
+  rate: number;
+}
+
+/**
+ * 광고주가 baseAmount(기본 100,000P)를 분배하면:
+ *  - 신규 가입자에게 baseAmount 지급
+ *  - 광고주 본인 지출로 인식 → 비선형공식 120% 적립
+ *  - 순변화 = +20% (advertiserSecured - advertiserSpend)
+ */
+export function calculateInviteReward(baseAmount: number = 100_000): InviteRewardResult {
+  const rate = DEFAULT_CONFIG.correctionTarget; // 1.2
+  const advertiserSecured = Math.round(baseAmount * rate);
+  const advertiserNetGain = advertiserSecured - baseAmount;
+  return {
+    baseAmount,
+    distributedToNewUser: baseAmount,
+    advertiserSpend: baseAmount,
+    advertiserSecured,
+    advertiserNetGain,
+    rate: rate * 100,
+  };
+}
