@@ -15,6 +15,11 @@ function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteCode = searchParams.get("invite");
+  const inviteAmtParam = searchParams.get("amt");
+  const inviteAmount = (() => {
+    const n = inviteAmtParam ? parseInt(inviteAmtParam, 10) : 100_000;
+    return Number.isFinite(n) && n > 0 ? n : 100_000;
+  })();
   const [isSignUp, setIsSignUp] = useState(!!inviteCode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,7 +33,7 @@ function LoginPageInner() {
     if (inviteCode && user.email) {
       const inviterEmail = resolveInviteCode(inviteCode);
       if (inviterEmail && inviterEmail !== user.email.toLowerCase()) {
-        const reward = calculateInviteReward(100_000);
+        const reward = calculateInviteReward(inviteAmount);
         processInviteReward(
           inviterEmail,
           user.email,
@@ -39,7 +44,7 @@ function LoginPageInner() {
       }
     }
     router.push("/dashboard");
-  }, [user, router, inviteCode, inviteProcessed]);
+  }, [user, router, inviteCode, inviteAmount, inviteProcessed]);
 
   if (loading) {
     return (
@@ -107,7 +112,7 @@ function LoginPageInner() {
       {inviteCode && (
         <div className="mb-4 w-full max-w-sm rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 px-4 py-3 text-xs leading-relaxed text-[#6B7394]">
           <div className="mb-1 font-bold text-[#10B981]">🎁 초대 코드 적용됨</div>
-          <p>회원가입을 완료하면 <strong className="text-[#1A1F36]">100,000P</strong>가 자동으로 지급됩니다!</p>
+          <p>회원가입을 완료하면 <strong className="text-[#1A1F36]">{inviteAmount.toLocaleString()}P</strong>가 자동으로 지급됩니다!</p>
         </div>
       )}
 

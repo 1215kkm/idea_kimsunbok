@@ -14,6 +14,7 @@ const menuItems = [
   { href: "/store-dashboard", label: "멤버십 분배", icon: "🔄", desc: "회원간 분배 현황" },
   { href: "/simulation", label: "시뮬레이션", icon: "🎮", desc: "다랜드 체험" },
   { href: "/engine", label: "엔진 설명", icon: "⚙️", desc: "비선형공식 원리" },
+  { href: "/quantity-mode", label: "총량유지 모드", icon: "🔗", desc: "락(고리) + 데이터노동" },
   { href: "/advertiser", label: "광고주", icon: "🏢", desc: "광고주 120% 수익" },
   { href: "/advertiser/invite", label: "리워드 초대", icon: "🎁", desc: "초대하고 +20,000P 수익" },
   { href: "/philosophy", label: "자리이타", icon: "🙏", desc: "다랜드 핵심 철학" },

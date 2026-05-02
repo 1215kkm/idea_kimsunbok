@@ -14,6 +14,13 @@ import { calculateInviteReward } from "@/lib/nonlinear-engine";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
+const PRESET_AMOUNTS = [
+  { value: 100_000, label: "10만P", desc: "일반 회원 초대" },
+  { value: 1_000_000, label: "100만P", desc: "VIP 초대" },
+  { value: 10_000_000, label: "1천만P", desc: "프리미엄 초대" },
+  { value: 100_000_000, label: "1억P", desc: "사업자 데모용" },
+];
+
 export default function AdvertiserInvitePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -22,6 +29,8 @@ export default function AdvertiserInvitePage() {
   const [balance, setBalance] = useState(0);
   const [copied, setCopied] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [rewardAmount, setRewardAmount] = useState(100_000);
+  const [customInput, setCustomInput] = useState("");
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -43,13 +52,13 @@ export default function AdvertiserInvitePage() {
     );
   }
 
-  const reward = calculateInviteReward(100_000);
+  const reward = calculateInviteReward(rewardAmount);
   const totalBonus = records.reduce((sum, r) => sum + r.bonus, 0);
   const totalDistributed = records.reduce((sum, r) => sum + r.amount, 0);
 
   const inviteUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/?invite=${inviteCode}`
+    typeof window !== "undefined" && inviteCode
+      ? `${window.location.origin}/?invite=${inviteCode}&amt=${rewardAmount}`
       : "";
 
   const handleCopy = async () => {
@@ -130,6 +139,72 @@ export default function AdvertiserInvitePage() {
           <div className="mt-1 text-xs text-[#6B7394]">
             총 {records.length}명 초대 · {totalDistributed.toLocaleString()}P
             분배
+          </div>
+        </div>
+
+        {/* 분배 금액 선택 */}
+        <div
+          className="rounded-2xl border p-5"
+          style={{
+            borderColor: "var(--card-border)",
+            background: "var(--card-bg)",
+          }}
+        >
+          <div className="mb-3 text-sm font-bold text-[#6B7394]">
+            신규 회원에게 분배할 금액
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {PRESET_AMOUNTS.map((p) => (
+              <button
+                key={p.value}
+                onClick={() => {
+                  setRewardAmount(p.value);
+                  setCustomInput("");
+                }}
+                className="rounded-xl border p-3 text-left transition-all"
+                style={{
+                  borderColor:
+                    rewardAmount === p.value && !customInput
+                      ? "rgba(59, 76, 202, 0.5)"
+                      : "var(--card-border)",
+                  background:
+                    rewardAmount === p.value && !customInput
+                      ? "rgba(59, 76, 202, 0.08)"
+                      : "transparent",
+                }}
+              >
+                <div className="text-sm font-bold text-[#3B4CCA]">
+                  {p.label}
+                </div>
+                <div className="text-xs text-[#6B7394]">{p.desc}</div>
+              </button>
+            ))}
+          </div>
+          <div className="mb-2 flex items-center gap-2">
+            <input
+              type="number"
+              placeholder="직접 입력 (P)"
+              value={customInput}
+              onChange={(e) => {
+                setCustomInput(e.target.value);
+                const v = parseInt(e.target.value);
+                if (Number.isFinite(v) && v > 0) setRewardAmount(v);
+              }}
+              min={10000}
+              max={1000000000}
+              className="dark-input flex-1 rounded-xl border border-[#E8EAF0] bg-white px-3 py-2 text-sm placeholder-[#9CA3C1] outline-none focus:border-[#3B4CCA]"
+            />
+            <span className="text-xs text-[#6B7394]">P</span>
+          </div>
+          <div className="rounded-lg bg-[#F7F8FC] px-3 py-2 text-xs text-[#6B7394]">
+            현재 분배 금액:{" "}
+            <strong className="text-[#3B4CCA]">
+              {rewardAmount.toLocaleString()}P
+            </strong>{" "}
+            · 광고주 순수익:{" "}
+            <strong className="text-[#10B981]">
+              +{reward.advertiserNetGain.toLocaleString()}P
+            </strong>
           </div>
         </div>
 

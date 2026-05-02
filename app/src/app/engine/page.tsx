@@ -308,11 +308,24 @@ export default function EnginePage() {
             <div className="mt-5 rounded-xl bg-black/10 p-4 text-left text-xs leading-relaxed dark-text-muted text-[#6B7394]">
               <div className="mb-2 text-sm font-bold text-[#3B4CCA]">핵심 원리</div>
               <p>다랜드에는 가맹점이 없습니다. <strong>모두가 사용자</strong>입니다.</p>
-              <p className="mt-1">사용자가 신용카드로 결제하면 지출데이터 단말기가 증명하고, 본인 충전데이터에서 차감된 금액이 비선형공식으로 분배되어 120% 증액 적립됩니다.</p>
+              <p className="mt-1">사용자가 신용카드로 결제하면 지출데이터 단말기가 증명하고, 본인 충전데이터에서 차감된 금액이 비선형공식으로 분배되어 120% 증액 재충전됩니다.</p>
               <p className="mt-1">회원 소비지출의 5%가 가입시킨 광고주에게 적립됩니다. 이로서 <strong>데이터에 의한 기본소득</strong>이 창출됩니다.</p>
               <p className="mt-1">이 지출금액은 다른 멤버십 회원들에게도 전달되어, 그들도 120% 적립을 받습니다.</p>
               <p className="mt-2 text-center font-bold text-[#3B4CCA]">
                 &ldquo;항아리 속의 물 총량은 같다. 바가지만 바뀔 뿐.&rdquo;
+              </p>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-left text-xs leading-relaxed text-[#6B7394]">
+              <div className="mb-2 flex items-center gap-2">
+                <span>🔗</span>
+                <span className="text-sm font-bold text-amber-700">총량유지 모드 + 데이터노동</span>
+              </div>
+              <p>지출 전에 <strong>락(고리)</strong>을 걸어 비선형공식에 분배 → 120% 확보 → 시스템 총량을 유지합니다.</p>
+              <p className="mt-1">중앙관리서버는 <strong>초당 30만 건의 거래</strong>로 비선형공식을 무한 반복하여 기술적 적정성을 확보합니다.</p>
+              <p className="mt-1">광고주가 리워드 광고로 지출(분배)해도 항상 120%(100%분배원금 + 20%수익)이 가능 — 이것을 <strong className="text-[#10B981]">데이터노동</strong>이라 합니다.</p>
+              <p className="mt-2 text-center">
+                <a href="/quantity-mode" className="inline-block rounded-full bg-amber-500/20 px-3 py-1 font-bold text-amber-700">총량유지 모드 자세히 보기 →</a>
               </p>
             </div>
           </div>
