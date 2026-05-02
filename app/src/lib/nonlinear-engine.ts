@@ -87,16 +87,6 @@ export function calculateNonlinear(amount: number, memberCount?: number): Nonlin
   // B1: 멤버십 회원 분배분 (50%)
   const memberDistribution = amount * c.memberShareRate;
 
-  // 멤버십 풀 (10배 확장)
-  const membershipPool = memberDistribution * c.membershipMultiplier;
-
-  // 비선형 분배 (5라운드)
-  let distributed = 0;
-  const totalMultiplier = c.roundMultipliers.reduce((x, y) => x + y, 0);
-  for (let i = 0; i < c.distributionRounds; i++) {
-    distributed += (membershipPool / totalMultiplier) * c.roundMultipliers[i];
-  }
-
   // 이탈모드: C1:4×거래금액(free) - a:50%(free) → 결합모드
   const c1Pool = amount * 4; // C1 = 4배 확장
   const escapeAmount = amount * 0.5; // a:500,000,000 = 50% of A1

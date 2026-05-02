@@ -8,6 +8,8 @@ import { db, isConfigured } from "@/lib/firebase";
 import { getTransactions as getDemoTxs, getStats as getDemoStats } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
 
+type FirestoreTimestamp = { toDate: () => Date };
+
 interface Transaction {
   id: string;
   storeName?: string;
@@ -19,7 +21,7 @@ interface Transaction {
     bonus: number;
     rate: number;
   };
-  createdAt: any;
+  createdAt: FirestoreTimestamp | number | null;
 }
 
 export default function HistoryPage() {
@@ -45,8 +47,10 @@ export default function HistoryPage() {
         nonlinearResult: t.nonlinearResult,
         createdAt: t.createdAt,
       })) as Transaction[];
+      /* eslint-disable react-hooks/set-state-in-effect */
       setTxs(list);
       setStats(getDemoStats(user));
+      /* eslint-enable react-hooks/set-state-in-effect */
       return;
     }
     const fetchTxs = async () => {

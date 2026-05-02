@@ -39,6 +39,7 @@ export default function AdvertiserInvitePage() {
   useEffect(() => {
     if (!user) return;
     const code = generateInviteCode(user);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setInviteCode(code);
     setRecords(getInviteRecords(user));
     setBalance(getDemoBalance(user));

@@ -15,12 +15,14 @@ interface UserData {
   membershipLevel: number;
 }
 
+type FirestoreTimestamp = { toDate: () => Date };
+
 interface RecentTx {
   id: string;
   storeName: string;
   amount: number;
   totalAccumulation: number;
-  createdAt: any;
+  createdAt: FirestoreTimestamp | number | null;
 }
 
 export default function DashboardPage() {
@@ -40,6 +42,7 @@ export default function DashboardPage() {
       // 데모 모드: localStorage 기반
       const demoTxs = getDemoTxs(user);
       const demoStats = getDemoStats(user);
+      /* eslint-disable react-hooks/set-state-in-effect */
       setUserData({
         name: user.displayName || "사용자",
         totalPoints: getDemoBalance(user),
@@ -55,6 +58,7 @@ export default function DashboardPage() {
         }))
       );
       setTotalSpent(demoStats.spent);
+      /* eslint-enable react-hooks/set-state-in-effect */
       return;
     }
     const fetchData = async () => {

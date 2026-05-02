@@ -3,6 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import { calculateNonlinear } from "@/lib/nonlinear-engine";
 import Navbar from "@/components/Navbar";
 
@@ -111,6 +112,22 @@ export default function ReceiptExtractPage() {
     };
   }, [cameraStream]);
 
+  // OCR 시뮬레이션 (한 줄씩 추출) — openCamera/capturePhoto 보다 위에 선언 (TDZ 방지)
+  const simulateOCR = useCallback(() => {
+    setOcrLines([]);
+    OCR_LINES.forEach((line, i) => {
+      setTimeout(() => {
+        setOcrLines((prev) => [...prev, line]);
+        if (i === OCR_LINES.length - 1) {
+          setTimeout(() => {
+            setMode("ocr-result");
+            setExtractedReceipts([DEMO_RECEIPTS[0]]);
+          }, 800);
+        }
+      }, (i + 1) * 600);
+    });
+  }, []);
+
   // 카메라 열기
   const openCamera = useCallback(async () => {
     setMode("camera");
@@ -127,7 +144,7 @@ export default function ReceiptExtractPage() {
       setMode("ocr-scanning");
       simulateOCR();
     }
-  }, []);
+  }, [simulateOCR]);
 
   // 사진 촬영
   const capturePhoto = () => {
@@ -150,22 +167,6 @@ export default function ReceiptExtractPage() {
     // OCR 시뮬레이션 시작
     setMode("ocr-scanning");
     simulateOCR();
-  };
-
-  // OCR 시뮬레이션 (한 줄씩 추출)
-  const simulateOCR = () => {
-    setOcrLines([]);
-    OCR_LINES.forEach((line, i) => {
-      setTimeout(() => {
-        setOcrLines((prev) => [...prev, line]);
-        if (i === OCR_LINES.length - 1) {
-          setTimeout(() => {
-            setMode("ocr-result");
-            setExtractedReceipts([DEMO_RECEIPTS[0]]);
-          }, 800);
-        }
-      }, (i + 1) * 600);
-    });
   };
 
   // CMS 자동인식 모드
@@ -358,7 +359,14 @@ export default function ReceiptExtractPage() {
             {/* 캡처 이미지 */}
             {capturedImage && (
               <div className="mb-4 overflow-hidden rounded-2xl border border-purple-500/30">
-                <img src={capturedImage} alt="촬영된 영수증" className="w-full opacity-60" />
+                <Image
+                  src={capturedImage}
+                  alt="촬영된 영수증"
+                  width={800}
+                  height={1000}
+                  unoptimized
+                  className="w-full h-auto opacity-60"
+                />
               </div>
             )}
 

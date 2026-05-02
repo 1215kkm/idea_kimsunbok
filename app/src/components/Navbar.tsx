@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePathname } from "next/navigation";
+import Icon from "@/components/Icon";
 
 export default function Navbar() {
   const { user, signOut } = useAuth();
@@ -11,10 +12,10 @@ export default function Navbar() {
   if (!user) return null;
 
   const links = [
-    { href: "/dashboard", label: "홈", icon: "🏠" },
-    { href: "/stores", label: "지출등록", icon: "💳" },
-    { href: "/withdraw", label: "출금", icon: "🏦" },
-    { href: "/history", label: "내역", icon: "📋" },
+    { href: "/dashboard", label: "홈", icon: "home" },
+    { href: "/stores", label: "지출등록", icon: "credit_card" },
+    { href: "/withdraw", label: "출금", icon: "account_balance" },
+    { href: "/history", label: "내역", icon: "list_alt" },
   ];
 
   return (
@@ -30,7 +31,7 @@ export default function Navbar() {
                 : "text-[#6B7394] hover:text-[#3B4CCA]"
             }`}
           >
-            <span className="text-xl">{l.icon}</span>
+            <Icon name={l.icon} size={22} filled={pathname === l.href} />
             {l.label}
           </Link>
         ))}
@@ -38,7 +39,7 @@ export default function Navbar() {
           onClick={signOut}
           className="flex flex-col items-center gap-0.5 px-4 py-1 text-xs text-[#6B7394] hover:text-[#3B4CCA]"
         >
-          <span className="text-xl">👋</span>
+          <Icon name="logout" size={22} />
           로그아웃
         </button>
       </div>

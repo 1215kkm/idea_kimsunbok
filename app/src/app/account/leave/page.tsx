@@ -37,6 +37,7 @@ export default function AccountLeavePage() {
 
   useEffect(() => {
     if (!user) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBalance(getDemoBalance(user));
   }, [user]);
 
