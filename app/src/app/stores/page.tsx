@@ -3,10 +3,10 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, doc, runTransaction, serverTimestamp } from "firebase/firestore";
-import { db, isConfigured } from "@/lib/firebase";
+import { isConfigured } from "@/lib/firebase";
 import { calculateNonlinear } from "@/lib/nonlinear-engine";
 import { saveTransaction as saveDemoTx } from "@/lib/demo-store";
+import { apiPost, ApiClientError } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
 
 // Web Audio API 신호음
@@ -89,6 +89,7 @@ export default function StoresPage() {
   const [processing, setProcessing] = useState(false);
   const [amount, setAmount] = useState("");
   const [memo, setMemo] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -97,43 +98,46 @@ export default function StoresPage() {
   const handleRegister = async (category: SpendCategory, spendAmount: number) => {
     if (!user || processing) return;
     setProcessing(true);
+    setSubmitError(null);
 
-    const nlResult = calculateNonlinear(spendAmount);
+    let earned = 0;
+    let bonus = 0;
+    let memberCount = 0;
+    let perMemberAmount = 0;
+    let advertiserReward = 0;
 
-    if (isConfigured && db) {
+    if (isConfigured) {
       try {
-        await runTransaction(db, async (transaction) => {
-          const userRef = doc(db!, "users", user.uid);
-          const userSnap = await transaction.get(userRef);
-          const currentPoints = userSnap.exists() ? (userSnap.data().totalPoints || 0) : 0;
-          transaction.set(userRef, { totalPoints: currentPoints + nlResult.totalAccumulation }, { merge: true });
-          const txRef = doc(collection(db!, "transactions"));
-          transaction.set(txRef, {
-            consumerId: user.uid,
-            userName: user.displayName || "사용자",
-            category: category.id,
-            categoryName: category.name,
-            storeName: memo || category.name,
-            amount: spendAmount,
-            memo: memo || category.examples,
-            nonlinearResult: {
-              principal: nlResult.principal,
-              bonus: nlResult.bonus,
-              totalAccumulation: nlResult.totalAccumulation,
-              rate: nlResult.rate,
-              memberCount: nlResult.memberCount,
-              perMemberAmount: nlResult.perMemberAmount,
-              advertiserReward: nlResult.advertiser.advertiserReward,
-            },
-            totalAccumulation: nlResult.totalAccumulation,
-            createdAt: serverTimestamp(),
-          });
+        const r = await apiPost<{
+          totalAccumulation: number;
+          bonus: number;
+          memberCount: number;
+          perMemberAmount: number;
+          advertiserReward: number;
+        }>("/api/spend/register", {
+          categoryId: category.id,
+          spendAmount,
+          memo,
         });
-      } catch {
-        // Firestore 오류 시에도 UI는 보여줌
+        earned = r.totalAccumulation;
+        bonus = r.bonus;
+        memberCount = r.memberCount;
+        perMemberAmount = r.perMemberAmount;
+        advertiserReward = r.advertiserReward;
+      } catch (err) {
+        setProcessing(false);
+        if (err instanceof ApiClientError) {
+          if (err.code === "INVALID_INPUT") setSubmitError("입력값이 올바르지 않습니다.");
+          else if (err.code === "UNAUTHENTICATED") setSubmitError("다시 로그인해 주세요.");
+          else setSubmitError("처리 중 오류가 발생했습니다.");
+        } else {
+          setSubmitError("네트워크 오류입니다.");
+        }
+        return;
       }
     } else {
-      // 데모 모드: localStorage에 거래 누적 + 잔액 증가
+      // 데모 모드: 클라이언트 계산 + localStorage 저장 (실서비스 영향 없음)
+      const nlResult = calculateNonlinear(spendAmount);
       saveDemoTx(user, {
         category: category.id,
         categoryName: category.name,
@@ -151,26 +155,30 @@ export default function StoresPage() {
           advertiserReward: nlResult.advertiser.advertiserReward,
         },
       });
+      earned = nlResult.totalAccumulation;
+      bonus = nlResult.bonus;
+      memberCount = nlResult.memberCount;
+      perMemberAmount = nlResult.perMemberAmount;
+      advertiserReward = nlResult.advertiser.advertiserReward;
     }
 
     setModal(null);
     setResult({
       category,
       amount: spendAmount,
-      earned: nlResult.totalAccumulation,
-      bonus: nlResult.bonus,
-      memberCount: nlResult.memberCount,
-      perMemberAmount: nlResult.perMemberAmount,
-      advertiserReward: nlResult.advertiser.advertiserReward,
+      earned,
+      bonus,
+      memberCount,
+      perMemberAmount,
+      advertiserReward,
     });
     setProcessing(false);
     setAmount("");
     setMemo("");
 
-    // 신호음 + 음성 알림
     playSignalSound();
     setTimeout(() => {
-      speakAccumulation(category.name, spendAmount, nlResult.totalAccumulation);
+      speakAccumulation(category.name, spendAmount, earned);
     }, 600);
   };
 
@@ -265,6 +273,10 @@ export default function StoresPage() {
                   </div>
                   <div className="text-xs text-[#3B4CCA] mt-1">120% 증액 적립</div>
                 </div>
+              )}
+
+              {submitError && (
+                <p className="text-center text-xs text-[#EF4444]">{submitError}</p>
               )}
 
               {/* 등록 버튼 */}
