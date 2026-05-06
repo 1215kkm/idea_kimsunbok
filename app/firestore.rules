@@ -1,32 +1,52 @@
 rules_version = '2';
 
+// 다랜드 Firestore 보안 규칙
+//
+// 정책: 클라이언트는 어떤 컬렉션에도 직접 쓸 수 없다.
+// 모든 쓰기는 서버 사이드 (Next.js API Routes의 firebase-admin)을 통해서만 가능.
+// 읽기는 본인 데이터(users, transactions, withdrawals)와 공개 데이터(stores, advertisements,
+// inviteCodes 메타정보)에 한해 허용한다.
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 유저: 본인 데이터만 읽기/쓰기
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
     }
 
-    // 가맹점: 로그인 유저 읽기 가능, 쓰기는 관리자만
-    match /stores/{storeId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
-    }
-
-    // 거래: 본인 거래만 읽기, 생성은 로그인 유저
     match /transactions/{txId} {
       allow read: if request.auth != null
         && resource.data.consumerId == request.auth.uid;
-      allow create: if request.auth != null
-        && request.resource.data.consumerId == request.auth.uid;
+      allow write: if false;
     }
 
-    // 광고: 로그인 유저 읽기 가능
+    match /stores/{storeId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     match /advertisements/{adId} {
       allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /inviteCodes/{code} {
+      // 클라이언트 직접 read 차단. 코드 메타정보 조회는
+      // 비인증 API Route(/api/invite/info)가 admin SDK로 처리.
+      allow read: if false;
+      allow write: if false;
+    }
+
+    match /inviteRedemptions/{inviteeUid} {
+      allow read: if request.auth != null && request.auth.uid == inviteeUid;
+      allow write: if false;
+    }
+
+    match /withdrawals/{reqId} {
+      allow read: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow write: if false;
     }
   }
 }
