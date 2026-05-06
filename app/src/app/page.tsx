@@ -187,32 +187,34 @@ function LoginPageInner() {
         {isSignUp ? "이미 계정이 있으신가요? 로그인" : "계정이 없으신가요? 회원가입"}
       </button>
 
-      {/* 데모 로그인 */}
-      <div className="mt-8 w-full max-w-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="h-px flex-1 bg-[#E8EAF0]" />
-          <span className="text-xs text-[#6B7394]">또는</span>
-          <div className="h-px flex-1 bg-[#E8EAF0]" />
+      {/* 데모 로그인 (데모 모드일 때만) */}
+      {isDemo && (
+        <div className="mt-8 w-full max-w-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-px flex-1 bg-[#E8EAF0]" />
+            <span className="text-xs text-[#6B7394]">또는</span>
+            <div className="h-px flex-1 bg-[#E8EAF0]" />
+          </div>
+          <button
+            onClick={async () => {
+              setSubmitting(true);
+              setError("");
+              try {
+                await demoSignIn();
+              } catch {
+                setError("데모 로그인에 실패했습니다.");
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+            disabled={submitting}
+            className="w-full rounded-xl border border-[#E8EAF0] bg-[#F0F2F8] py-3.5 text-sm font-medium text-[#6B7394] transition-all hover:border-[#3B4CCA]/30 hover:bg-[#F0F2F8] hover:text-[#1A1F36] disabled:opacity-50"
+          >
+            🎮 데모 아이디로 체험하기
+          </button>
+          <p className="mt-2 text-center text-xs text-[#9CA3C1]">가입 없이 바로 둘러볼 수 있어요</p>
         </div>
-        <button
-          onClick={async () => {
-            setSubmitting(true);
-            setError("");
-            try {
-              await demoSignIn();
-            } catch {
-              setError("데모 로그인에 실패했습니다.");
-            } finally {
-              setSubmitting(false);
-            }
-          }}
-          disabled={submitting}
-          className="w-full rounded-xl border border-[#E8EAF0] bg-[#F0F2F8] py-3.5 text-sm font-medium text-[#6B7394] transition-all hover:border-[#3B4CCA]/30 hover:bg-[#F0F2F8] hover:text-[#1A1F36] disabled:opacity-50"
-        >
-          🎮 데모 아이디로 체험하기
-        </button>
-        <p className="mt-2 text-center text-xs text-[#9CA3C1]">가입 없이 바로 둘러볼 수 있어요</p>
-      </div>
+      )}
     </div>
   );
 }
