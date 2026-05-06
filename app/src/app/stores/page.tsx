@@ -303,7 +303,7 @@ export default function StoresPage() {
 
             <div className="my-4 text-xs text-[#3B4CCA]">── 비선형공식 실행 ──</div>
 
-            <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-6xl font-black text-transparent">
+            <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-5xl font-black text-transparent break-keep">
               +{result.earned.toLocaleString()}P
             </div>
 
