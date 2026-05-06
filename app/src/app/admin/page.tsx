@@ -2,90 +2,185 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { isConfigured } from "@/lib/firebase";
+import { useEffect, useState, useCallback } from "react";
+import { isConfigured, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { apiGet, apiPost, ApiClientError } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
 
-// 데모 데이터
-const DEMO_STORES = [
-  { id: "super", name: "행복한 슈퍼", category: "마트", icon: "🏪", owner: "박민수", sales: 2450000, status: "active" },
-  { id: "cafe", name: "다랜드 카페", category: "카페", icon: "☕", owner: "김철수", sales: 980000, status: "active" },
-  { id: "gas", name: "주유소", category: "주유", icon: "⛽", owner: "이영호", sales: 5600000, status: "active" },
-  { id: "pharm", name: "건강 약국", category: "약국", icon: "💊", owner: "최지연", sales: 640000, status: "active" },
-  { id: "rest", name: "맛있는 식당", category: "식당", icon: "🍽️", owner: "한동우", sales: 1870000, status: "active" },
-  { id: "beauty", name: "뷰티샵", category: "미용", icon: "💇", owner: "정수현", sales: 720000, status: "pending" },
-];
+interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  totalPoints: number;
+  membershipLevel: number;
+  createdAt: number | null;
+}
 
-const DEMO_USERS = [
-  { id: "u1", name: "박영희", email: "younghee@test.com", role: "consumer", points: 128400, txCount: 23, joined: "2025-01-15" },
-  { id: "u2", name: "이지은", email: "jieun@test.com", role: "consumer", points: 85200, txCount: 15, joined: "2025-02-03" },
-  { id: "u3", name: "김철수", email: "chulsu@test.com", role: "store", points: 340000, txCount: 45, joined: "2025-01-10" },
-  { id: "u4", name: "홍길동", email: "hong@test.com", role: "consumer", points: 42000, txCount: 8, joined: "2025-03-22" },
-  { id: "u5", name: "신한은행", email: "shinhan@test.com", role: "advertiser", points: 0, txCount: 0, joined: "2025-04-01" },
-  { id: "u6", name: "박민수", email: "minsu@test.com", role: "store", points: 210000, txCount: 67, joined: "2025-01-08" },
-];
+interface AdminWithdrawal {
+  id: string;
+  userId: string;
+  amount: number;
+  status: "pending" | "completed" | "rejected";
+  bankInfo: { bank: string; accountNumber: string; holder: string };
+  requestedAt: number | null;
+  processedAt: number | null;
+  rejectReason: string | null;
+}
 
-const DEMO_RECENT_TX = [
-  { id: "t1", user: "박영희", store: "다랜드 카페", amount: 4500, earned: 5400, time: "10분 전" },
-  { id: "t2", user: "이지은", store: "건강 약국", amount: 8000, earned: 9600, time: "25분 전" },
-  { id: "t3", user: "홍길동", store: "행복한 슈퍼", amount: 32000, earned: 38400, time: "1시간 전" },
-  { id: "t4", user: "박영희", store: "주유소", amount: 70000, earned: 84000, time: "2시간 전" },
-  { id: "t5", user: "이지은", store: "맛있는 식당", amount: 25000, earned: 30000, time: "3시간 전" },
-];
-
-type TabType = "overview" | "stores" | "users" | "transactions";
+type TabType = "overview" | "users" | "withdrawals";
+type CheckState = "checking" | "ok" | "denied" | "demo";
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<TabType>("overview");
-  const [storeSearch, setStoreSearch] = useState("");
+  const [check, setCheck] = useState<CheckState>("checking");
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [withdrawals, setWithdrawals] = useState<AdminWithdrawal[]>([]);
+  const [withdrawalStatus, setWithdrawalStatus] = useState<"pending" | "completed" | "rejected" | "all">("pending");
   const [userSearch, setUserSearch] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) router.push("/");
+    if (!loading && !user) {
+      router.push("/");
+      return;
+    }
+    if (!loading && user) {
+      if (!isConfigured) {
+        setCheck("demo");
+        return;
+      }
+      if (!db) {
+        setCheck("denied");
+        return;
+      }
+      getDoc(doc(db, "users", user.uid))
+        .then((snap) => {
+          const role = snap.exists() ? snap.data().role : null;
+          if (role === "admin") setCheck("ok");
+          else setCheck("denied");
+        })
+        .catch(() => setCheck("denied"));
+    }
   }, [user, loading, router]);
 
-  if (loading || !user) {
-    return <div className="flex min-h-screen items-center justify-center dark-text-muted">로딩 중...</div>;
-  }
+  const refreshUsers = useCallback(async () => {
+    if (check !== "ok") return;
+    try {
+      const r = await apiGet<{ items: AdminUser[] }>("/api/admin/users");
+      setUsers(r.items || []);
+    } catch (err) {
+      if (err instanceof ApiClientError) setError(err.code);
+    }
+  }, [check]);
 
-  const totalSales = DEMO_STORES.reduce((s, st) => s + st.sales, 0);
-  const totalUsers = DEMO_USERS.length;
-  const totalStores = DEMO_STORES.filter((s) => s.status === "active").length;
-  const totalPool = Math.round(totalSales * 0.3);
+  const refreshWithdrawals = useCallback(
+    async (status: typeof withdrawalStatus = withdrawalStatus) => {
+      if (check !== "ok") return;
+      try {
+        const r = await apiGet<{ items: AdminWithdrawal[] }>(
+          `/api/admin/withdraw/list?status=${status}`,
+        );
+        setWithdrawals(r.items || []);
+      } catch (err) {
+        if (err instanceof ApiClientError) setError(err.code);
+      }
+    },
+    [check, withdrawalStatus],
+  );
 
-  const tabs: { key: TabType; label: string; icon: string }[] = [
-    { key: "overview", label: "총괄", icon: "📊" },
-    { key: "stores", label: "사용자", icon: "🏪" },
-    { key: "users", label: "회원", icon: "👥" },
-    { key: "transactions", label: "거래", icon: "💳" },
-  ];
+  useEffect(() => {
+    if (check === "ok") {
+      refreshUsers();
+      refreshWithdrawals("pending");
+    }
+  }, [check, refreshUsers, refreshWithdrawals]);
 
-  const filteredStores = DEMO_STORES.filter((s) => {
-    if (!storeSearch.trim()) return true;
-    const q = storeSearch.toLowerCase();
-    return s.name.toLowerCase().includes(q) || s.owner.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
-  });
-
-  const filteredUsers = DEMO_USERS.filter((u) => {
-    if (!userSearch.trim()) return true;
-    const q = userSearch.toLowerCase();
-    return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q);
-  });
-
-  const roleLabel = (role: string) => {
-    switch (role) {
-      case "consumer": return { text: "소비자", color: "#06b6d4" };
-      case "store": return { text: "사용자(사업주)", color: "#f59e0b" };
-      case "advertiser": return { text: "광고주", color: "#a855f7" };
-      default: return { text: role, color: "#71717a" };
+  const handleApprove = async (id: string) => {
+    if (!confirm("이 출금 요청을 승인 처리할까요? 외부 송금이 끝났다는 의미입니다.")) return;
+    setBusy(true);
+    try {
+      await apiPost("/api/admin/withdraw/approve", { requestId: id });
+      await refreshWithdrawals();
+    } catch {
+      alert("승인 실패");
+    } finally {
+      setBusy(false);
     }
   };
 
+  const handleReject = async (id: string) => {
+    const reason = prompt("반려 사유를 입력해 주세요");
+    if (reason === null) return;
+    setBusy(true);
+    try {
+      await apiPost("/api/admin/withdraw/reject", {
+        requestId: id,
+        reason,
+      });
+      await refreshWithdrawals();
+    } catch {
+      alert("반려 실패");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading || check === "checking") {
+    return <div className="flex min-h-screen items-center justify-center dark-text-muted">로딩 중...</div>;
+  }
+  if (check === "demo") {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-6 text-center">
+        <div>
+          <div className="text-2xl mb-2">🛡️</div>
+          <div className="text-sm text-[#6B7394]">관리자 패널은 Firebase 실연동 환경에서만 동작합니다.</div>
+        </div>
+      </div>
+    );
+  }
+  if (check === "denied") {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-6 text-center">
+        <div>
+          <div className="text-2xl mb-2">🚫</div>
+          <div className="text-sm text-[#EF4444]">관리자 권한이 없습니다.</div>
+          <button onClick={() => router.push("/dashboard")} className="mt-4 rounded-xl bg-[#3B4CCA] px-4 py-2 text-sm text-white">
+            대시보드로 이동
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const filteredUsers = users.filter((u) => {
+    if (!userSearch.trim()) return true;
+    const q = userSearch.toLowerCase();
+    return (
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.role.toLowerCase().includes(q)
+    );
+  });
+
+  const totalPointsAcrossUsers = users.reduce((s, u) => s + (u.totalPoints || 0), 0);
+  const pendingCount = withdrawals.filter((w) => w.status === "pending").length;
+  const pendingAmount = withdrawals
+    .filter((w) => w.status === "pending")
+    .reduce((s, w) => s + w.amount, 0);
+
+  const tabs: { key: TabType; label: string; icon: string }[] = [
+    { key: "overview", label: "총괄", icon: "📊" },
+    { key: "users", label: "회원", icon: "👥" },
+    { key: "withdrawals", label: "출금", icon: "💸" },
+  ];
+
   return (
     <div className="min-h-screen pb-20">
-      {/* 헤더 */}
       <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
         <div className="flex items-center gap-2">
           <span className="text-xl">🛡️</span>
@@ -96,7 +191,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* 탭 바 */}
       <div className="flex gap-1 border-b px-3 pt-2" style={{ borderColor: "var(--card-border)" }}>
         {tabs.map((t) => (
           <button
@@ -116,179 +210,66 @@ export default function AdminPage() {
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-5">
+        {error && (
+          <div className="mb-4 rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/5 px-4 py-3 text-xs text-[#EF4444]">
+            오류: {error}
+          </div>
+        )}
 
-        {/* ========== 총괄 탭 ========== */}
         {tab === "overview" && (
           <div className="space-y-4">
-            {/* 핵심 지표 */}
             <div className="grid grid-cols-2 gap-3">
               <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-[#6B7394]">총 매출</div>
-                <div className="mt-1 text-xl font-black text-[#10B981]">{totalSales.toLocaleString()}원</div>
-              </div>
-              <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
                 <div className="text-xs dark-text-muted text-[#6B7394]">총 회원</div>
-                <div className="mt-1 text-xl font-black text-[#3B4CCA]">{totalUsers}명</div>
+                <div className="mt-1 text-xl font-black text-[#3B4CCA]">{users.length}명</div>
               </div>
               <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-[#6B7394]">활성 사용자</div>
-                <div className="mt-1 text-xl font-black text-amber-400">{totalStores}개</div>
+                <div className="text-xs dark-text-muted text-[#6B7394]">총 적립 포인트</div>
+                <div className="mt-1 text-xl font-black text-[#10B981]">
+                  {totalPointsAcrossUsers.toLocaleString()}P
+                </div>
               </div>
               <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-[#6B7394]">멤버십 풀</div>
-                <div className="mt-1 text-xl font-black text-[#3B4CCA]">{totalPool.toLocaleString()}P</div>
+                <div className="text-xs dark-text-muted text-[#6B7394]">대기 중인 출금</div>
+                <div className="mt-1 text-xl font-black text-amber-500">{pendingCount}건</div>
+              </div>
+              <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
+                <div className="text-xs dark-text-muted text-[#6B7394]">대기 출금 합계</div>
+                <div className="mt-1 text-xl font-black text-amber-500">{pendingAmount.toLocaleString()}P</div>
               </div>
             </div>
 
-            {/* 시스템 상태 */}
             <div
               className="dark-card rounded-xl border p-4"
               style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
             >
               <div className="mb-3 text-sm font-bold text-[#3B4CCA]">시스템 상태</div>
-              <div className="space-y-2">
-                {[
-                  { label: "비선형공식 엔진", status: "정상", color: "#10b981" },
-                  { label: "보정 모드", status: "활성 (120%)", color: "#10b981" },
-                  { label: "결제 시스템", status: "데모 모드", color: "#f59e0b" },
-                  { label: "Firebase 연동", status: isConfigured ? "연결됨" : "미설정", color: isConfigured ? "#10b981" : "#f59e0b" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between text-sm">
-                    <span style={{ color: "var(--text-muted)" }}>{item.label}</span>
-                    <span className="flex items-center gap-1.5 font-bold" style={{ color: item.color }}>
-                      <span className="inline-block h-2 w-2 rounded-full" style={{ background: item.color }} />
-                      {item.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 최근 거래 */}
-            <div>
-              <div className="mb-2 text-xs font-bold uppercase tracking-wider text-[#3B4CCA]">실시간 거래</div>
-              <div className="space-y-2">
-                {DEMO_RECENT_TX.map((tx) => (
-                  <div
-                    key={tx.id}
-                    className="dark-card flex items-center justify-between rounded-xl border px-3 py-2.5"
-                    style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 text-sm">
-                        <span className="font-bold">{tx.user}</span>
-                        <span style={{ color: "var(--text-muted)" }}>→</span>
-                        <span className="truncate" style={{ color: "var(--text-muted)" }}>{tx.store}</span>
-                      </div>
-                      <div className="text-xs" style={{ color: "var(--text-sub)" }}>{tx.time}</div>
-                    </div>
-                    <div className="ml-2 text-right shrink-0">
-                      <div className="text-sm font-bold text-[#EF4444]">-{tx.amount.toLocaleString()}원</div>
-                      <div className="text-xs font-bold text-[#10B981]">+{tx.earned.toLocaleString()}P</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ========== 사용자 관리 탭 ========== */}
-        {tab === "stores" && (
-          <div className="space-y-4">
-            {/* 검색 + 추가 버튼 */}
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#6B7394]">🔍</span>
-                <input
-                  type="text"
-                  placeholder="사용자/회원 이름 검색"
-                  value={storeSearch}
-                  onChange={(e) => setStoreSearch(e.target.value)}
-                  className="dark-input w-full rounded-xl border py-2.5 pl-9 pr-3 text-sm placeholder-zinc-600 outline-none"
-                  style={{ borderColor: "var(--card-border)", background: "var(--input-bg)" }}
-                />
-              </div>
-              <button className="shrink-0 rounded-xl bg-[#FFB800] px-4 text-sm font-bold text-[#1A1F36]">
-                + 추가
-              </button>
-            </div>
-
-            {/* 사용자 리스트 */}
-            <div className="space-y-2">
-              {filteredStores.map((store) => (
-                <div
-                  key={store.id}
-                  className="dark-card rounded-xl border p-4"
-                  style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{store.icon}</span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold">{store.name}</span>
-                          <span
-                            className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                            style={{
-                              background: store.status === "active" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)",
-                              color: store.status === "active" ? "#10b981" : "#f59e0b",
-                            }}
-                          >
-                            {store.status === "active" ? "활성" : "대기"}
-                          </span>
-                        </div>
-                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          {store.category} · {store.owner} 회원
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-[#3B4CCA]">{store.sales.toLocaleString()}원</div>
-                      <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>누적 매출</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button className="flex-1 rounded-lg py-1.5 text-xs font-bold" style={{ background: "rgba(168,85,247,0.1)", color: "#a855f7" }}>
-                      상세보기
-                    </button>
-                    <button className="flex-1 rounded-lg py-1.5 text-xs font-bold" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
-                      정산
-                    </button>
-                    {store.status === "pending" && (
-                      <button className="flex-1 rounded-lg py-1.5 text-xs font-bold" style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
-                        승인
-                      </button>
-                    )}
-                  </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span style={{ color: "var(--text-muted)" }}>Firebase 연동</span>
+                  <span className="flex items-center gap-1.5 font-bold text-[#10B981]">
+                    <span className="inline-block h-2 w-2 rounded-full bg-[#10B981]" /> 연결됨
+                  </span>
                 </div>
-              ))}
+                <div className="flex items-center justify-between">
+                  <span style={{ color: "var(--text-muted)" }}>비선형공식 엔진</span>
+                  <span className="flex items-center gap-1.5 font-bold text-[#10B981]">
+                    <span className="inline-block h-2 w-2 rounded-full bg-[#10B981]" /> 정상
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: "var(--text-muted)" }}>출금 승인 플로우</span>
+                  <span className="flex items-center gap-1.5 font-bold text-[#10B981]">
+                    <span className="inline-block h-2 w-2 rounded-full bg-[#10B981]" /> 활성
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* ========== 회원 관리 탭 ========== */}
         {tab === "users" && (
           <div className="space-y-4">
-            {/* 요약 */}
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: "소비자", count: DEMO_USERS.filter((u) => u.role === "consumer").length, color: "#06b6d4" },
-                { label: "사용자", count: DEMO_USERS.filter((u) => u.role === "store").length, color: "#f59e0b" },
-                { label: "광고주", count: DEMO_USERS.filter((u) => u.role === "advertiser").length, color: "#a855f7" },
-              ].map((r) => (
-                <div
-                  key={r.label}
-                  className="dark-card rounded-xl border p-3 text-center"
-                  style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-                >
-                  <div className="text-xs" style={{ color: "var(--text-muted)" }}>{r.label}</div>
-                  <div className="text-lg font-black" style={{ color: r.color }}>{r.count}명</div>
-                </div>
-              ))}
-            </div>
-
-            {/* 검색 */}
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#6B7394]">🔍</span>
               <input
@@ -301,11 +282,13 @@ export default function AdminPage() {
               />
             </div>
 
-            {/* 회원 리스트 */}
             <div className="space-y-2">
-              {filteredUsers.map((u) => {
-                const rl = roleLabel(u.role);
-                return (
+              {filteredUsers.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-[#E8EAF0] p-6 text-center text-xs text-[#6B7394]">
+                  {users.length === 0 ? "회원 데이터가 없습니다." : "검색 결과가 없습니다."}
+                </div>
+              ) : (
+                filteredUsers.map((u) => (
                   <div
                     key={u.id}
                     className="dark-card rounded-xl border p-4"
@@ -313,94 +296,111 @@ export default function AdminPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold"
-                          style={{ background: `${rl.color}22`, color: rl.color }}
-                        >
-                          {u.name.charAt(0)}
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3B4CCA]/15 text-sm font-bold text-[#3B4CCA]">
+                          {(u.name || u.email)[0]?.toUpperCase()}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold">{u.name}</span>
-                            <span
-                              className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                              style={{ background: `${rl.color}22`, color: rl.color }}
-                            >
-                              {rl.text}
+                            <span className="text-sm font-bold">{u.name || "(이름 없음)"}</span>
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "#a855f722", color: "#a855f7" }}>
+                              {u.role}
                             </span>
                           </div>
                           <div className="text-xs" style={{ color: "var(--text-muted)" }}>{u.email}</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-bold text-[#3B4CCA]">{u.points.toLocaleString()}P</div>
-                        <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>{u.txCount}건 거래</div>
+                        <div className="text-sm font-bold text-[#3B4CCA]">{u.totalPoints.toLocaleString()}P</div>
+                        <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>Lv.{u.membershipLevel}</div>
                       </div>
                     </div>
-                    <div className="mt-2 flex items-center justify-between text-xs" style={{ color: "var(--text-sub)" }}>
-                      <span>가입일: {u.joined}</span>
-                      <button className="font-bold text-[#3B4CCA]">상세보기</button>
-                    </div>
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
           </div>
         )}
 
-        {/* ========== 거래 모니터링 탭 ========== */}
-        {tab === "transactions" && (
+        {tab === "withdrawals" && (
           <div className="space-y-4">
-            {/* 오늘 거래 요약 */}
-            <div
-              className="dark-card rounded-xl border p-4"
-              style={{ borderColor: "var(--card-border)", background: "linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))" }}
-            >
-              <div className="text-xs dark-text-muted text-[#6B7394]">오늘 거래 현황</div>
-              <div className="mt-2 grid grid-cols-3 gap-3">
-                <div className="text-center">
-                  <div className="text-xl font-black text-[#3B4CCA]">{DEMO_RECENT_TX.length}건</div>
-                  <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>거래 수</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-black text-[#EF4444]">
-                    {DEMO_RECENT_TX.reduce((s, t) => s + t.amount, 0).toLocaleString()}원
-                  </div>
-                  <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>결제 금액</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-black text-[#10B981]">
-                    {DEMO_RECENT_TX.reduce((s, t) => s + t.earned, 0).toLocaleString()}P
-                  </div>
-                  <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>적립 포인트</div>
-                </div>
-              </div>
+            <div className="flex gap-2">
+              {(["pending", "completed", "rejected", "all"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    setWithdrawalStatus(s);
+                    refreshWithdrawals(s);
+                  }}
+                  className="flex-1 rounded-lg py-2 text-xs font-bold transition-all"
+                  style={{
+                    background: withdrawalStatus === s ? "rgba(168, 85, 247, 0.15)" : "var(--card-bg)",
+                    color: withdrawalStatus === s ? "#a855f7" : "var(--text-muted)",
+                    border: "1px solid var(--card-border)",
+                  }}
+                >
+                  {s === "pending" ? "대기" : s === "completed" ? "완료" : s === "rejected" ? "반려" : "전체"}
+                </button>
+              ))}
             </div>
 
-            {/* 전체 거래 리스트 */}
             <div className="space-y-2">
-              {DEMO_RECENT_TX.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="dark-card rounded-xl border p-3"
-                  style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm">
-                        <span className="font-bold">{tx.user}</span>
-                        <span className="mx-1" style={{ color: "var(--text-muted)" }}>→</span>
-                        <span style={{ color: "var(--text-muted)" }}>{tx.store}</span>
-                      </div>
-                      <div className="text-xs" style={{ color: "var(--text-sub)" }}>{tx.time}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-[#EF4444]">-{tx.amount.toLocaleString()}원</div>
-                      <div className="text-xs font-bold text-[#10B981]">+{tx.earned.toLocaleString()}P (120%)</div>
-                    </div>
-                  </div>
+              {withdrawals.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-[#E8EAF0] p-6 text-center text-xs text-[#6B7394]">
+                  요청이 없습니다.
                 </div>
-              ))}
+              ) : (
+                withdrawals.map((w) => (
+                  <div
+                    key={w.id}
+                    className="dark-card rounded-xl border p-4"
+                    style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="text-sm font-bold">{w.amount.toLocaleString()}P</div>
+                        <div className="text-xs text-[#6B7394]">
+                          {w.bankInfo?.bank} · {w.bankInfo?.accountNumber} · {w.bankInfo?.holder}
+                        </div>
+                        <div className="text-xs text-[#6B7394]">사용자: {w.userId.slice(0, 8)}...</div>
+                        <div className="text-xs text-[#6B7394]">
+                          {w.requestedAt ? new Date(w.requestedAt).toLocaleString("ko-KR") : ""}
+                        </div>
+                      </div>
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                        style={{
+                          background:
+                            w.status === "pending" ? "#f59e0b22" : w.status === "completed" ? "#10b98122" : "#EF444422",
+                          color:
+                            w.status === "pending" ? "#f59e0b" : w.status === "completed" ? "#10b981" : "#EF4444",
+                        }}
+                      >
+                        {w.status === "pending" ? "대기" : w.status === "completed" ? "완료" : "반려"}
+                      </span>
+                    </div>
+                    {w.rejectReason && (
+                      <div className="mt-2 text-[11px] text-[#EF4444]">사유: {w.rejectReason}</div>
+                    )}
+                    {w.status === "pending" && (
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={() => handleApprove(w.id)}
+                          disabled={busy}
+                          className="flex-1 rounded-lg bg-[#10B981]/15 py-1.5 text-xs font-bold text-[#10B981] disabled:opacity-50"
+                        >
+                          승인
+                        </button>
+                        <button
+                          onClick={() => handleReject(w.id)}
+                          disabled={busy}
+                          className="flex-1 rounded-lg bg-[#EF4444]/15 py-1.5 text-xs font-bold text-[#EF4444] disabled:opacity-50"
+                        >
+                          반려
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}

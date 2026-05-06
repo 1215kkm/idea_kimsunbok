@@ -1,31 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Icon from "@/components/Icon";
+import { db, isConfigured } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 const menuItems = [
-  { href: "/dashboard", label: "홈", icon: "home", desc: "대시보드" },
-  { href: "/stores", label: "지출등록", icon: "credit_card", desc: "신용카드 지출 & 120% 적립" },
-  { href: "/withdraw", label: "출금", icon: "account_balance", desc: "다랜드 계좌 → 내 은행계좌" },
-  { href: "/card", label: "비선형카드", icon: "badge", desc: "카드 잔액 & 충전데이터" },
-  { href: "/history", label: "내역", icon: "list_alt", desc: "포인트 기록" },
-  { href: "/store-dashboard", label: "멤버십 분배", icon: "swap_horiz", desc: "회원간 분배 현황" },
-  { href: "/engine", label: "엔진 설명", icon: "settings", desc: "비선형공식 원리" },
-  { href: "/advertiser", label: "광고주", icon: "business", desc: "광고주 120% 수익" },
-  { href: "/advertiser/invite", label: "리워드 초대", icon: "card_giftcard", desc: "초대하고 +20,000P 수익" },
-  { href: "/admin", label: "관리자", icon: "admin_panel_settings", desc: "시스템 관리 패널" },
-  { href: "/account/leave", label: "회원 탈퇴", icon: "logout", desc: "탈퇴 및 환불" },
+  { href: "/dashboard", label: "홈", icon: "home", desc: "대시보드", admin: false },
+  { href: "/stores", label: "지출등록", icon: "credit_card", desc: "신용카드 지출 & 120% 적립", admin: false },
+  { href: "/withdraw", label: "출금", icon: "account_balance", desc: "다랜드 계좌 → 내 은행계좌", admin: false },
+  { href: "/card", label: "비선형카드", icon: "badge", desc: "카드 잔액 & 충전데이터", admin: false },
+  { href: "/history", label: "내역", icon: "list_alt", desc: "포인트 기록", admin: false },
+  { href: "/store-dashboard", label: "멤버십 분배", icon: "swap_horiz", desc: "회원간 분배 현황", admin: false },
+  { href: "/engine", label: "엔진 설명", icon: "settings", desc: "비선형공식 원리", admin: false },
+  { href: "/advertiser", label: "광고주", icon: "business", desc: "광고주 120% 수익", admin: false },
+  { href: "/advertiser/invite", label: "리워드 초대", icon: "card_giftcard", desc: "초대하고 +20,000P 수익", admin: false },
+  { href: "/admin", label: "관리자", icon: "admin_panel_settings", desc: "시스템 관리 패널", admin: true },
+  { href: "/account/leave", label: "회원 탈퇴", icon: "logout", desc: "탈퇴 및 환불", admin: false },
 ];
 
 export default function HamburgerMenu() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user || !isConfigured || !db) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsAdmin(false);
+      return;
+    }
+    let cancelled = false;
+    getDoc(doc(db, "users", user.uid))
+      .then((snap) => {
+        if (cancelled) return;
+        if (snap.exists() && snap.data().role === "admin") setIsAdmin(true);
+        else setIsAdmin(false);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   if (!user) return null;
+
+  const visibleItems = menuItems.filter((m) => !m.admin || isAdmin);
 
   return (
     <>
@@ -73,7 +97,7 @@ export default function HamburgerMenu() {
         {/* 메뉴 리스트 (스크롤 가능) */}
         <nav className="flex-1 overflow-y-auto p-3">
           <div className="flex flex-col gap-1">
-            {menuItems.map((item) => (
+            {visibleItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
