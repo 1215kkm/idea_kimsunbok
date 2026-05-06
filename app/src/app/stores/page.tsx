@@ -292,7 +292,7 @@ export default function StoresPage() {
 
       {/* 적립 결과 */}
       {result && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-6 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 px-6 backdrop-blur-sm">
           <div className="w-full max-w-sm text-center">
             <div className="text-4xl">✅</div>
             <div className="mt-2 text-sm text-[#6B7394]">지출데이터 증명 → 다랜드 내 계좌에 재충전 완료 (총량 유지)</div>
@@ -303,7 +303,7 @@ export default function StoresPage() {
 
             <div className="my-4 text-xs text-[#3B4CCA]">── 비선형공식 실행 ──</div>
 
-            <div className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-6xl font-black text-transparent">
+            <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-6xl font-black text-transparent">
               +{result.earned.toLocaleString()}P
             </div>
 
@@ -316,7 +316,7 @@ export default function StoresPage() {
             </div>
 
             {/* 다랜드 계좌 안내 */}
-            <div className="mt-4 rounded-xl border border-cyan-500/20 bg-[#3B4CCA]/5 p-3 text-xs text-[#6B7394]">
+            <div className="mt-4 rounded-xl border border-[#3B4CCA]/20 bg-[#3B4CCA]/5 p-3 text-xs text-[#6B7394]">
               <div className="text-[#3B4CCA] font-bold mb-1">🏦 다랜드 내 계좌에 적립됨</div>
               <p>적립된 포인트는 등록된 <span className="text-[#1A1F36] font-bold">내 은행계좌로 출금</span>할 수 있습니다.</p>
               <p>1P = 1원 (출금 수수료 무료)</p>
@@ -324,13 +324,13 @@ export default function StoresPage() {
 
             {/* 광고주 적립 안내 */}
             <div className="mt-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 text-xs text-[#6B7394]">
-              <div className="text-orange-400 font-bold mb-1">📢 광고주 적립 (5%)</div>
-              <p>이 지출의 5% = <span className="text-orange-400 font-bold">{result.advertiserReward.toLocaleString()}P</span>가 가입시킨 광고주에게 적립됩니다.</p>
+              <div className="text-orange-500 font-bold mb-1">📢 광고주 적립 (5%)</div>
+              <p>이 지출의 5% = <span className="text-orange-500 font-bold">{result.advertiserReward.toLocaleString()}P</span>가 가입시킨 광고주에게 적립됩니다.</p>
               <p>광고주가 회원을 많이 가입시킬수록 더 많은 금액이 지속 적립!</p>
             </div>
 
             {/* 멤버십 분배 안내 */}
-            <div className="mt-2 rounded-xl border border-purple-500/20 bg-purple-900/10 p-3 text-xs text-[#6B7394]">
+            <div className="mt-2 rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 text-xs text-[#6B7394]">
               <div className="text-[#3B4CCA] font-bold mb-1">🔄 멤버십 회원 분배</div>
               <p>이 지출금액이 {result.memberCount}명의 멤버십 회원에게 전달됩니다.</p>
               <p>각 회원도 본인 적립금에서 차감 → 비선형공식 → <span className="text-[#3B4CCA] font-bold">120% 적립</span></p>
@@ -343,7 +343,7 @@ export default function StoresPage() {
 
             <button
               onClick={() => setResult(null)}
-              className="mt-4 rounded-full border border-purple-500/40 bg-[#3B4CCA]/8 px-8 py-2.5 text-sm text-[#3B4CCA] hover:bg-[#3B4CCA]/12"
+              className="mt-4 rounded-full border border-[#3B4CCA]/30 bg-[#3B4CCA]/8 px-8 py-2.5 text-sm font-bold text-[#3B4CCA] hover:bg-[#3B4CCA]/12"
             >
               확인
             </button>
