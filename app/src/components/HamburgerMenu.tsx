@@ -13,12 +13,9 @@ const menuItems = [
   { href: "/card", label: "비선형카드", icon: "badge", desc: "카드 잔액 & 충전데이터" },
   { href: "/history", label: "내역", icon: "list_alt", desc: "포인트 기록" },
   { href: "/store-dashboard", label: "멤버십 분배", icon: "swap_horiz", desc: "회원간 분배 현황" },
-  { href: "/simulation", label: "시뮬레이션", icon: "sports_esports", desc: "다랜드 체험" },
   { href: "/engine", label: "엔진 설명", icon: "settings", desc: "비선형공식 원리" },
-  { href: "/quantity-mode", label: "총량유지 모드", icon: "link", desc: "락(고리) + 데이터노동" },
   { href: "/advertiser", label: "광고주", icon: "business", desc: "광고주 120% 수익" },
   { href: "/advertiser/invite", label: "리워드 초대", icon: "card_giftcard", desc: "초대하고 +20,000P 수익" },
-  { href: "/philosophy", label: "자리이타", icon: "self_improvement", desc: "다랜드 핵심 철학" },
   { href: "/admin", label: "관리자", icon: "admin_panel_settings", desc: "시스템 관리 패널" },
   { href: "/account/leave", label: "회원 탈퇴", icon: "logout", desc: "탈퇴 및 환불" },
 ];
