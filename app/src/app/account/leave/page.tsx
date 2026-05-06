@@ -114,34 +114,25 @@ export default function AccountLeavePage() {
               }}
             >
               <div className="mb-2 text-sm font-bold text-[#3B4CCA]">
-                비선형공식 탈퇴 환불 원리
+                환불 계산 과정
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between rounded-xl px-3 py-2 bg-white/50">
-                  <span>현재 잔액</span>
-                  <span className="font-bold text-[#1A1F36]">
+                  <span>내 잔액 (= 환불받을 금액)</span>
+                  <span className="font-bold text-[#3B4CCA]">
                     {balance.toLocaleString()}P
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-xl px-3 py-2 bg-white/50">
-                  <span>비선형공식 {refund.rate}% 확보</span>
+                <div className="flex items-center justify-between rounded-xl px-3 py-2 bg-[#10B981]/8">
+                  <span>다랜드 시스템이 별도로 확보</span>
                   <span className="font-bold text-[#10B981]">
                     {refund.securedPool.toLocaleString()}P
                   </span>
                 </div>
-                <div className="h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
-                <div className="flex items-center justify-between rounded-xl px-3 py-2 bg-white/50">
-                  <span>회원 환불 (원금 100%)</span>
-                  <span className="font-bold text-[#3B4CCA]">
-                    {refund.refundAmount.toLocaleString()}P
-                  </span>
-                </div>
-                <div className="flex items-center justify-between rounded-xl px-3 py-2 bg-white/50">
-                  <span>시스템 수익 (20%)</span>
-                  <span className="font-bold text-[#EF4444]">
-                    {refund.systemProfit.toLocaleString()}P
-                  </span>
-                </div>
+              </div>
+              <div className="mt-3 rounded-xl bg-[#3B4CCA]/5 border border-[#3B4CCA]/20 px-3 py-2.5 text-xs text-[#1A1F36]">
+                <strong className="text-[#3B4CCA]">내 환불금에서 차감되는 것은 없습니다.</strong><br />
+                비선형공식이 별도로 {refund.rate}%({refund.securedPool.toLocaleString()}P)를 만들어내고, 그 중 내 잔액 전액({balance.toLocaleString()}P)이 환불됩니다. 나머지 {refund.systemProfit.toLocaleString()}P는 다랜드가 시스템 운영에 활용합니다.
               </div>
             </div>
 
@@ -154,11 +145,8 @@ export default function AccountLeavePage() {
                   탈퇴 시 모든 거래내역과 적립 포인트가{" "}
                   <strong className="text-[#EF4444]">영구 삭제</strong>됩니다.
                 </li>
-                <li>원금(잔액)은 등록된 은행계좌로 환불됩니다.</li>
-                <li>
-                  비선형공식으로 확보된 120% 중 20%는 시스템 운영 수익으로
-                  귀속됩니다.
-                </li>
+                <li><strong className="text-[#10B981]">내 잔액 전액({balance.toLocaleString()}P)이 은행계좌로 환불</strong>됩니다.</li>
+                <li>내 돈에서 빼가는 금액은 없습니다. 비선형공식이 별도로 추가 확보한 {refund.systemProfit.toLocaleString()}P만 다랜드 운영에 활용됩니다.</li>
                 <li>탈퇴 후 같은 이메일로 재가입이 가능합니다.</li>
               </ul>
             </div>

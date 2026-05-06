@@ -159,16 +159,31 @@ function LoginPageInner() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-[#FFB800] py-3.5 text-sm font-bold text-[#1A1F36] shadow-lg shadow-[#FFB800]/30 transition-transform hover:scale-[1.02] hover:bg-[#E5A600] disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#FFB800] py-3.5 text-sm font-bold text-[#1A1F36] shadow-lg shadow-[#FFB800]/30 transition-transform hover:scale-[1.02] hover:bg-[#E5A600] disabled:opacity-50"
         >
-          {submitting ? "처리 중..." : isSignUp ? "회원가입" : "로그인"}
+          {submitting ? (
+            "처리 중..."
+          ) : isSignUp ? (
+            <>
+              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>person_add</span>
+              회원가입
+            </>
+          ) : (
+            <>
+              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>login</span>
+              로그인
+            </>
+          )}
         </button>
       </form>
 
       <button
         onClick={() => { setIsSignUp(!isSignUp); setError(""); }}
-        className="mt-6 text-sm dark-text-muted text-[#6B7394] hover:text-[#3B4CCA]"
+        className="mt-6 flex items-center gap-1 text-sm dark-text-muted text-[#6B7394] hover:text-[#3B4CCA]"
       >
+        <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+          {isSignUp ? "login" : "person_add"}
+        </span>
         {isSignUp ? "이미 계정이 있으신가요? 로그인" : "계정이 없으신가요? 회원가입"}
       </button>
 
