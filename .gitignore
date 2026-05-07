@@ -3,3 +3,8 @@ node_modules/
 .env.local
 !.env.local.example
 .next/
+
+# Firebase service account keys (NEVER commit)
+**/serviceAccount*.json
+**/firebase-adminsdk-*.json
+**/*-firebase-adminsdk.json

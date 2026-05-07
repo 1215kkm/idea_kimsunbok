@@ -2,11 +2,12 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import { getBalance as getDemoBalance, deductBalance as deductDemoBalance } from "@/lib/demo-store";
 import { calculateWithdrawalRefund } from "@/lib/nonlinear-engine";
+import { apiGet, apiPost, ApiClientError } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -20,61 +21,168 @@ const BANKS = [
   { id: "toss", name: "토스뱅크", icon: "🏦", color: "#0064ff" },
 ];
 
+type Bank = typeof BANKS[number];
 type Step = "main" | "register" | "amount" | "confirm" | "complete";
+
+interface WithdrawalItem {
+  id: string;
+  amount: number;
+  status: "pending" | "completed" | "rejected";
+  bank?: string;
+  accountNumber?: string;
+  requestedAt: number | null;
+  processedAt: number | null;
+  rejectReason: string | null;
+}
 
 export default function WithdrawPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [balance, setBalance] = useState(0);
   const [step, setStep] = useState<Step>("main");
-  const [selectedBank, setSelectedBank] = useState<typeof BANKS[0] | null>(null);
+  const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [accountNumber, setAccountNumber] = useState("");
-  const [registeredBank, setRegisteredBank] = useState<{ bank: typeof BANKS[0]; account: string } | null>(null);
+  const [holder, setHolder] = useState("");
+  const [registeredBank, setRegisteredBank] = useState<{
+    bank: Bank;
+    account: string;
+    holder: string;
+  } | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [items, setItems] = useState<WithdrawalItem[]>([]);
+  const [completedAmount, setCompletedAmount] = useState(0);
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
   }, [user, loading, router]);
 
-  useEffect(() => {
+  const refreshBalance = useCallback(async () => {
     if (!user) return;
     if (!isConfigured || !db) {
-      // 데모 모드: localStorage 기반 잔액
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBalance(getDemoBalance(user));
       return;
     }
-    const fetch = async () => {
-      try {
-        const snap = await getDoc(doc(db!, "users", user.uid));
-        if (snap.exists()) setBalance(snap.data().totalPoints || 0);
-      } catch {
-        // Firestore 미연결
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists()) setBalance(snap.data().totalPoints || 0);
+    } catch {
+      // ignore
+    }
+  }, [user]);
+
+  const refreshList = useCallback(async () => {
+    if (!user || !isConfigured) return;
+    try {
+      const r = await apiGet<{ ok: boolean; items: WithdrawalItem[] }>(
+        "/api/withdraw/list",
+      );
+      setItems(r.items || []);
+    } catch {
+      // ignore
+    }
+  }, [user]);
+
+  useEffect(() => {
+    refreshBalance();
+    refreshList();
+  }, [refreshBalance, refreshList]);
+
+  // 등록된 은행계좌는 localStorage에 저장(간단). 실 서비스에서는 users 문서에 저장하지만,
+  // 출금 요청 시 어차피 서버가 다시 검증하므로 저장 위치는 보안상 무관.
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const saved = localStorage.getItem(`daland-bank-${user.uid}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const found = BANKS.find((b) => b.id === parsed.bankId);
+        if (found) setRegisteredBank({ bank: found, account: parsed.account, holder: parsed.holder });
       }
-    };
-    fetch();
+    } catch {
+      // ignore
+    }
   }, [user]);
 
   const handleRegisterBank = () => {
-    if (!selectedBank || !accountNumber) return;
-    setRegisteredBank({ bank: selectedBank, account: accountNumber });
+    if (!selectedBank || !accountNumber.trim() || !holder.trim() || !user) return;
+    const next = { bank: selectedBank, account: accountNumber.trim(), holder: holder.trim() };
+    setRegisteredBank(next);
+    try {
+      localStorage.setItem(
+        `daland-bank-${user.uid}`,
+        JSON.stringify({
+          bankId: selectedBank.id,
+          account: next.account,
+          holder: next.holder,
+        }),
+      );
+    } catch {
+      // ignore
+    }
     setStep("main");
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
+    if (!user || !registeredBank) return;
     const amt = parseInt(withdrawAmount);
     if (!amt || amt <= 0 || amt > balance) return;
     setProcessing(true);
-    setTimeout(() => {
-      if (!isConfigured || !db) {
-        // 데모 모드: localStorage에서 차감
-        if (user) deductDemoBalance(user, amt);
-      }
-      setBalance((prev) => prev - amt);
-      setProcessing(false);
+    setError(null);
+
+    if (!isConfigured) {
+      // 데모 모드: localStorage 차감
+      setTimeout(() => {
+        deductDemoBalance(user, amt);
+        setBalance((prev) => prev - amt);
+        setCompletedAmount(amt);
+        setProcessing(false);
+        setStep("complete");
+      }, 1500);
+      return;
+    }
+
+    try {
+      const r = await apiPost<{ requestId: string; newBalance: number; amount: number }>(
+        "/api/withdraw/request",
+        {
+          amount: amt,
+          bankInfo: {
+            bank: registeredBank.bank.id,
+            accountNumber: registeredBank.account,
+            holder: registeredBank.holder,
+          },
+        },
+      );
+      setBalance(r.newBalance);
+      setCompletedAmount(r.amount);
+      await refreshList();
       setStep("complete");
-    }, 2000);
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        if (err.code === "INSUFFICIENT_BALANCE") setError("잔액이 부족합니다.");
+        else if (err.code === "INVALID_INPUT") setError("입력값을 확인해 주세요.");
+        else if (err.code === "UNAUTHENTICATED") setError("다시 로그인해 주세요.");
+        else setError("출금 요청에 실패했습니다.");
+      } else {
+        setError("네트워크 오류입니다.");
+      }
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleCancelRequest = async (id: string) => {
+    if (!user) return;
+    if (!confirm("출금 요청을 취소할까요? 잔액으로 환불됩니다.")) return;
+    try {
+      await apiPost("/api/withdraw/cancel", { requestId: id });
+      await refreshBalance();
+      await refreshList();
+    } catch {
+      alert("취소 실패. 잠시 후 다시 시도해주세요.");
+    }
   };
 
   if (loading || !user) {
@@ -98,24 +206,26 @@ export default function WithdrawPage() {
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-5">
-        {/* 다랜드 계좌 잔액 */}
+        {/* 잔액 */}
         <div className="rounded-2xl border border-cyan-500/20 p-5 text-center mb-5"
           style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}>
           <div className="text-xs text-[#6B7394]">다랜드 내 계좌 잔액</div>
-          <div className="mt-1 text-[#3B4CCA] text-4xl font-black">
-            {balance.toLocaleString()}P
-          </div>
+          <div className="mt-1 text-[#3B4CCA] text-4xl font-black">{balance.toLocaleString()}P</div>
           <div className="mt-1 text-xs text-[#6B7394]">= {balance.toLocaleString()}원 상당 (1P = 1원)</div>
         </div>
 
-        {/* 메인 화면 */}
+        {error && (
+          <div className="mb-4 rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/5 px-4 py-3 text-xs text-[#EF4444]">
+            {error}
+          </div>
+        )}
+
         {step === "main" && (
           <div className="space-y-4">
-            {/* 등록된 은행계좌 */}
             <div className="rounded-2xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="text-sm font-bold text-[#6B7394]">등록된 은행계좌</div>
-                <button onClick={() => { setStep("register"); setSelectedBank(null); setAccountNumber(""); }}
+                <button onClick={() => { setStep("register"); setSelectedBank(null); setAccountNumber(""); setHolder(""); }}
                   className="text-xs text-[#3B4CCA] hover:underline">
                   {registeredBank ? "변경" : "등록하기"}
                 </button>
@@ -126,6 +236,7 @@ export default function WithdrawPage() {
                   <div>
                     <div className="text-sm font-bold">{registeredBank.bank.name}</div>
                     <div className="text-xs text-[#6B7394]">{maskedAccount}</div>
+                    <div className="text-xs text-[#6B7394]">예금주: {registeredBank.holder}</div>
                   </div>
                   <div className="ml-auto text-xs text-[#10B981] font-bold">연결됨</div>
                 </div>
@@ -136,52 +247,77 @@ export default function WithdrawPage() {
               )}
             </div>
 
-            {/* 출금 버튼 */}
             {registeredBank ? (
-              <button onClick={() => { setStep("amount"); setWithdrawAmount(""); }}
+              <button onClick={() => { setStep("amount"); setWithdrawAmount(""); setError(null); }}
                 className="w-full rounded-2xl bg-gradient-to-r from-cyan-600 to-purple-600 py-4 text-base font-bold text-white shadow-lg shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95">
-                🏦 출금하기
+                🏦 출금 요청하기
               </button>
             ) : (
-              <button onClick={() => { setStep("register"); setSelectedBank(null); setAccountNumber(""); }}
+              <button onClick={() => { setStep("register"); setSelectedBank(null); setAccountNumber(""); setHolder(""); }}
                 className="w-full rounded-2xl bg-[#FFB800] py-4 text-base font-bold text-[#1A1F36] shadow-lg shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95">
                 은행계좌 등록하기
               </button>
             )}
 
-            {/* 안내 */}
+            {/* 출금 요청 내역 */}
+            {isConfigured && (
+              <div className="rounded-2xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
+                <div className="text-sm font-bold text-[#6B7394] mb-3">출금 요청 내역</div>
+                {items.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-[#E8EAF0] p-4 text-center text-xs text-[#6B7394]">
+                    아직 출금 요청 내역이 없습니다.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {items.map((it) => {
+                      const statusColor =
+                        it.status === "pending" ? "#f59e0b" : it.status === "completed" ? "#10b981" : "#EF4444";
+                      const statusText =
+                        it.status === "pending" ? "승인 대기" : it.status === "completed" ? "완료" : "반려";
+                      return (
+                        <div key={it.id} className="rounded-xl border border-[#E8EAF0] bg-[#F7F8FC] p-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm font-bold">{it.amount.toLocaleString()}P</div>
+                              <div className="text-xs text-[#6B7394]">
+                                {it.requestedAt ? new Date(it.requestedAt).toLocaleString("ko-KR") : ""}
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: `${statusColor}22`, color: statusColor }}>
+                                {statusText}
+                              </span>
+                              {it.status === "pending" && (
+                                <button onClick={() => handleCancelRequest(it.id)} className="text-[10px] text-[#6B7394] hover:text-[#EF4444]">
+                                  취소
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          {it.rejectReason && (
+                            <div className="mt-1 text-[10px] text-[#EF4444]">사유: {it.rejectReason}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="rounded-2xl border border-purple-500/20 p-4 text-xs leading-relaxed text-[#6B7394]"
               style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
               <div className="mb-2 text-sm font-bold text-[#3B4CCA]">출금 안내</div>
               <p>1. 다랜드 내 계좌의 포인트는 <strong className="text-[#1A1F36]">1P = 1원</strong>입니다.</p>
-              <p>2. 등록된 은행계좌로 출금 요청하면, 영업일 기준 1~2일 내 입금됩니다.</p>
-              <p>3. 최소 출금 금액: <strong className="text-[#3B4CCA]">1,000P</strong></p>
-              <p>4. 출금 수수료: <strong className="text-[#10B981]">무료</strong></p>
-            </div>
-
-            {/* 흐름 설명 */}
-            <div className="rounded-2xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-              <div className="text-sm font-bold text-[#6B7394] mb-3">다랜드 포인트 흐름</div>
-              <div className="space-y-2 text-xs">
-                {[
-                  { step: "1", text: "신용카드로 어디서든 결제", color: "#a855f7" },
-                  { step: "2", text: "다랜드가 지출데이터를 인식", color: "#06b6d4" },
-                  { step: "3", text: "비선형공식으로 120% 증액", color: "#f59e0b" },
-                  { step: "4", text: "다랜드 내 계좌에 적립", color: "#10b981" },
-                  { step: "5", text: "내 은행계좌로 출금 가능!", color: "#ec4899" },
-                ].map((s) => (
-                  <div key={s.step} className="flex items-center gap-3">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-white"
-                      style={{ background: s.color }}>{s.step}</div>
-                    <div className="text-[#6B7394]">{s.text}</div>
-                  </div>
-                ))}
-              </div>
+              <p>2. 출금 요청 시 잔액이 즉시 차감됩니다(승인 대기 중).</p>
+              <p>3. 관리자가 검토 후 영업일 기준 1~2일 내 입금됩니다.</p>
+              <p>4. 최소 출금 금액: <strong className="text-[#3B4CCA]">1,000P</strong></p>
+              <p>5. 출금 수수료: <strong className="text-[#10B981]">무료</strong></p>
+              <p>6. 승인 대기 중인 요청은 직접 취소(환불) 가능합니다.</p>
             </div>
           </div>
         )}
 
-        {/* 은행 등록 화면 */}
         {step === "register" && (
           <div className="space-y-4">
             <div className="text-sm font-bold text-[#6B7394]">은행 선택</div>
@@ -200,16 +336,24 @@ export default function WithdrawPage() {
             </div>
 
             {selectedBank && (
-              <div>
-                <label className="text-xs text-[#6B7394] mb-1 block">계좌번호 입력</label>
-                <input type="text" placeholder="계좌번호를 입력하세요" value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-lg font-bold placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50" />
-              </div>
+              <>
+                <div>
+                  <label className="text-xs text-[#6B7394] mb-1 block">계좌번호 (숫자만, 6~30자리)</label>
+                  <input type="text" placeholder="계좌번호" value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9-]/g, ""))}
+                    className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-lg font-bold placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50" />
+                </div>
+                <div>
+                  <label className="text-xs text-[#6B7394] mb-1 block">예금주</label>
+                  <input type="text" placeholder="예금주명" value={holder}
+                    onChange={(e) => setHolder(e.target.value.slice(0, 30))}
+                    className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-sm placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50" />
+                </div>
+              </>
             )}
 
             <button onClick={handleRegisterBank}
-              disabled={!selectedBank || !accountNumber}
+              disabled={!selectedBank || !accountNumber.trim() || !holder.trim()}
               className="w-full rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] disabled:opacity-50">
               계좌 등록 완료
             </button>
@@ -218,7 +362,6 @@ export default function WithdrawPage() {
           </div>
         )}
 
-        {/* 출금 금액 입력 */}
         {step === "amount" && registeredBank && (
           <div className="space-y-4">
             <div className="rounded-xl border p-3 text-center" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
@@ -227,13 +370,12 @@ export default function WithdrawPage() {
             </div>
 
             <div>
-              <label className="text-xs text-[#6B7394] mb-1 block">출금 금액 (P)</label>
+              <label className="text-xs text-[#6B7394] mb-1 block">출금 금액 (P, 최소 1,000)</label>
               <input type="number" placeholder="출금할 금액 입력" value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}
                 className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-2xl font-black placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50" />
             </div>
 
-            {/* 빠른 금액 버튼 */}
             <div className="grid grid-cols-4 gap-2">
               {[10000, 50000, 100000].map((amt) => (
                 <button key={amt} onClick={() => setWithdrawAmount(String(amt))}
@@ -256,7 +398,7 @@ export default function WithdrawPage() {
             )}
 
             <button onClick={() => { if (parseInt(withdrawAmount) > 0 && parseInt(withdrawAmount) <= balance) setStep("confirm"); }}
-              disabled={!withdrawAmount || parseInt(withdrawAmount) <= 0 || parseInt(withdrawAmount) > balance}
+              disabled={!withdrawAmount || parseInt(withdrawAmount) < 1000 || parseInt(withdrawAmount) > balance}
               className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-purple-600 py-3 text-sm font-bold text-white disabled:opacity-50">
               출금 신청
             </button>
@@ -265,7 +407,6 @@ export default function WithdrawPage() {
           </div>
         )}
 
-        {/* 출금 확인 */}
         {step === "confirm" && registeredBank && (() => {
           const amt = parseInt(withdrawAmount);
           const refund = calculateWithdrawalRefund(amt);
@@ -273,32 +414,19 @@ export default function WithdrawPage() {
           <div className="space-y-4 text-center">
             <div className="text-lg font-bold">출금 확인</div>
 
-            {/* 락(고리) 메커니즘 안내 */}
             <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-left">
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-base">🔗</span>
                 <span className="text-sm font-bold text-amber-700">비선형공식 락(고리) 적용</span>
               </div>
               <div className="space-y-1.5 text-xs text-[#6B7394]">
-                <div className="flex justify-between">
-                  <span>출금 신청 금액</span>
-                  <span className="font-bold text-[#1A1F36]">{amt.toLocaleString()}P</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>비선형공식 {refund.rate}% 확보</span>
-                  <span className="font-bold text-[#10B981]">{refund.securedPool.toLocaleString()}P</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>본인 계좌로 이체 (100%)</span>
-                  <span className="font-bold text-[#3B4CCA]">{refund.refundAmount.toLocaleString()}원</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>다랜드 시스템 수익 (20%)</span>
-                  <span className="font-bold text-amber-600">+{refund.systemProfit.toLocaleString()}P</span>
-                </div>
+                <div className="flex justify-between"><span>출금 신청 금액</span><span className="font-bold text-[#1A1F36]">{amt.toLocaleString()}P</span></div>
+                <div className="flex justify-between"><span>비선형공식 {refund.rate}% 확보</span><span className="font-bold text-[#10B981]">{refund.securedPool.toLocaleString()}P</span></div>
+                <div className="flex justify-between"><span>본인 계좌로 이체 (100%)</span><span className="font-bold text-[#3B4CCA]">{refund.refundAmount.toLocaleString()}원</span></div>
+                <div className="flex justify-between"><span>다랜드 시스템 수익 (20%)</span><span className="font-bold text-amber-600">+{refund.systemProfit.toLocaleString()}P</span></div>
               </div>
               <div className="mt-2 rounded-lg bg-white/70 px-2 py-1.5 text-[11px] leading-relaxed text-[#6B7394]">
-                지출 전에 락(고리)을 걸어 비선형공식으로 분배 → 시스템 총량을 유지하면서 출금이 처리됩니다.
+                관리자 승인 후 영업일 기준 1~2일 내 입금됩니다.
               </div>
             </div>
 
@@ -306,33 +434,19 @@ export default function WithdrawPage() {
               style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
               <div className="text-xs text-[#6B7394] mb-2">출금 정보</div>
               <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-[#6B7394]">출금 금액</span>
-                  <span className="font-bold text-[#3B4CCA]">{amt.toLocaleString()}원</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-[#6B7394]">입금 은행</span>
-                  <span className="font-bold">{registeredBank.bank.name}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-[#6B7394]">계좌번호</span>
-                  <span className="font-bold">{maskedAccount}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-[#6B7394]">수수료</span>
-                  <span className="font-bold text-[#10B981]">무료</span>
-                </div>
+                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">출금 금액</span><span className="font-bold text-[#3B4CCA]">{amt.toLocaleString()}원</span></div>
+                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">입금 은행</span><span className="font-bold">{registeredBank.bank.name}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">계좌번호</span><span className="font-bold">{maskedAccount}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">예금주</span><span className="font-bold">{registeredBank.holder}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">수수료</span><span className="font-bold text-[#10B981]">무료</span></div>
                 <div className="h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
-                <div className="flex justify-between text-sm">
-                  <span className="font-bold">출금 후 잔액</span>
-                  <span className="font-bold text-[#3B4CCA]">{(balance - amt).toLocaleString()}P</span>
-                </div>
+                <div className="flex justify-between text-sm"><span className="font-bold">출금 후 잔액</span><span className="font-bold text-[#3B4CCA]">{(balance - amt).toLocaleString()}P</span></div>
               </div>
             </div>
 
             <button onClick={handleWithdraw} disabled={processing}
               className="w-full rounded-2xl bg-gradient-to-r from-cyan-600 to-purple-600 py-4 text-base font-bold text-white shadow-lg shadow-[#3B4CCA]/15">
-              {processing ? "출금 처리 중..." : "출금 확정"}
+              {processing ? "출금 요청 중..." : "출금 확정"}
             </button>
             <button onClick={() => setStep("amount")} disabled={processing}
               className="w-full text-center text-sm text-[#6B7394] hover:text-[#6B7394]">뒤로</button>
@@ -340,30 +454,19 @@ export default function WithdrawPage() {
           );
         })()}
 
-        {/* 출금 완료 */}
-        {step === "complete" && registeredBank && (() => {
-          const amt = parseInt(withdrawAmount);
-          const refund = calculateWithdrawalRefund(amt);
-          return (
+        {step === "complete" && registeredBank && (
           <div className="text-center space-y-4">
             <div className="text-5xl">✅</div>
-            <div className="text-xl font-bold">출금 신청 완료!</div>
+            <div className="text-xl font-bold">출금 요청 접수 완료!</div>
             <div className="rounded-2xl border border-[#10B981]/20 bg-emerald-500/5 p-5">
-              <div className="text-3xl font-black text-[#10B981]">{amt.toLocaleString()}원</div>
-              <div className="mt-2 text-sm text-[#6B7394]">
-                {registeredBank.bank.name} {maskedAccount}
-              </div>
-              <div className="mt-1 text-xs text-[#6B7394]">영업일 기준 1~2일 내 입금 예정</div>
+              <div className="text-3xl font-black text-[#10B981]">{completedAmount.toLocaleString()}원</div>
+              <div className="mt-2 text-sm text-[#6B7394]">{registeredBank.bank.name} {maskedAccount}</div>
+              <div className="mt-1 text-xs text-[#6B7394]">관리자 승인 후 1~2일 내 입금 예정</div>
             </div>
 
             <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-3 text-xs text-left">
-              <div className="mb-1 flex items-center gap-2">
-                <span>🔗</span>
-                <span className="font-bold text-amber-700">총량유지 모드 처리됨</span>
-              </div>
-              <div className="text-[#6B7394]">
-                비선형공식으로 {refund.securedPool.toLocaleString()}P 확보 → {refund.refundAmount.toLocaleString()}원 이체, {refund.systemProfit.toLocaleString()}P 시스템 수익으로 귀속
-              </div>
+              <div className="mb-1 flex items-center gap-2"><span>⏳</span><span className="font-bold text-amber-700">승인 대기 중</span></div>
+              <div className="text-[#6B7394]">잔액에서 차감되었습니다. 승인 전이라면 메인 화면에서 직접 취소 가능합니다.</div>
             </div>
 
             <div className="rounded-xl bg-purple-900/10 border border-purple-500/20 p-3 text-xs text-[#6B7394]">
@@ -371,13 +474,12 @@ export default function WithdrawPage() {
               <p className="mt-1">앞으로도 신용카드를 사용하시면 자동으로 120% 증액 재충전됩니다!</p>
             </div>
 
-            <Link href="/dashboard"
+            <button onClick={() => setStep("main")}
               className="block w-full rounded-xl border border-purple-500/30 bg-[#3B4CCA]/8 py-3 text-sm font-bold text-[#3B4CCA] hover:bg-[#3B4CCA]/15">
-              대시보드로 돌아가기
-            </Link>
+              내역으로 돌아가기
+            </button>
           </div>
-          );
-        })()}
+        )}
       </div>
 
       <Navbar />

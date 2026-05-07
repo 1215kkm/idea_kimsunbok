@@ -4,47 +4,57 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
-import {
-  resolveInviteCode,
-  processInviteReward,
-} from "@/lib/demo-store";
-import { calculateInviteReward } from "@/lib/nonlinear-engine";
+import { apiGet, ApiClientError } from "@/lib/api-client";
+
+interface InviteInfo {
+  code: string;
+  tierId: string;
+  amount: number;
+  label: string;
+}
 
 function LoginPageInner() {
   const { user, loading, signIn, signUp, demoSignIn, isDemo } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const inviteCode = searchParams.get("invite");
-  const inviteAmtParam = searchParams.get("amt");
-  const inviteAmount = (() => {
-    const n = inviteAmtParam ? parseInt(inviteAmtParam, 10) : 100_000;
-    return Number.isFinite(n) && n > 0 ? n : 100_000;
-  })();
+  const inviteCode = (searchParams.get("invite") || "").toUpperCase() || null;
   const [isSignUp, setIsSignUp] = useState(!!inviteCode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [inviteProcessed, setInviteProcessed] = useState(false);
+  const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null);
+  const [inviteInfoError, setInviteInfoError] = useState<string | null>(null);
+
+  // Look up invite code metadata from server (no client-trusted amount).
+  useEffect(() => {
+    if (!inviteCode || isDemo) return;
+    if (!/^[A-Z0-9]{8}$/.test(inviteCode)) {
+      setInviteInfoError("INVALID_FORMAT");
+      return;
+    }
+    let cancelled = false;
+    apiGet<{ ok: boolean } & InviteInfo>(
+      `/api/invite/info?code=${encodeURIComponent(inviteCode)}`,
+    )
+      .then((r) => {
+        if (!cancelled) setInviteInfo(r);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (err instanceof ApiClientError) setInviteInfoError(err.code);
+        else setInviteInfoError("INTERNAL");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteCode, isDemo]);
 
   useEffect(() => {
-    if (!user || inviteProcessed) return;
-    if (inviteCode && user.email) {
-      const inviterEmail = resolveInviteCode(inviteCode);
-      if (inviterEmail && inviterEmail !== user.email.toLowerCase()) {
-        const reward = calculateInviteReward(inviteAmount);
-        processInviteReward(
-          inviterEmail,
-          user.email,
-          reward.distributedToNewUser,
-          reward.advertiserNetGain,
-        );
-        setInviteProcessed(true);
-      }
-    }
+    if (!user) return;
     router.push("/dashboard");
-  }, [user, router, inviteCode, inviteAmount, inviteProcessed]);
+  }, [user, router]);
 
   if (loading) {
     return (
@@ -59,7 +69,6 @@ function LoginPageInner() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    // 클라이언트 측 기본 검증
     if (!email.includes("@")) {
       setError("올바른 이메일 형식을 입력해주세요.");
       return;
@@ -75,7 +84,18 @@ function LoginPageInner() {
     setSubmitting(true);
     try {
       if (isSignUp) {
-        await signUp(email, password, name.trim());
+        const result = await signUp(email, password, name.trim(), inviteCode);
+        if (result.inviteError && inviteCode) {
+          if (result.inviteError === "SELF_INVITE")
+            setError("본인의 초대 코드는 사용할 수 없습니다.");
+          else if (result.inviteError === "ALREADY_REDEEMED")
+            setError("이미 초대 코드를 사용하셨습니다.");
+          else if (result.inviteError === "NOT_FOUND")
+            setError("유효하지 않은 초대 코드입니다.");
+          else if (result.inviteError === "INACTIVE")
+            setError("만료된 초대 코드입니다.");
+          // 가입 자체는 성공이므로 라우팅은 useEffect에서 진행
+        }
       } else {
         await signIn(email, password);
       }
@@ -109,10 +129,28 @@ function LoginPageInner() {
       <p className="mb-6 text-sm dark-text-muted text-[#6B7394]">쓸수록 쌓이는 120%의 마법</p>
 
       {/* 초대 코드 배너 */}
-      {inviteCode && (
+      {inviteCode && !inviteInfoError && (
         <div className="mb-4 w-full max-w-sm rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 px-4 py-3 text-xs leading-relaxed text-[#6B7394]">
           <div className="mb-1 font-bold text-[#10B981]">🎁 초대 코드 적용됨</div>
-          <p>회원가입을 완료하면 <strong className="text-[#1A1F36]">{inviteAmount.toLocaleString()}P</strong>가 자동으로 지급됩니다!</p>
+          {inviteInfo ? (
+            <p>
+              회원가입을 완료하면{" "}
+              <strong className="text-[#1A1F36]">{inviteInfo.amount.toLocaleString()}P</strong>가
+              자동으로 지급됩니다!
+            </p>
+          ) : (
+            <p>회원가입을 완료하면 보상이 자동으로 지급됩니다.</p>
+          )}
+        </div>
+      )}
+
+      {inviteCode && inviteInfoError && (
+        <div className="mb-4 w-full max-w-sm rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/5 px-4 py-3 text-xs leading-relaxed text-[#EF4444]">
+          {inviteInfoError === "NOT_FOUND" && "유효하지 않은 초대 코드입니다."}
+          {inviteInfoError === "INACTIVE" && "만료된 초대 코드입니다."}
+          {(inviteInfoError === "INVALID_INPUT" || inviteInfoError === "INVALID_FORMAT") &&
+            "초대 코드 형식이 올바르지 않습니다."}
+          {inviteInfoError === "INTERNAL" && "초대 코드 정보를 불러오지 못했습니다."}
         </div>
       )}
 

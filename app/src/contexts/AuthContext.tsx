@@ -9,14 +9,25 @@ import {
   signOut as firebaseSignOut,
   updateProfile,
 } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db, isConfigured } from "@/lib/firebase";
+import { auth, isConfigured } from "@/lib/firebase";
+import { apiPost } from "@/lib/api-client";
+
+interface SignUpResult {
+  inviteRedeemed: boolean;
+  inviteError: string | null;
+  totalPoints: number;
+}
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   isDemo: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    name: string,
+    inviteCode?: string | null,
+  ) => Promise<SignUpResult>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   demoSignIn: () => Promise<void>;
@@ -24,7 +35,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-// Firebase 미설정 시 데모 유저
 const DEMO_USER = {
   uid: "demo-user",
   displayName: "체험 사용자",
@@ -37,7 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isConfigured || !auth) {
-      // Firebase 미설정: 데모 모드 — localStorage에서 복원
       try {
         const saved = localStorage.getItem("daland-demo-user");
         if (saved) {
@@ -46,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser({ ...DEMO_USER, displayName: parsed.displayName, email: parsed.email } as User);
         }
       } catch {
-        // 파싱 실패 무시
+        // ignore
       }
       setLoading(false);
       return;
@@ -58,25 +67,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp: AuthContextType["signUp"] = async (email, password, name, inviteCode) => {
     if (!isConfigured || !auth) {
-      // 데모 모드: 바로 로그인 + localStorage 저장
       const demoUser = { ...DEMO_USER, displayName: name, email } as User;
       setUser(demoUser);
       localStorage.setItem("daland-demo-user", JSON.stringify({ displayName: name, email }));
-      return;
+      return { inviteRedeemed: false, inviteError: null, totalPoints: 0 };
     }
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
-    if (db) {
-      await setDoc(doc(db, "users", cred.user.uid), {
+    // Force fresh ID token, then call server to provision the user document.
+    await cred.user.getIdToken(true);
+    try {
+      const res = await apiPost<{
+        ok: boolean;
+        totalPoints: number;
+        inviteRedeemed: boolean;
+        inviteError: string | null;
+      }>("/api/auth/post-signup", {
         name,
-        email,
-        role: "consumer",
-        membershipLevel: 1,
-        totalPoints: 0,
-        createdAt: serverTimestamp(),
+        inviteCode: inviteCode ?? undefined,
       });
+      return {
+        inviteRedeemed: res.inviteRedeemed,
+        inviteError: res.inviteError,
+        totalPoints: res.totalPoints,
+      };
+    } catch (err) {
+      console.error("[auth] post-signup failed", err);
+      return { inviteRedeemed: false, inviteError: "INTERNAL", totalPoints: 0 };
     }
   };
 
