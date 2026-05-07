@@ -35,13 +35,8 @@ export async function requireAuth(req: NextRequest): Promise<AuthedUser> {
       emailVerified: decoded.email_verified ?? false,
     };
   } catch (err) {
-    const detail = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-    console.error("[auth] verifyIdToken failed:", detail);
-    throw new ApiError(
-      "UNAUTHENTICATED",
-      `Invalid or expired token (${detail})`,
-      401,
-    );
+    console.error("[auth] verifyIdToken failed:", err);
+    throw new ApiError("UNAUTHENTICATED", "Invalid or expired token", 401);
   }
 }
 
