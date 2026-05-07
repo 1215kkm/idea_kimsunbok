@@ -15,8 +15,20 @@ export async function requireAuth(req: NextRequest): Promise<AuthedUser> {
     throw new ApiError("UNAUTHENTICATED", "Missing or malformed Authorization header", 401);
   }
   const idToken = match[1];
+  let auth;
   try {
-    const decoded = await adminAuth().verifyIdToken(idToken);
+    auth = adminAuth();
+  } catch (err) {
+    // Service Account 미설정/오류 — 클라이언트에는 500 + 명확한 메시지
+    console.error("[auth] adminAuth init failed:", err);
+    throw new ApiError(
+      "INTERNAL",
+      "Server is missing FIREBASE_SERVICE_ACCOUNT_KEY env var. Configure it in Vercel and redeploy.",
+      500,
+    );
+  }
+  try {
+    const decoded = await auth.verifyIdToken(idToken);
     return {
       uid: decoded.uid,
       email: decoded.email ?? null,
