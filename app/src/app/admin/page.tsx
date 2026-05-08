@@ -51,7 +51,7 @@ export default function AdminPage() {
   const [check, setCheck] = useState<CheckState>("checking");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [withdrawals, setWithdrawals] = useState<AdminWithdrawal[]>([]);
-  const [withdrawalStatus, setWithdrawalStatus] = useState<"pending" | "completed" | "rejected" | "all">("pending");
+  const [withdrawalStatus, setWithdrawalStatus] = useState<"pending" | "completed" | "rejected" | "all">("all");
   const [userSearch, setUserSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,9 +108,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (check === "ok") {
       refreshUsers();
-      refreshWithdrawals("pending");
+      refreshWithdrawals("all");
     }
-  }, [check, refreshUsers, refreshWithdrawals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [check]);
 
   const handleApprove = async (id: string) => {
     if (!confirm("이 출금 요청을 승인 처리할까요? 외부 송금이 끝났다는 의미입니다.")) return;
@@ -336,7 +337,7 @@ export default function AdminPage() {
         {tab === "withdrawals" && (
           <div className="space-y-4">
             <div className="flex gap-2">
-              {(["pending", "completed", "rejected", "all"] as const).map((s) => (
+              {(["all", "pending", "completed", "rejected"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => {

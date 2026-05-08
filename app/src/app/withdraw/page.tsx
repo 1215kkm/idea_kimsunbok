@@ -24,6 +24,13 @@ const BANKS = [
 type Bank = typeof BANKS[number];
 type Step = "main" | "register" | "amount" | "confirm" | "complete";
 
+interface SavedAccount {
+  id: string; // local-generated
+  bankId: string;
+  account: string;
+  holder: string;
+}
+
 interface WithdrawalItem {
   id: string;
   amount: number;
@@ -35,19 +42,55 @@ interface WithdrawalItem {
   rejectReason: string | null;
 }
 
+const BANKS_KEY = (uid: string) => `daland-banks-${uid}`;
+const SELECTED_KEY = (uid: string) => `daland-bank-selected-${uid}`;
+const LEGACY_KEY = (uid: string) => `daland-bank-${uid}`;
+
+function loadAccounts(uid: string): SavedAccount[] {
+  try {
+    const raw = localStorage.getItem(BANKS_KEY(uid));
+    if (raw) return JSON.parse(raw) as SavedAccount[];
+    // 1회성 마이그레이션: 단일 계좌 → 배열
+    const legacy = localStorage.getItem(LEGACY_KEY(uid));
+    if (legacy) {
+      const parsed = JSON.parse(legacy);
+      if (parsed?.bankId && parsed?.account) {
+        const migrated: SavedAccount[] = [
+          {
+            id: `acc-${Date.now()}`,
+            bankId: parsed.bankId,
+            account: parsed.account,
+            holder: parsed.holder || "",
+          },
+        ];
+        localStorage.setItem(BANKS_KEY(uid), JSON.stringify(migrated));
+        return migrated;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+function saveAccounts(uid: string, list: SavedAccount[]) {
+  try {
+    localStorage.setItem(BANKS_KEY(uid), JSON.stringify(list));
+  } catch {
+    // ignore
+  }
+}
+
 export default function WithdrawPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [balance, setBalance] = useState(0);
   const [step, setStep] = useState<Step>("main");
+  const [accounts, setAccounts] = useState<SavedAccount[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [accountNumber, setAccountNumber] = useState("");
   const [holder, setHolder] = useState("");
-  const [registeredBank, setRegisteredBank] = useState<{
-    bank: Bank;
-    account: string;
-    holder: string;
-  } | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,50 +132,84 @@ export default function WithdrawPage() {
     refreshList();
   }, [refreshBalance, refreshList]);
 
-  // 등록된 은행계좌는 localStorage에 저장(간단). 실 서비스에서는 users 문서에 저장하지만,
-  // 출금 요청 시 어차피 서버가 다시 검증하므로 저장 위치는 보안상 무관.
+  // 저장된 계좌 목록 로드
   useEffect(() => {
     if (!user) return;
+    const loaded = loadAccounts(user.uid);
+    setAccounts(loaded);
     try {
-      const saved = localStorage.getItem(`daland-bank-${user.uid}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const found = BANKS.find((b) => b.id === parsed.bankId);
-        if (found) setRegisteredBank({ bank: found, account: parsed.account, holder: parsed.holder });
+      const sel = localStorage.getItem(SELECTED_KEY(user.uid));
+      if (sel && loaded.find((a) => a.id === sel)) {
+        setSelectedAccountId(sel);
+      } else if (loaded.length > 0) {
+        setSelectedAccountId(loaded[0].id);
       }
     } catch {
-      // ignore
+      if (loaded.length > 0) setSelectedAccountId(loaded[0].id);
     }
   }, [user]);
 
-  const handleRegisterBank = () => {
-    if (!selectedBank || !accountNumber.trim() || !holder.trim() || !user) return;
-    const next = { bank: selectedBank, account: accountNumber.trim(), holder: holder.trim() };
-    setRegisteredBank(next);
-    try {
-      localStorage.setItem(
-        `daland-bank-${user.uid}`,
-        JSON.stringify({
-          bankId: selectedBank.id,
-          account: next.account,
-          holder: next.holder,
-        }),
-      );
-    } catch {
-      // ignore
+  const selectAccount = (id: string) => {
+    setSelectedAccountId(id);
+    if (user) {
+      try {
+        localStorage.setItem(SELECTED_KEY(user.uid), id);
+      } catch {
+        // ignore
+      }
     }
+  };
+
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId) || null;
+  const selectedBankInfo = selectedAccount
+    ? BANKS.find((b) => b.id === selectedAccount.bankId) || null
+    : null;
+
+  const handleAddAccount = () => {
+    if (!selectedBank || !accountNumber.trim() || !holder.trim() || !user) return;
+    const next: SavedAccount = {
+      id: `acc-${Date.now()}`,
+      bankId: selectedBank.id,
+      account: accountNumber.trim(),
+      holder: holder.trim(),
+    };
+    const newList = [...accounts, next];
+    setAccounts(newList);
+    saveAccounts(user.uid, newList);
+    selectAccount(next.id);
+    setSelectedBank(null);
+    setAccountNumber("");
+    setHolder("");
     setStep("main");
   };
 
+  const handleDeleteAccount = (id: string) => {
+    if (!user) return;
+    if (!confirm("이 계좌 정보를 삭제할까요?")) return;
+    const newList = accounts.filter((a) => a.id !== id);
+    setAccounts(newList);
+    saveAccounts(user.uid, newList);
+    if (selectedAccountId === id) {
+      const nextSel = newList[0]?.id || null;
+      setSelectedAccountId(nextSel);
+      if (nextSel) {
+        try {
+          localStorage.setItem(SELECTED_KEY(user.uid), nextSel);
+        } catch {
+          // ignore
+        }
+      }
+    }
+  };
+
   const handleWithdraw = async () => {
-    if (!user || !registeredBank) return;
+    if (!user || !selectedAccount || !selectedBankInfo) return;
     const amt = parseInt(withdrawAmount);
     if (!amt || amt <= 0 || amt > balance) return;
     setProcessing(true);
     setError(null);
 
     if (!isConfigured) {
-      // 데모 모드: localStorage 차감
       setTimeout(() => {
         deductDemoBalance(user, amt);
         setBalance((prev) => prev - amt);
@@ -149,9 +226,9 @@ export default function WithdrawPage() {
         {
           amount: amt,
           bankInfo: {
-            bank: registeredBank.bank.id,
-            accountNumber: registeredBank.account,
-            holder: registeredBank.holder,
+            bank: selectedBankInfo.id,
+            accountNumber: selectedAccount.account,
+            holder: selectedAccount.holder,
           },
         },
       );
@@ -189,9 +266,8 @@ export default function WithdrawPage() {
     return <div className="flex min-h-screen items-center justify-center dark-text-muted">로딩 중...</div>;
   }
 
-  const maskedAccount = registeredBank
-    ? registeredBank.account.replace(/(\d{3})\d+(\d{4})/, "$1-****-$2")
-    : "";
+  const maskAccount = (acc: string) =>
+    acc.replace(/(\d{3})\d+(\d{4})/, "$1-****-$2");
 
   return (
     <div className="min-h-screen pb-20">
@@ -206,7 +282,6 @@ export default function WithdrawPage() {
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-5">
-        {/* 잔액 */}
         <div className="rounded-2xl border border-cyan-500/20 p-5 text-center mb-5"
           style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}>
           <div className="text-xs text-[#6B7394]">다랜드 내 계좌 잔액</div>
@@ -225,32 +300,65 @@ export default function WithdrawPage() {
             <div className="rounded-2xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="text-sm font-bold text-[#6B7394]">등록된 은행계좌</div>
-                <button onClick={() => { setStep("register"); setSelectedBank(null); setAccountNumber(""); setHolder(""); }}
-                  className="text-xs text-[#3B4CCA] hover:underline">
-                  {registeredBank ? "변경" : "등록하기"}
+                <button
+                  onClick={() => { setStep("register"); setSelectedBank(null); setAccountNumber(""); setHolder(""); }}
+                  className="text-xs text-[#3B4CCA] hover:underline"
+                >
+                  + 계좌 추가
                 </button>
               </div>
-              {registeredBank ? (
-                <div className="flex items-center gap-3 rounded-xl bg-[#10B981]/8 border border-[#10B981]/20 p-3">
-                  <div className="text-2xl">{registeredBank.bank.icon}</div>
-                  <div>
-                    <div className="text-sm font-bold">{registeredBank.bank.name}</div>
-                    <div className="text-xs text-[#6B7394]">{maskedAccount}</div>
-                    <div className="text-xs text-[#6B7394]">예금주: {registeredBank.holder}</div>
-                  </div>
-                  <div className="ml-auto text-xs text-[#10B981] font-bold">연결됨</div>
-                </div>
-              ) : (
+
+              {accounts.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-[#E8EAF0] p-4 text-center text-xs text-[#6B7394]">
                   출금받을 은행계좌를 등록해주세요
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {accounts.map((acc) => {
+                    const bank = BANKS.find((b) => b.id === acc.bankId);
+                    const isSelected = acc.id === selectedAccountId;
+                    return (
+                      <div
+                        key={acc.id}
+                        onClick={() => selectAccount(acc.id)}
+                        className="cursor-pointer rounded-xl border p-3 transition-all"
+                        style={{
+                          borderColor: isSelected ? "rgba(16,185,129,0.4)" : "var(--card-border)",
+                          background: isSelected ? "rgba(16,185,129,0.08)" : "transparent",
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="text-2xl">{bank?.icon || "🏦"}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold">{bank?.name || acc.bankId}</div>
+                            <div className="text-xs text-[#6B7394] truncate">{maskAccount(acc.account)}</div>
+                            <div className="text-xs text-[#6B7394]">예금주 {acc.holder}</div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            {isSelected ? (
+                              <span className="text-xs font-bold text-[#10B981]">✓ 선택됨</span>
+                            ) : (
+                              <span className="text-xs text-[#6B7394]">선택</span>
+                            )}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteAccount(acc.id); }}
+                              className="text-[10px] text-[#EF4444] hover:underline"
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {registeredBank ? (
+            {selectedAccount ? (
               <button onClick={() => { setStep("amount"); setWithdrawAmount(""); setError(null); }}
                 className="w-full rounded-2xl bg-gradient-to-r from-cyan-600 to-purple-600 py-4 text-base font-bold text-white shadow-lg shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95">
-                🏦 출금 요청하기
+                🏦 선택한 계좌로 출금 요청하기
               </button>
             ) : (
               <button onClick={() => { setStep("register"); setSelectedBank(null); setAccountNumber(""); setHolder(""); }}
@@ -259,7 +367,6 @@ export default function WithdrawPage() {
               </button>
             )}
 
-            {/* 출금 요청 내역 */}
             {isConfigured && (
               <div className="rounded-2xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
                 <div className="text-sm font-bold text-[#6B7394] mb-3">출금 요청 내역</div>
@@ -274,11 +381,15 @@ export default function WithdrawPage() {
                         it.status === "pending" ? "#f59e0b" : it.status === "completed" ? "#10b981" : "#EF4444";
                       const statusText =
                         it.status === "pending" ? "승인 대기" : it.status === "completed" ? "완료" : "반려";
+                      const bank = BANKS.find((b) => b.id === it.bank);
                       return (
                         <div key={it.id} className="rounded-xl border border-[#E8EAF0] bg-[#F7F8FC] p-3">
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="text-sm font-bold">{it.amount.toLocaleString()}P</div>
+                              <div className="text-xs text-[#6B7394]">
+                                {bank?.name || it.bank} {it.accountNumber ? maskAccount(it.accountNumber) : ""}
+                              </div>
                               <div className="text-xs text-[#6B7394]">
                                 {it.requestedAt ? new Date(it.requestedAt).toLocaleString("ko-KR") : ""}
                               </div>
@@ -352,18 +463,26 @@ export default function WithdrawPage() {
               </>
             )}
 
-            <button onClick={handleRegisterBank}
+            <button onClick={handleAddAccount}
               disabled={!selectedBank || !accountNumber.trim() || !holder.trim()}
               className="w-full rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] disabled:opacity-50">
-              계좌 등록 완료
+              계좌 추가 완료
             </button>
             <button onClick={() => setStep("main")}
               className="w-full text-center text-sm text-[#6B7394] hover:text-[#6B7394]">취소</button>
           </div>
         )}
 
-        {step === "amount" && registeredBank && (
+        {step === "amount" && selectedAccount && selectedBankInfo && (
           <div className="space-y-4">
+            <div className="rounded-xl border p-3" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
+              <div className="text-xs text-[#6B7394]">출금 받을 계좌</div>
+              <div className="text-sm font-bold mt-1">
+                {selectedBankInfo.name} · {maskAccount(selectedAccount.account)}
+              </div>
+              <div className="text-xs text-[#6B7394]">예금주 {selectedAccount.holder}</div>
+            </div>
+
             <div className="rounded-xl border p-3 text-center" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
               <div className="text-xs text-[#6B7394]">출금 가능 잔액</div>
               <div className="text-2xl font-black text-[#3B4CCA]">{balance.toLocaleString()}P</div>
@@ -393,7 +512,7 @@ export default function WithdrawPage() {
               <div className="rounded-xl border border-[#10B981]/20 bg-emerald-500/5 p-3 text-center">
                 <div className="text-xs text-[#6B7394]">출금 예정 금액</div>
                 <div className="text-2xl font-black text-[#10B981]">{parseInt(withdrawAmount).toLocaleString()}원</div>
-                <div className="text-xs text-[#6B7394] mt-1">{registeredBank.bank.name} {maskedAccount}로 입금</div>
+                <div className="text-xs text-[#6B7394] mt-1">{selectedBankInfo.name} {maskAccount(selectedAccount.account)}로 입금</div>
               </div>
             )}
 
@@ -407,7 +526,7 @@ export default function WithdrawPage() {
           </div>
         )}
 
-        {step === "confirm" && registeredBank && (() => {
+        {step === "confirm" && selectedAccount && selectedBankInfo && (() => {
           const amt = parseInt(withdrawAmount);
           const refund = calculateWithdrawalRefund(amt);
           return (
@@ -435,9 +554,9 @@ export default function WithdrawPage() {
               <div className="text-xs text-[#6B7394] mb-2">출금 정보</div>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm"><span className="text-[#6B7394]">출금 금액</span><span className="font-bold text-[#3B4CCA]">{amt.toLocaleString()}원</span></div>
-                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">입금 은행</span><span className="font-bold">{registeredBank.bank.name}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">계좌번호</span><span className="font-bold">{maskedAccount}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">예금주</span><span className="font-bold">{registeredBank.holder}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">입금 은행</span><span className="font-bold">{selectedBankInfo.name}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">계좌번호</span><span className="font-bold">{maskAccount(selectedAccount.account)}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-[#6B7394]">예금주</span><span className="font-bold">{selectedAccount.holder}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-[#6B7394]">수수료</span><span className="font-bold text-[#10B981]">무료</span></div>
                 <div className="h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
                 <div className="flex justify-between text-sm"><span className="font-bold">출금 후 잔액</span><span className="font-bold text-[#3B4CCA]">{(balance - amt).toLocaleString()}P</span></div>
@@ -454,13 +573,13 @@ export default function WithdrawPage() {
           );
         })()}
 
-        {step === "complete" && registeredBank && (
+        {step === "complete" && selectedAccount && selectedBankInfo && (
           <div className="text-center space-y-4">
             <div className="text-5xl">✅</div>
             <div className="text-xl font-bold">출금 요청 접수 완료!</div>
             <div className="rounded-2xl border border-[#10B981]/20 bg-emerald-500/5 p-5">
               <div className="text-3xl font-black text-[#10B981]">{completedAmount.toLocaleString()}원</div>
-              <div className="mt-2 text-sm text-[#6B7394]">{registeredBank.bank.name} {maskedAccount}</div>
+              <div className="mt-2 text-sm text-[#6B7394]">{selectedBankInfo.name} {maskAccount(selectedAccount.account)}</div>
               <div className="mt-1 text-xs text-[#6B7394]">관리자 승인 후 1~2일 내 입금 예정</div>
             </div>
 
