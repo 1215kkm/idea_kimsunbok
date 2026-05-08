@@ -15,23 +15,43 @@ export async function GET(req: NextRequest) {
     if (!VALID_STATUS.includes(status)) {
       return jsonOk({ ok: true, items: [] });
     }
-    let q: FirebaseFirestore.Query = adminDb()
-      .collection("withdrawals")
-      .orderBy("requestedAt", "desc")
-      .limit(200);
-    if (status !== "all") {
-      q = adminDb()
-        .collection("withdrawals")
-        .where("status", "==", status)
-        .orderBy("requestedAt", "desc")
-        .limit(200);
-    }
+    const db = adminDb();
+    let q: FirebaseFirestore.Query =
+      status === "all"
+        ? db.collection("withdrawals").orderBy("requestedAt", "desc").limit(200)
+        : db
+            .collection("withdrawals")
+            .where("status", "==", status)
+            .orderBy("requestedAt", "desc")
+            .limit(200);
     const snap = await q.get();
+
+    const userIds = Array.from(
+      new Set(snap.docs.map((d) => d.data().userId as string).filter(Boolean)),
+    );
+    const userMap = new Map<string, { name: string; email: string }>();
+    if (userIds.length > 0) {
+      const userRefs = userIds.map((uid) => db.collection("users").doc(uid));
+      const userSnaps = await db.getAll(...userRefs);
+      userSnaps.forEach((us) => {
+        if (us.exists) {
+          const ud = us.data() || {};
+          userMap.set(us.id, {
+            name: ud.name || "",
+            email: ud.email || "",
+          });
+        }
+      });
+    }
+
     const items = snap.docs.map((d) => {
       const data = d.data();
+      const u = userMap.get(data.userId);
       return {
         id: d.id,
         userId: data.userId,
+        userName: u?.name ?? "",
+        userEmail: u?.email ?? "",
         amount: data.amount,
         status: data.status,
         bankInfo: data.bankInfo,

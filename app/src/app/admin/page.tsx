@@ -21,6 +21,8 @@ interface AdminUser {
 interface AdminWithdrawal {
   id: string;
   userId: string;
+  userName?: string;
+  userEmail?: string;
   amount: number;
   status: "pending" | "completed" | "rejected";
   bankInfo: { bank: string; accountNumber: string; holder: string };
@@ -28,6 +30,16 @@ interface AdminWithdrawal {
   processedAt: number | null;
   rejectReason: string | null;
 }
+
+const BANK_NAMES: Record<string, string> = {
+  shinhan: "신한은행",
+  kb: "국민은행",
+  woori: "우리은행",
+  hana: "하나은행",
+  nh: "농협은행",
+  kakao: "카카오뱅크",
+  toss: "토스뱅크",
+};
 
 type TabType = "overview" | "users" | "withdrawals";
 type CheckState = "checking" | "ok" | "denied" | "demo";
@@ -359,9 +371,13 @@ export default function AdminPage() {
                       <div>
                         <div className="text-sm font-bold">{w.amount.toLocaleString()}P</div>
                         <div className="text-xs text-[#6B7394]">
-                          {w.bankInfo?.bank} · {w.bankInfo?.accountNumber} · {w.bankInfo?.holder}
+                          {BANK_NAMES[w.bankInfo?.bank] || w.bankInfo?.bank} ·{" "}
+                          {w.bankInfo?.accountNumber} · 예금주 {w.bankInfo?.holder}
                         </div>
-                        <div className="text-xs text-[#6B7394]">사용자: {w.userId.slice(0, 8)}...</div>
+                        <div className="text-xs text-[#6B7394]">
+                          사용자: {w.userName || "(이름 없음)"}
+                          {w.userEmail ? ` · ${w.userEmail}` : ""}
+                        </div>
                         <div className="text-xs text-[#6B7394]">
                           {w.requestedAt ? new Date(w.requestedAt).toLocaleString("ko-KR") : ""}
                         </div>
