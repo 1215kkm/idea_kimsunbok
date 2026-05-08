@@ -21,6 +21,8 @@ interface AdminUser {
 interface AdminWithdrawal {
   id: string;
   userId: string;
+  userName?: string;
+  userEmail?: string;
   amount: number;
   status: "pending" | "completed" | "rejected";
   bankInfo: { bank: string; accountNumber: string; holder: string };
@@ -28,6 +30,16 @@ interface AdminWithdrawal {
   processedAt: number | null;
   rejectReason: string | null;
 }
+
+const BANK_NAMES: Record<string, string> = {
+  shinhan: "신한은행",
+  kb: "국민은행",
+  woori: "우리은행",
+  hana: "하나은행",
+  nh: "농협은행",
+  kakao: "카카오뱅크",
+  toss: "토스뱅크",
+};
 
 type TabType = "overview" | "users" | "withdrawals";
 type CheckState = "checking" | "ok" | "denied" | "demo";
@@ -39,7 +51,7 @@ export default function AdminPage() {
   const [check, setCheck] = useState<CheckState>("checking");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [withdrawals, setWithdrawals] = useState<AdminWithdrawal[]>([]);
-  const [withdrawalStatus, setWithdrawalStatus] = useState<"pending" | "completed" | "rejected" | "all">("pending");
+  const [withdrawalStatus, setWithdrawalStatus] = useState<"pending" | "completed" | "rejected" | "all">("all");
   const [userSearch, setUserSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,9 +108,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (check === "ok") {
       refreshUsers();
-      refreshWithdrawals("pending");
+      refreshWithdrawals("all");
     }
-  }, [check, refreshUsers, refreshWithdrawals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [check]);
 
   const handleApprove = async (id: string) => {
     if (!confirm("이 출금 요청을 승인 처리할까요? 외부 송금이 끝났다는 의미입니다.")) return;
@@ -181,7 +194,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
         <div className="flex items-center gap-2">
           <span className="text-xl">🛡️</span>
           <div>
@@ -324,7 +337,7 @@ export default function AdminPage() {
         {tab === "withdrawals" && (
           <div className="space-y-4">
             <div className="flex gap-2">
-              {(["pending", "completed", "rejected", "all"] as const).map((s) => (
+              {(["all", "pending", "completed", "rejected"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => {
@@ -359,9 +372,13 @@ export default function AdminPage() {
                       <div>
                         <div className="text-sm font-bold">{w.amount.toLocaleString()}P</div>
                         <div className="text-xs text-[#6B7394]">
-                          {w.bankInfo?.bank} · {w.bankInfo?.accountNumber} · {w.bankInfo?.holder}
+                          {BANK_NAMES[w.bankInfo?.bank] || w.bankInfo?.bank} ·{" "}
+                          {w.bankInfo?.accountNumber} · 예금주 {w.bankInfo?.holder}
                         </div>
-                        <div className="text-xs text-[#6B7394]">사용자: {w.userId.slice(0, 8)}...</div>
+                        <div className="text-xs text-[#6B7394]">
+                          사용자: {w.userName || "(이름 없음)"}
+                          {w.userEmail ? ` · ${w.userEmail}` : ""}
+                        </div>
                         <div className="text-xs text-[#6B7394]">
                           {w.requestedAt ? new Date(w.requestedAt).toLocaleString("ko-KR") : ""}
                         </div>

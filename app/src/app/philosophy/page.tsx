@@ -71,7 +71,7 @@ export default function PhilosophyPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
         <h1 className="text-lg font-bold">자리이타 철학</h1>
         <p className="text-xs dark-text-muted text-[#6B7394]">다랜드의 핵심 정신</p>
       </div>

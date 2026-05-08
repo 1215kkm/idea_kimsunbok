@@ -38,7 +38,7 @@ export default function AdvertiserPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
         <h1 className="text-lg font-bold">광고주 대시보드</h1>
         <p className="text-xs dark-text-muted text-[#6B7394]">광고주도 120% 수익</p>
       </div>

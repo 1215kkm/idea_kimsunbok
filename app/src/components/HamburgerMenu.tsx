@@ -53,11 +53,12 @@ export default function HamburgerMenu() {
 
   return (
     <>
-      {/* 햄버거 버튼 */}
+      {/* 햄버거 버튼 (우측) */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed left-4 top-4 z-50 flex h-10 w-10 flex-col items-center justify-center gap-1 rounded-xl shadow-lg transition-transform active:scale-90"
+        className="fixed right-4 top-4 z-50 flex h-10 w-10 flex-col items-center justify-center gap-1 rounded-xl shadow-lg transition-transform active:scale-90"
         style={{ background: "var(--header-bg)", border: "1px solid var(--card-border)" }}
+        aria-label="메뉴 열기"
       >
         <span className="block h-0.5 w-5 rounded-full bg-[#3B4CCA] transition-all" />
         <span className="block h-0.5 w-5 rounded-full bg-[#3B4CCA] transition-all" />
@@ -69,13 +70,13 @@ export default function HamburgerMenu() {
         <div className="fixed inset-0 z-[100] bg-black/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
       )}
 
-      {/* 사이드 메뉴 */}
+      {/* 사이드 메뉴 (우측에서 슬라이드) */}
       <div
-        className="fixed left-0 top-0 z-[101] flex h-full w-72 flex-col transition-transform duration-300"
+        className="fixed right-0 top-0 z-[101] flex h-full w-72 flex-col transition-transform duration-300"
         style={{
           background: "var(--background)",
-          borderRight: "1px solid var(--card-border)",
-          transform: open ? "translateX(0)" : "translateX(-100%)",
+          borderLeft: "1px solid var(--card-border)",
+          transform: open ? "translateX(0)" : "translateX(100%)",
         }}
       >
         {/* 로고 영역 */}

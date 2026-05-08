@@ -222,7 +222,7 @@ export default function ReceiptExtractPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold">영수증 자동 추출 모드</h1>
