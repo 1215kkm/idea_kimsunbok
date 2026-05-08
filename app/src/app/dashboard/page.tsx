@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import { getTransactions as getDemoTxs, getBalance as getDemoBalance, getStats as getDemoStats } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
@@ -19,11 +19,21 @@ type FirestoreTimestamp = { toDate: () => Date };
 
 interface RecentTx {
   id: string;
-  storeName: string;
+  type?: string;
+  storeName?: string;
+  categoryName?: string;
   amount: number;
   totalAccumulation: number;
   createdAt: FirestoreTimestamp | number | null;
 }
+
+const TX_LABEL: Record<string, string> = {
+  spend: "지출등록",
+  invite_invitee: "초대 가입 보상",
+  invite_advertiser: "초대 수익",
+  withdrawal_request: "출금 요청",
+  withdrawal_refund: "출금 환불",
+};
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -68,21 +78,26 @@ export default function DashboardPage() {
           setUserData(userSnap.data() as UserData);
         }
         const txRef = collection(db!, "transactions");
-        const q = query(txRef, orderBy("createdAt", "desc"), limit(5));
+        const q = query(
+          txRef,
+          where("consumerId", "==", user.uid),
+          orderBy("createdAt", "desc"),
+          limit(5),
+        );
         const txSnap = await getDocs(q);
         const txs: RecentTx[] = [];
         let spent = 0;
         txSnap.forEach((d) => {
           const data = d.data();
-          if (data.consumerId === user.uid) {
-            txs.push({ id: d.id, ...data } as RecentTx);
+          txs.push({ id: d.id, ...data } as RecentTx);
+          if (data.type === "spend" || !data.type) {
             spent += data.amount || 0;
           }
         });
         setRecentTxs(txs);
         setTotalSpent(spent);
-      } catch {
-        // Firestore 미연결
+      } catch (err) {
+        console.error("[dashboard] recent tx fetch failed:", err);
       }
     };
     fetchData();
@@ -102,7 +117,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
         <div className="text-xs dark-text-muted text-[#6B7394]">안녕하세요</div>
         <div className="text-lg font-bold">
           {user.displayName || "사용자"}님
@@ -194,20 +209,36 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {recentTxs.map((tx) => (
-              <div key={tx.id} className="dark-card flex items-center justify-between rounded-xl border border-[#E8EAF0] bg-white px-4 py-3">
-                <div>
-                  <div className="text-sm font-medium">{tx.storeName}</div>
-                  <div className="text-xs text-[#6B7394]">-{tx.amount.toLocaleString()}원</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-bold text-[#10B981]">
-                    +{tx.totalAccumulation.toLocaleString()}P
+            {recentTxs.map((tx) => {
+              const label = (tx.type && TX_LABEL[tx.type]) || "거래";
+              const title = tx.storeName || tx.categoryName || label;
+              const isMinus = tx.type === "withdrawal_request";
+              const sign = isMinus ? "-" : "+";
+              const color = isMinus ? "#EF4444" : "#10B981";
+              const display = tx.totalAccumulation || tx.amount || 0;
+              return (
+                <div
+                  key={tx.id}
+                  className="dark-card flex items-center justify-between rounded-xl border border-[#E8EAF0] bg-white px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{title}</div>
+                    <div className="text-xs text-[#6B7394]">
+                      {label}
+                      {tx.type === "spend" && tx.amount
+                        ? ` · -${tx.amount.toLocaleString()}원`
+                        : ""}
+                    </div>
                   </div>
-                  <div className="text-xs text-[#6B7394]">120%</div>
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-bold" style={{ color }}>
+                      {sign}
+                      {Math.abs(display).toLocaleString()}P
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -245,30 +276,6 @@ export default function DashboardPage() {
           <div>
             <div className="text-sm font-bold">영수증 자동추출</div>
             <div className="text-xs dark-text-muted text-[#6B7394]">CMS 자동인식</div>
-          </div>
-        </Link>
-      </div>
-
-      {/* 시뮬레이션 & 엔진 바로가기 */}
-      <div className="mx-5 mt-3 grid grid-cols-2 gap-3">
-        <Link
-          href="/simulation"
-          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
-        >
-          <span className="text-2xl">🎮</span>
-          <div>
-            <div className="text-sm font-bold">마을 시뮬레이션</div>
-            <div className="text-xs dark-text-muted text-[#6B7394]">게임으로 체험</div>
-          </div>
-        </Link>
-        <Link
-          href="/engine"
-          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
-        >
-          <span className="text-2xl">⚙️</span>
-          <div>
-            <div className="text-sm font-bold">엔진 설명서</div>
-            <div className="text-xs dark-text-muted text-[#6B7394]">공식 원리 보기</div>
           </div>
         </Link>
       </div>
