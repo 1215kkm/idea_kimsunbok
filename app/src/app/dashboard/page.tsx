@@ -256,8 +256,18 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* CMS & 영수증 바로가기 */}
+      {/* 카드 연동 & CMS 바로가기 */}
       <div className="mx-5 mt-3 grid grid-cols-2 gap-3">
+        <Link
+          href="/card-connect"
+          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
+        >
+          <span className="text-2xl">💳</span>
+          <div>
+            <div className="text-sm font-bold">카드 자동 연동</div>
+            <div className="text-xs dark-text-muted text-[#6B7394]">실제 결제내역 자동 등록</div>
+          </div>
+        </Link>
         <Link
           href="/cms-register"
           className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
@@ -266,16 +276,6 @@ export default function DashboardPage() {
           <div>
             <div className="text-sm font-bold">CMS 가입센터</div>
             <div className="text-xs dark-text-muted text-[#6B7394]">결제수단 등록</div>
-          </div>
-        </Link>
-        <Link
-          href="/receipt-extract"
-          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
-        >
-          <span className="text-2xl">🧾</span>
-          <div>
-            <div className="text-sm font-bold">영수증 자동추출</div>
-            <div className="text-xs dark-text-muted text-[#6B7394]">CMS 자동인식</div>
           </div>
         </Link>
       </div>

@@ -1,12 +1,31 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import ClientLayout from "@/components/ClientLayout";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "다랜드 - 쓸수록 쌓이는 120%",
   description: "비선형공식 기반 리워드 플랫폼",
+  applicationName: "다랜드",
+  appleWebApp: {
+    capable: true,
+    title: "다랜드",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#3B4CCA",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -29,6 +48,7 @@ export default function RootLayout({
             <ClientLayout>{children}</ClientLayout>
           </ThemeProvider>
         </AuthProvider>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
