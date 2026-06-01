@@ -134,13 +134,20 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* 베타 시연 안내 (실연동 + 베타 시연 시 상시 표시) */}
+      {isConfigured && (
+        <div className="mx-5 mt-3 rounded-xl border border-amber-500/30 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-[#6B7394]">
+          <span className="font-bold text-amber-700">🧪 폐쇄 베타 시연 중</span> — 표시된 포인트/잔액은 가상 테스트 자금입니다. 출금 신청 시 실제 송금되지 않습니다.
+        </div>
+      )}
+
       {/* 다랜드 내 계좌 카드 */}
       <div className="mx-5 mt-5 rounded-2xl bg-gradient-to-br from-[#3B4CCA] to-[#2D3A8C] p-6 shadow-lg shadow-[#3B4CCA]/20">
         <div className="flex items-center justify-between">
-          <div className="text-xs text-white/70">다랜드 내 계좌</div>
-          <div className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-[#34D399] animate-pulse" />
-            <span className="text-[10px] text-[#34D399]">활성</span>
+          <div className="text-xs text-white/70">테스트 자금 (가상)</div>
+          <div className="flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5">
+            <div className="h-1.5 w-1.5 rounded-full bg-amber-300 animate-pulse" />
+            <span className="text-[10px] text-amber-200">BETA</span>
           </div>
         </div>
         <div className="mt-1 text-white text-4xl font-black">
