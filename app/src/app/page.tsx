@@ -22,6 +22,7 @@ function LoginPageInner() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [betaConsent, setBetaConsent] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null);
@@ -81,10 +82,14 @@ function LoginPageInner() {
       setError("이름을 입력해주세요.");
       return;
     }
+    if (isSignUp && !betaConsent) {
+      setError("베타 시연 동의에 체크해 주세요.");
+      return;
+    }
     setSubmitting(true);
     try {
       if (isSignUp) {
-        const result = await signUp(email, password, name.trim(), inviteCode);
+        const result = await signUp(email, password, name.trim(), inviteCode, betaConsent);
         if (result.inviteError && inviteCode) {
           if (result.inviteError === "SELF_INVITE")
             setError("본인의 초대 코드는 사용할 수 없습니다.");
@@ -154,7 +159,16 @@ function LoginPageInner() {
         </div>
       )}
 
-      {/* 베타 안내 배너 (데모 모드일 때만) */}
+      {/* 베타 시연 안내 (회원가입 모드일 때) */}
+      {isSignUp && !isDemo && (
+        <div className="mb-4 w-full max-w-sm rounded-xl border border-amber-500/30 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-[#6B7394]">
+          <div className="mb-1 font-bold text-amber-700">🧪 폐쇄 베타 시연</div>
+          <p>본 앱은 <strong className="text-[#1A1F36]">시연/연구용 베타</strong>입니다. 가입 시 <strong className="text-[#3B4CCA]">테스트 자금 1,000,000P</strong>가 가상으로 지급됩니다.</p>
+          <p className="mt-1">출금 요청은 <strong className="text-[#1A1F36]">실제 송금되지 않으며</strong>, 모든 포인트는 시뮬레이션입니다.</p>
+        </div>
+      )}
+
+      {/* 데모 모드 안내 (Firebase 미연결 시) */}
       {isDemo && (
         <div className="mb-6 w-full max-w-sm rounded-xl border border-[#3B4CCA]/20 bg-[#3B4CCA]/5 px-4 py-3 text-xs leading-relaxed text-[#6B7394]">
           <div className="mb-1 font-bold text-[#3B4CCA]">🧪 베타 체험 모드</div>
@@ -191,6 +205,21 @@ function LoginPageInner() {
           required
           className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3.5 text-sm placeholder-[#9CA3C1] outline-none focus:border-[#3B4CCA]"
         />
+
+        {isSignUp && (
+          <label className="flex items-start gap-2 text-xs leading-relaxed text-[#6B7394] cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={betaConsent}
+              onChange={(e) => setBetaConsent(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#3B4CCA]"
+            />
+            <span>
+              본 앱이 <strong className="text-[#1A1F36]">베타 시연용</strong>임을 이해하며,{" "}
+              <strong className="text-[#1A1F36]">적립금은 실 화폐가 아님</strong>을 동의합니다. (필수)
+            </span>
+          </label>
+        )}
 
         {error && <p className="text-center text-sm text-[#EF4444]">{error}</p>}
 

@@ -5,16 +5,17 @@ import { codefEncrypt, codefRequest, isCodefSuccess, type CodefResult } from "./
 import { calculateNonlinear } from "@/lib/nonlinear-engine";
 
 // CODEF 카드사 기관코드 (개인)
+// 출처: CODEF 개발가이드 - 카드 > 기관코드 > 개인
 export const CARD_ORGS: Record<string, string> = {
-  shinhan: "0306",
-  kb: "0301",
-  samsung: "0302",
-  hyundai: "0303",
-  lotte: "0305",
-  hana: "0313",
-  bc: "0304",
-  woori: "0309",
-  nh: "0307",
+  shinhan: "0306", // 신한카드
+  kb: "0301",      // KB국민카드
+  samsung: "0302", // 삼성카드
+  hyundai: "0303", // 현대카드
+  lotte: "0304",   // 롯데카드
+  hana: "0311",    // 하나카드
+  bc: "0312",      // BC카드
+  woori: "0309",   // 우리카드
+  nh: "0307",      // NH농협카드
 };
 
 export function isValidCardOrg(id: unknown): id is keyof typeof CARD_ORGS {

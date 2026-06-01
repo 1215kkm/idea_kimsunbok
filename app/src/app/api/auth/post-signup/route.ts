@@ -10,7 +10,11 @@ export const runtime = "nodejs";
 interface Body {
   name?: unknown;
   inviteCode?: unknown;
+  betaConsent?: unknown;
 }
+
+// 베타 테스터에게 지급하는 가상 테스트 자금 (실 화폐 X, 시뮬레이션 전용)
+const BETA_INITIAL_FUNDS = 1_000_000;
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,15 +40,19 @@ export async function POST(req: NextRequest) {
 
     if (!snap.exists) {
       const role = isAdminEmail(user.email) ? "admin" : "consumer";
+      const betaConsent = raw.betaConsent === true;
       await userRef.create({
         name,
         email: user.email,
         role,
         membershipLevel: 1,
-        totalPoints: 0,
+        totalPoints: BETA_INITIAL_FUNDS,
+        isBetaTester: true,
+        betaTestFunds: BETA_INITIAL_FUNDS,
+        betaConsentAt: betaConsent ? FieldValue.serverTimestamp() : null,
         createdAt: FieldValue.serverTimestamp(),
       });
-      totalPoints = 0;
+      totalPoints = BETA_INITIAL_FUNDS;
     }
 
     if (inviteCode) {

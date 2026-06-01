@@ -2,7 +2,11 @@ import { publicEncrypt, constants } from "crypto";
 import { ApiError } from "./api-error";
 
 const OAUTH_URL = "https://oauth.codef.io/oauth/token?grant_type=client_credentials";
-const API_HOST = process.env.CODEF_API_HOST || "https://api.codef.io";
+// CODEF API 호스트 (키 타입에 따라 다름):
+//  - 샌드박스 키 → https://sandbox.codef.io
+//  - 데모/정식 키 → https://api.codef.io
+// 환경변수 CODEF_API_HOST로 오버라이드 가능. 기본값은 샌드박스.
+const API_HOST = process.env.CODEF_API_HOST || "https://sandbox.codef.io";
 
 interface TokenCache {
   token: string;
@@ -85,9 +89,11 @@ export async function codefRequest<T = unknown>(
     body: JSON.stringify(body),
   });
   const raw = await res.text();
+  // CODEF 응답은 form-style URL 인코딩(공백=`+`, 한글=%XX). 둘 다 정규화.
+  const normalized = raw.replace(/\+/g, "%20");
   let parsed: unknown;
   try {
-    parsed = JSON.parse(decodeURIComponent(raw));
+    parsed = JSON.parse(decodeURIComponent(normalized));
   } catch {
     try {
       parsed = JSON.parse(raw);

@@ -27,6 +27,7 @@ interface AuthContextType {
     password: string,
     name: string,
     inviteCode?: string | null,
+    betaConsent?: boolean,
   ) => Promise<SignUpResult>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -67,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const signUp: AuthContextType["signUp"] = async (email, password, name, inviteCode) => {
+  const signUp: AuthContextType["signUp"] = async (email, password, name, inviteCode, betaConsent) => {
     if (!isConfigured || !auth) {
       const demoUser = { ...DEMO_USER, displayName: name, email } as User;
       setUser(demoUser);
@@ -87,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }>("/api/auth/post-signup", {
         name,
         inviteCode: inviteCode ?? undefined,
+        betaConsent: betaConsent === true,
       });
       return {
         inviteRedeemed: res.inviteRedeemed,
