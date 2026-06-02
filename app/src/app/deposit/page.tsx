@@ -1,0 +1,170 @@
+"use client";
+
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db, isConfigured } from "@/lib/firebase";
+import { apiPost, ApiClientError } from "@/lib/api-client";
+import Navbar from "@/components/Navbar";
+import Link from "next/link";
+
+const PRESETS = [10_000, 50_000, 100_000, 500_000, 1_000_000];
+
+export default function DepositPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [balance, setBalance] = useState(0);
+  const [amount, setAmount] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<{ amount: number; newBalance: number } | null>(null);
+
+  useEffect(() => {
+    if (!loading && !user) router.push("/");
+  }, [user, loading, router]);
+
+  const refreshBalance = useCallback(async () => {
+    if (!user || !isConfigured || !db) return;
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists()) setBalance(snap.data().totalPoints || 0);
+    } catch {
+      // ignore
+    }
+  }, [user]);
+
+  useEffect(() => {
+    refreshBalance();
+  }, [refreshBalance]);
+
+  const handleDeposit = async () => {
+    const amt = parseInt(amount);
+    if (!amt || amt < 1000) {
+      setError("최소 입금 금액은 1,000P 입니다.");
+      return;
+    }
+    setProcessing(true);
+    setError(null);
+    try {
+      const r = await apiPost<{ amount: number; newBalance: number }>("/api/deposit", {
+        amount: amt,
+        method: "beta_virtual",
+      });
+      setBalance(r.newBalance);
+      setSuccess({ amount: r.amount, newBalance: r.newBalance });
+      setAmount("");
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setError(err.message || "입금 처리에 실패했습니다.");
+      } else {
+        setError("네트워크 오류입니다.");
+      }
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (loading || !user) {
+    return <div className="flex min-h-screen items-center justify-center dark-text-muted">로딩 중...</div>;
+  }
+
+  return (
+    <div className="min-h-screen pb-20">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard" className="text-[#6B7394] hover:text-[#1A1F36]">&larr;</Link>
+          <div>
+            <h1 className="text-lg font-bold">입금하기</h1>
+            <p className="text-xs dark-text-muted text-[#6B7394]">다랜드 내 계좌 충전</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-lg px-5 py-5">
+        <div
+          className="rounded-2xl border border-cyan-500/20 p-5 text-center mb-5"
+          style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}
+        >
+          <div className="text-xs text-[#6B7394]">현재 잔액</div>
+          <div className="mt-1 text-[#3B4CCA] text-4xl font-black">{balance.toLocaleString()}P</div>
+          <div className="mt-1 text-xs text-[#6B7394]">1P = 1원</div>
+        </div>
+
+        <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-base">🧪</span>
+            <span className="text-sm font-bold text-amber-700">베타 가상 입금 모드</span>
+          </div>
+          <div className="text-xs text-[#6B7394] leading-relaxed">
+            현재는 베타 테스트 기간으로, 실제 송금 없이 가상으로 잔액이 충전됩니다.
+            정식 출시 시에는 실제 은행 송금/PG 결제로 전환됩니다.
+          </div>
+        </div>
+
+        {success && (
+          <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-center">
+            <div className="text-2xl mb-1">✅</div>
+            <div className="text-sm font-bold text-emerald-700">
+              {success.amount.toLocaleString()}P 입금 완료
+            </div>
+            <div className="text-xs text-[#6B7394] mt-1">
+              현재 잔액: {success.newBalance.toLocaleString()}P
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/5 px-4 py-3 text-xs text-[#EF4444]">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <label className="text-xs text-[#6B7394] block">입금 금액 (P)</label>
+          <input
+            type="number"
+            placeholder="입금할 금액 입력"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-2xl font-black placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50"
+          />
+
+          <div className="grid grid-cols-5 gap-2">
+            {PRESETS.map((p) => (
+              <button
+                key={p}
+                onClick={() => setAmount(String(p))}
+                className="rounded-lg border border-[#E8EAF0] bg-purple-900/10 py-2 text-xs font-bold text-[#3B4CCA] hover:bg-[#3B4CCA]/8"
+              >
+                {p >= 1_000_000 ? `${p / 1_000_000}백만` : `${(p / 10_000).toLocaleString()}만`}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handleDeposit}
+            disabled={processing || !amount}
+            className="w-full rounded-2xl bg-gradient-to-r from-cyan-600 to-purple-600 py-4 text-base font-bold text-white shadow-lg shadow-[#3B4CCA]/15 transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+          >
+            {processing ? "입금 처리 중..." : "입금하기"}
+          </button>
+        </div>
+
+        <div
+          className="mt-6 rounded-2xl border border-purple-500/20 p-4 text-xs leading-relaxed text-[#6B7394]"
+          style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}
+        >
+          <div className="mb-2 text-sm font-bold text-[#3B4CCA]">입금 안내</div>
+          <p>1. 입금한 금액은 즉시 다랜드 내 계좌(P)에 반영됩니다.</p>
+          <p>2. 1P = 1원으로 1:1 매칭됩니다.</p>
+          <p>3. 카드 자동 연동/지출 등록 시 잔액에서 차감되며, 비선형공식으로 120% 적립됩니다.</p>
+          <p>4. 잔액 한도 내에서만 지출 등록이 가능합니다.</p>
+          <p>5. 잔액은 언제든 출금 가능합니다(관리자 승인 후 1~2영업일).</p>
+        </div>
+      </div>
+
+      <Navbar />
+    </div>
+  );
+}

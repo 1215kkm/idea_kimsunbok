@@ -127,7 +127,8 @@ export default function StoresPage() {
       } catch (err) {
         setProcessing(false);
         if (err instanceof ApiClientError) {
-          if (err.code === "INVALID_INPUT") setSubmitError("입력값이 올바르지 않습니다.");
+          if (err.code === "INSUFFICIENT_BALANCE") setSubmitError("잔액이 부족합니다. 입금 후 다시 시도해 주세요.");
+          else if (err.code === "INVALID_INPUT") setSubmitError("입력값이 올바르지 않습니다.");
           else if (err.code === "UNAUTHENTICATED") setSubmitError("다시 로그인해 주세요.");
           else setSubmitError("처리 중 오류가 발생했습니다.");
         } else {

@@ -10,6 +10,7 @@ import { doc, getDoc } from "firebase/firestore";
 
 const menuItems = [
   { href: "/dashboard", label: "홈", icon: "home", desc: "대시보드", admin: false },
+  { href: "/deposit", label: "입금", icon: "savings", desc: "다랜드 내 계좌 충전", admin: false },
   { href: "/stores", label: "지출등록", icon: "credit_card", desc: "신용카드 지출 & 120% 적립", admin: false },
   { href: "/card-connect", label: "카드 자동 연동", icon: "sync", desc: "카드사 결제내역 자동 등록", admin: false },
   { href: "/withdraw", label: "출금", icon: "account_balance", desc: "다랜드 계좌 → 내 은행계좌", admin: false },
