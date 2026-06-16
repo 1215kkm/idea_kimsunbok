@@ -116,11 +116,17 @@ export default function AdminPage() {
   const handleApprove = async (id: string) => {
     if (!confirm("이 출금 요청을 승인 처리할까요? 외부 송금이 끝났다는 의미입니다.")) return;
     setBusy(true);
+    setError(null);
     try {
       await apiPost("/api/admin/withdraw/approve", { requestId: id });
       await refreshWithdrawals();
-    } catch {
-      alert("승인 실패");
+    } catch (err) {
+      const msg =
+        err instanceof ApiClientError
+          ? `승인 실패 [${err.code}] ${err.message}`
+          : `승인 실패: ${(err as Error)?.message || "알 수 없는 오류"}`;
+      setError(msg);
+      alert(msg);
     } finally {
       setBusy(false);
     }
@@ -130,14 +136,20 @@ export default function AdminPage() {
     const reason = prompt("반려 사유를 입력해 주세요");
     if (reason === null) return;
     setBusy(true);
+    setError(null);
     try {
       await apiPost("/api/admin/withdraw/reject", {
         requestId: id,
         reason,
       });
       await refreshWithdrawals();
-    } catch {
-      alert("반려 실패");
+    } catch (err) {
+      const msg =
+        err instanceof ApiClientError
+          ? `반려 실패 [${err.code}] ${err.message}`
+          : `반려 실패: ${(err as Error)?.message || "알 수 없는 오류"}`;
+      setError(msg);
+      alert(msg);
     } finally {
       setBusy(false);
     }

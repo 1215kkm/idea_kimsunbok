@@ -23,8 +23,8 @@ export interface DistributionChain {
   b: number; // A1 자유값 - 멤버십적립 (20%)
   c: number; // 소비자적립값 (12%)
   d: number; // 보정값 (5%)
-  e: number; // 광고주적립값 (1%)
-  f: number; // 수수료 (12%)
+  e: number; // 광고주적립값 (5%)
+  f: number; // 수수료 (8%)
   valid: boolean;
 }
 
@@ -99,14 +99,14 @@ export function calculateNonlinear(amount: number, memberCount?: number): Nonlin
     canCombine: true,
   };
 
-  // a→f 분배 체인
-  const a = escapeAmount; // a:500M(free) - 이탈모드 자유값
-  const b = amount * 0.2; // b:200M - A1 자유값 (멤버십적립)
-  const cc = amount * 0.12; // c:120M - 소비자적립값
-  const d = amount * 0.05; // d:50M - 보정값
-  const e = amount * 0.01; // e:10M - 광고주적립값
-  const f = amount * 0.12; // f:120M - 수수료
-  // 검증: b+cc+d+e+f = 200+120+50+10+120 = 500M = a ✓
+  // a→f 분배 체인 (의뢰자 새 공식: 광고주 5%, 수수료 8%)
+  const a = escapeAmount; // a:500K(free) - 이탈모드 자유값
+  const b = amount * 0.2; // b:200K - A1 자유값 (멤버십적립)
+  const cc = amount * 0.12; // c:120K - 소비자적립값
+  const d = amount * 0.05; // d:50K - 보정값
+  const e = amount * 0.05; // e:50K - 광고주적립값 (1% → 5% 변경)
+  const f = amount * 0.08; // f:80K - 수수료 (12% → 8% 변경)
+  // 검증: b+cc+d+e+f = 200+120+50+50+80 = 500K = a ✓
 
   const distributionChain: DistributionChain = {
     a, b, c: cc, d, e, f,
@@ -192,6 +192,47 @@ export function calculateWithdrawalRefund(balance: number): WithdrawalRefundResu
   const refundAmount = balance;
   const systemProfit = securedPool - refundAmount;
   return { balance, securedPool, refundAmount, systemProfit, rate: rate * 100 };
+}
+
+// --- 단계(Tier) 시스템 ---
+
+export interface MembershipTier {
+  level: 4 | 5 | 6 | 7;
+  label: string;
+  a1Amount: number; // A1 기준값 (단계별)
+  consumerStep: number; // 소비자 단계 (A1 / 10)
+  splitCountPerMillion: number; // 1,000,000원 결제 시 분할 회수
+}
+
+export const MEMBERSHIP_TIERS: MembershipTier[] = [
+  { level: 4, label: "백만 단위", a1Amount: 1_000_000, consumerStep: 100_000, splitCountPerMillion: 10 },
+  { level: 5, label: "천만 단위", a1Amount: 10_000_000, consumerStep: 1_000_000, splitCountPerMillion: 1 },
+  { level: 6, label: "1억 단위", a1Amount: 100_000_000, consumerStep: 10_000_000, splitCountPerMillion: 1 },
+  { level: 7, label: "10억 단위", a1Amount: 1_000_000_000, consumerStep: 100_000_000, splitCountPerMillion: 1 },
+];
+
+/**
+ * 회원 자금(잔액)에 따라 단계 자동 결정.
+ * - 100만 미만 → 4단계
+ * - 1000만 미만 → 5단계
+ * - 1억 미만 → 6단계
+ * - 그 이상 → 7단계
+ */
+export function determineTier(balance: number): MembershipTier {
+  if (balance < 10_000_000) return MEMBERSHIP_TIERS[0]; // 4단계
+  if (balance < 100_000_000) return MEMBERSHIP_TIERS[1]; // 5단계
+  if (balance < 1_000_000_000) return MEMBERSHIP_TIERS[2]; // 6단계
+  return MEMBERSHIP_TIERS[3]; // 7단계
+}
+
+/**
+ * 결제금액 → 분할 회수 계산 (단계별).
+ * 4단계: 100만원 결제 시 10회 분할 (10만씩)
+ * 5단계 이상: 1회 처리
+ */
+export function calculateSplitCount(spendAmount: number, tier: MembershipTier): number {
+  if (spendAmount < tier.consumerStep) return 1;
+  return Math.ceil(spendAmount / tier.consumerStep);
 }
 
 // --- 리워드 광고(초대) 영업 모델 ---

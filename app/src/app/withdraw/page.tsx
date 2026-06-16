@@ -391,8 +391,14 @@ export default function WithdrawPage() {
                                 {bank?.name || it.bank} {it.accountNumber ? maskAccount(it.accountNumber) : ""}
                               </div>
                               <div className="text-xs text-[#6B7394]">
-                                {it.requestedAt ? new Date(it.requestedAt).toLocaleString("ko-KR") : ""}
+                                신청 {it.requestedAt ? new Date(it.requestedAt).toLocaleString("ko-KR") : "-"}
                               </div>
+                              {it.processedAt && it.status !== "pending" && (
+                                <div className="text-xs font-bold" style={{ color: statusColor }}>
+                                  {it.status === "completed" ? "승인 " : "반려 "}
+                                  {new Date(it.processedAt).toLocaleString("ko-KR")}
+                                </div>
+                              )}
                             </div>
                             <div className="flex flex-col items-end gap-1">
                               <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: `${statusColor}22`, color: statusColor }}>
