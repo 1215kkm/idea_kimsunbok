@@ -495,10 +495,18 @@ export default function WithdrawPage() {
             </div>
 
             <div>
-              <label className="text-xs text-[#6B7394] mb-1 block">출금 금액 (P, 최소 1,000)</label>
-              <input type="number" placeholder="출금할 금액 입력" value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-2xl font-black placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50" />
+              <label className="text-xs text-[#6B7394] mb-1 block">출금 금액 (원, 최소 1,000)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="출금할 금액 입력"
+                value={withdrawAmount ? parseInt(withdrawAmount).toLocaleString() : ""}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/[^0-9]/g, "");
+                  setWithdrawAmount(digits);
+                }}
+                className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-2xl font-black placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50"
+              />
             </div>
 
             <div className="grid grid-cols-4 gap-2">

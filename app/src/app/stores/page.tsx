@@ -241,14 +241,18 @@ export default function StoresPage() {
             </div>
 
             <div className="mt-5 space-y-3">
-              {/* 금액 입력 */}
+              {/* 금액 입력 — 콤마 자동 표시 (의뢰자 요청) */}
               <div>
                 <label className="text-xs text-[#6B7394] mb-1 block">결제 금액 (원)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="결제 금액 입력"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  value={amount ? parseInt(amount).toLocaleString() : ""}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/[^0-9]/g, "");
+                    setAmount(digits);
+                  }}
                   className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-lg font-bold text-center placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50"
                 />
               </div>
@@ -270,7 +274,7 @@ export default function StoresPage() {
                 <div className="rounded-xl bg-[#3B4CCA]/8 border border-purple-500/20 p-3 text-center">
                   <div className="text-xs text-[#6B7394]">비선형공식 적용 시</div>
                   <div className="text-2xl font-black text-[#10B981] mt-1">
-                    +{Math.round(parseInt(amount) * 1.2).toLocaleString()}P
+                    +{Math.round(parseInt(amount) * 1.2).toLocaleString()}원
                   </div>
                   <div className="text-xs text-[#3B4CCA] mt-1">120% 증액 적립</div>
                 </div>

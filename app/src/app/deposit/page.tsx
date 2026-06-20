@@ -41,7 +41,7 @@ export default function DepositPage() {
   const handleDeposit = async () => {
     const amt = parseInt(amount);
     if (!amt || amt < 1000) {
-      setError("최소 입금 금액은 1,000P 입니다.");
+      setError("최소 입금 금액은 1,000원 입니다.");
       return;
     }
     setProcessing(true);
@@ -121,12 +121,16 @@ export default function DepositPage() {
         )}
 
         <div className="space-y-3">
-          <label className="text-xs text-[#6B7394] block">입금 금액 (P)</label>
+          <label className="text-xs text-[#6B7394] block">입금 금액 (원)</label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             placeholder="입금할 금액 입력"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            value={amount ? parseInt(amount).toLocaleString() : ""}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/[^0-9]/g, "");
+              setAmount(digits);
+            }}
             className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-2xl font-black placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50"
           />
 
@@ -164,6 +168,11 @@ export default function DepositPage() {
             시간이 필요없는 수수료 소득으로 1초에 예: <strong>1억 × 20% = 2천만원 적립</strong> 가능.</p>
           <p><strong>5.</strong> 비선형공식 알고리즘에 의해 <strong>하루에도 횟수 제한 없이 증액</strong>되는 구조로 <strong>특허등록</strong> 개발했습니다. <span className="text-[#EF4444]">* 1~2일 영업일 빼고.</span></p>
           <p><strong>6.</strong> 입금액은 <strong>언제든 출금 가능</strong>합니다.</p>
+          <p className="mt-2 pt-2 border-t border-purple-500/15">
+            <strong className="text-[#a855f7]">🏢 사업자/식당 사장님:</strong> 다랜드의 <strong>결제플랫폼</strong>에 가입하는 것만으로도
+            <strong className="text-[#10B981]"> 고객 매출 전부가 수익</strong>으로 환산됩니다.
+            (사업자 지출이 전부 120% 적립 → 매출 = 수익)
+          </p>
         </div>
       </div>
 
