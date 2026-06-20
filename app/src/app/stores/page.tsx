@@ -342,11 +342,11 @@ export default function StoresPage() {
               <p>광고주가 회원을 많이 가입시킬수록 더 많은 금액이 지속 적립!</p>
             </div>
 
-            {/* 멤버십 분배 안내 */}
+            {/* 멤버십 분배 안내 — 의뢰자 수정: "10명에게 분배" X → "멤버십 회원에게 120% 적립" O */}
             <div className="mt-2 rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 text-xs text-[#6B7394]">
-              <div className="text-[#3B4CCA] font-bold mb-1">🔄 멤버십 회원 분배</div>
-              <p>이 지출금액이 {result.memberCount}명의 멤버십 회원에게 전달됩니다.</p>
-              <p>각 회원도 본인 적립금에서 차감 → 비선형공식 → <span className="text-[#3B4CCA] font-bold">120% 적립</span></p>
+              <div className="text-[#3B4CCA] font-bold mb-1">🔄 멤버십 회원 적립</div>
+              <p>이 지출금액이 <span className="text-[#3B4CCA] font-bold">멤버십 회원에게 120% 적립</span>됩니다.</p>
+              <p className="mt-1 text-[10px]">※ 시계열에 따라 분배 회원이 1인 ~ 10인 이상이 될 수 있습니다.</p>
             </div>
 
             {/* 음성 알림 표시 */}
