@@ -9,7 +9,7 @@ import { apiPost, ApiClientError } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
-const PRESETS = [10_000, 50_000, 100_000, 500_000, 1_000_000];
+const PRESETS = [10_000, 50_000, 100_000, 500_000, 1_000_000, 100_000_000];
 
 export default function DepositPage() {
   const { user, loading } = useAuth();
@@ -41,7 +41,7 @@ export default function DepositPage() {
   const handleDeposit = async () => {
     const amt = parseInt(amount);
     if (!amt || amt < 1000) {
-      setError("최소 입금 금액은 1,000P 입니다.");
+      setError("최소 입금 금액은 1,000원 입니다.");
       return;
     }
     setProcessing(true);
@@ -87,8 +87,8 @@ export default function DepositPage() {
           style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}
         >
           <div className="text-xs text-[#6B7394]">현재 잔액</div>
-          <div className="mt-1 text-[#3B4CCA] text-4xl font-black">{balance.toLocaleString()}P</div>
-          <div className="mt-1 text-xs text-[#6B7394]">1P = 1원</div>
+          <div className="mt-1 text-[#3B4CCA] text-4xl font-black">{balance.toLocaleString()}원</div>
+          <div className="mt-1 text-xs text-[#6B7394]">1원 = 1P</div>
         </div>
 
         <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
@@ -106,10 +106,10 @@ export default function DepositPage() {
           <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-center">
             <div className="text-2xl mb-1">✅</div>
             <div className="text-sm font-bold text-emerald-700">
-              {success.amount.toLocaleString()}P 입금 완료
+              {success.amount.toLocaleString()}원 입금 완료
             </div>
             <div className="text-xs text-[#6B7394] mt-1">
-              현재 잔액: {success.newBalance.toLocaleString()}P
+              현재 잔액: {success.newBalance.toLocaleString()}원
             </div>
           </div>
         )}
@@ -121,23 +121,27 @@ export default function DepositPage() {
         )}
 
         <div className="space-y-3">
-          <label className="text-xs text-[#6B7394] block">입금 금액 (P)</label>
+          <label className="text-xs text-[#6B7394] block">입금 금액 (원)</label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             placeholder="입금할 금액 입력"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            value={amount ? parseInt(amount).toLocaleString() : ""}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/[^0-9]/g, "");
+              setAmount(digits);
+            }}
             className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-2xl font-black placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50"
           />
 
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-6 gap-2">
             {PRESETS.map((p) => (
               <button
                 key={p}
                 onClick={() => setAmount(String(p))}
                 className="rounded-lg border border-[#E8EAF0] bg-purple-900/10 py-2 text-xs font-bold text-[#3B4CCA] hover:bg-[#3B4CCA]/8"
               >
-                {p >= 1_000_000 ? `${p / 1_000_000}백만` : `${(p / 10_000).toLocaleString()}만`}
+                {p >= 100_000_000 ? `${p / 100_000_000}억` : p >= 1_000_000 ? `${p / 1_000_000}백만` : `${(p / 10_000).toLocaleString()}만`}
               </button>
             ))}
           </div>
@@ -156,11 +160,19 @@ export default function DepositPage() {
           style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}
         >
           <div className="mb-2 text-sm font-bold text-[#3B4CCA]">입금 안내</div>
-          <p>1. 입금한 금액은 즉시 다랜드 내 계좌(P)에 반영됩니다.</p>
-          <p>2. 1P = 1원으로 1:1 매칭됩니다.</p>
-          <p>3. 지출 등록 시 잔액에서 차감되며, 비선형공식으로 120% 적립됩니다.</p>
-          <p>4. 잔액 한도 내에서만 지출 등록이 가능합니다.</p>
-          <p>5. 잔액은 언제든 출금 가능합니다(관리자 승인 후 1~2영업일).</p>
+          <p><strong>1.</strong> 입금 금액은 즉시 <strong>다랜드 내 계좌(P)</strong>에 반영됩니다.</p>
+          <p><strong>2.</strong> <strong>1원 = 1P</strong>로 1:1 매칭됩니다.</p>
+          <p><strong>3.</strong> <strong>지출 등록 시</strong> 잔액에서 차감, <strong>비선형공식</strong>의 소비자 단계 <strong>120% 적립(재충전)</strong>됩니다.<br/>
+            ※ 차감하여 온·오프 계좌에 이체 → AI검색 모드에 의해 지출금액만큼 다랜드 소비자 단계 <strong>120% 재충전</strong>.</p>
+          <p><strong>4.</strong> 입금액이 클수록 비선형공식에 의해 <strong>120%(100%:분배금액 + 20%:수익)</strong> 분배수익 또한 많아집니다.<br/>
+            시간이 필요없는 수수료 소득으로 1초에 예: <strong>1억 × 20% = 2천만원 적립</strong> 가능.</p>
+          <p><strong>5.</strong> 비선형공식 알고리즘에 의해 <strong>하루에도 횟수 제한 없이 증액</strong>되는 구조로 <strong>특허등록</strong> 개발했습니다. <span className="text-[#EF4444]">* 1~2일 영업일 빼고.</span></p>
+          <p><strong>6.</strong> 입금액은 <strong>언제든 출금 가능</strong>합니다.</p>
+          <p className="mt-2 pt-2 border-t border-purple-500/15">
+            <strong className="text-[#a855f7]">🏢 사업자/식당 사장님:</strong> 다랜드의 <strong>결제플랫폼</strong>에 가입하는 것만으로도
+            <strong className="text-[#10B981]"> 고객 매출 전부가 수익</strong>으로 환산됩니다.
+            (사업자 지출이 전부 120% 적립 → 매출 = 수익)
+          </p>
         </div>
       </div>
 

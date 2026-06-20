@@ -285,8 +285,8 @@ export default function WithdrawPage() {
         <div className="rounded-2xl border border-cyan-500/20 p-5 text-center mb-5"
           style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}>
           <div className="text-xs text-[#6B7394]">다랜드 내 계좌 잔액</div>
-          <div className="mt-1 text-[#3B4CCA] text-4xl font-black">{balance.toLocaleString()}P</div>
-          <div className="mt-1 text-xs text-[#6B7394]">= {balance.toLocaleString()}원 상당 (1P = 1원)</div>
+          <div className="mt-1 text-[#3B4CCA] text-4xl font-black">{balance.toLocaleString()}원</div>
+          <div className="mt-1 text-xs text-[#6B7394]">= {balance.toLocaleString()}P (1원 = 1P)</div>
         </div>
 
         {error && (
@@ -386,7 +386,7 @@ export default function WithdrawPage() {
                         <div key={it.id} className="rounded-xl border border-[#E8EAF0] bg-[#F7F8FC] p-3">
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="text-sm font-bold">{it.amount.toLocaleString()}P</div>
+                              <div className="text-sm font-bold">{it.amount.toLocaleString()}원</div>
                               <div className="text-xs text-[#6B7394]">
                                 {bank?.name || it.bank} {it.accountNumber ? maskAccount(it.accountNumber) : ""}
                               </div>
@@ -425,10 +425,10 @@ export default function WithdrawPage() {
             <div className="rounded-2xl border border-purple-500/20 p-4 text-xs leading-relaxed text-[#6B7394]"
               style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
               <div className="mb-2 text-sm font-bold text-[#3B4CCA]">출금 안내</div>
-              <p>1. 다랜드 내 계좌의 포인트는 <strong className="text-[#1A1F36]">1P = 1원</strong>입니다.</p>
+              <p>1. 다랜드 내 계좌의 포인트는 <strong className="text-[#1A1F36]">1원 = 1P</strong>입니다.</p>
               <p>2. 출금 요청 시 잔액이 즉시 차감됩니다(승인 대기 중).</p>
               <p>3. 관리자가 검토 후 영업일 기준 1~2일 내 입금됩니다.</p>
-              <p>4. 최소 출금 금액: <strong className="text-[#3B4CCA]">1,000P</strong></p>
+              <p>4. 최소 출금 금액: <strong className="text-[#3B4CCA]">1,000원</strong></p>
               <p>5. 출금 수수료: <strong className="text-[#10B981]">무료</strong></p>
               <p>6. 승인 대기 중인 요청은 직접 취소(환불) 가능합니다.</p>
             </div>
@@ -491,14 +491,22 @@ export default function WithdrawPage() {
 
             <div className="rounded-xl border p-3 text-center" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
               <div className="text-xs text-[#6B7394]">출금 가능 잔액</div>
-              <div className="text-2xl font-black text-[#3B4CCA]">{balance.toLocaleString()}P</div>
+              <div className="text-2xl font-black text-[#3B4CCA]">{balance.toLocaleString()}원</div>
             </div>
 
             <div>
-              <label className="text-xs text-[#6B7394] mb-1 block">출금 금액 (P, 최소 1,000)</label>
-              <input type="number" placeholder="출금할 금액 입력" value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-2xl font-black placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50" />
+              <label className="text-xs text-[#6B7394] mb-1 block">출금 금액 (원, 최소 1,000)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="출금할 금액 입력"
+                value={withdrawAmount ? parseInt(withdrawAmount).toLocaleString() : ""}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/[^0-9]/g, "");
+                  setWithdrawAmount(digits);
+                }}
+                className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-2xl font-black placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50"
+              />
             </div>
 
             <div className="grid grid-cols-4 gap-2">
@@ -545,10 +553,10 @@ export default function WithdrawPage() {
                 <span className="text-sm font-bold text-amber-700">비선형공식 락(고리) 적용</span>
               </div>
               <div className="space-y-1.5 text-xs text-[#6B7394]">
-                <div className="flex justify-between"><span>출금 신청 금액</span><span className="font-bold text-[#1A1F36]">{amt.toLocaleString()}P</span></div>
-                <div className="flex justify-between"><span>비선형공식 {refund.rate}% 확보</span><span className="font-bold text-[#10B981]">{refund.securedPool.toLocaleString()}P</span></div>
+                <div className="flex justify-between"><span>출금 신청 금액</span><span className="font-bold text-[#1A1F36]">{amt.toLocaleString()}원</span></div>
+                <div className="flex justify-between"><span>비선형공식 {refund.rate}% 확보</span><span className="font-bold text-[#10B981]">{refund.securedPool.toLocaleString()}원</span></div>
                 <div className="flex justify-between"><span>본인 계좌로 이체 (100%)</span><span className="font-bold text-[#3B4CCA]">{refund.refundAmount.toLocaleString()}원</span></div>
-                <div className="flex justify-between"><span>다랜드 시스템 수익 (20%)</span><span className="font-bold text-amber-600">+{refund.systemProfit.toLocaleString()}P</span></div>
+                <div className="flex justify-between"><span>다랜드 시스템 수익 (20%)</span><span className="font-bold text-amber-600">+{refund.systemProfit.toLocaleString()}원</span></div>
               </div>
               <div className="mt-2 rounded-lg bg-white/70 px-2 py-1.5 text-[11px] leading-relaxed text-[#6B7394]">
                 관리자 승인 후 영업일 기준 1~2일 내 입금됩니다.
@@ -565,7 +573,7 @@ export default function WithdrawPage() {
                 <div className="flex justify-between text-sm"><span className="text-[#6B7394]">예금주</span><span className="font-bold">{selectedAccount.holder}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-[#6B7394]">수수료</span><span className="font-bold text-[#10B981]">무료</span></div>
                 <div className="h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
-                <div className="flex justify-between text-sm"><span className="font-bold">출금 후 잔액</span><span className="font-bold text-[#3B4CCA]">{(balance - amt).toLocaleString()}P</span></div>
+                <div className="flex justify-between text-sm"><span className="font-bold">출금 후 잔액</span><span className="font-bold text-[#3B4CCA]">{(balance - amt).toLocaleString()}원</span></div>
               </div>
             </div>
 
@@ -595,7 +603,7 @@ export default function WithdrawPage() {
             </div>
 
             <div className="rounded-xl bg-purple-900/10 border border-purple-500/20 p-3 text-xs text-[#6B7394]">
-              <p>다랜드 내 계좌 잔액: <strong className="text-[#3B4CCA]">{balance.toLocaleString()}P</strong></p>
+              <p>다랜드 내 계좌 잔액: <strong className="text-[#3B4CCA]">{balance.toLocaleString()}원</strong></p>
               <p className="mt-1">앞으로도 신용카드를 사용하시면 자동으로 120% 증액 재충전됩니다!</p>
             </div>
 

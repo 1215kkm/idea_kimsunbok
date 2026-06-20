@@ -241,14 +241,18 @@ export default function StoresPage() {
             </div>
 
             <div className="mt-5 space-y-3">
-              {/* 금액 입력 */}
+              {/* 금액 입력 — 콤마 자동 표시 (의뢰자 요청) */}
               <div>
                 <label className="text-xs text-[#6B7394] mb-1 block">결제 금액 (원)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="결제 금액 입력"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  value={amount ? parseInt(amount).toLocaleString() : ""}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/[^0-9]/g, "");
+                    setAmount(digits);
+                  }}
                   className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-lg font-bold text-center placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50"
                 />
               </div>
@@ -270,7 +274,7 @@ export default function StoresPage() {
                 <div className="rounded-xl bg-[#3B4CCA]/8 border border-purple-500/20 p-3 text-center">
                   <div className="text-xs text-[#6B7394]">비선형공식 적용 시</div>
                   <div className="text-2xl font-black text-[#10B981] mt-1">
-                    +{Math.round(parseInt(amount) * 1.2).toLocaleString()}P
+                    +{Math.round(parseInt(amount) * 1.2).toLocaleString()}원
                   </div>
                   <div className="text-xs text-[#3B4CCA] mt-1">120% 증액 적립</div>
                 </div>
@@ -342,11 +346,11 @@ export default function StoresPage() {
               <p>광고주가 회원을 많이 가입시킬수록 더 많은 금액이 지속 적립!</p>
             </div>
 
-            {/* 멤버십 분배 안내 */}
+            {/* 멤버십 분배 안내 — 의뢰자 수정: "10명에게 분배" X → "멤버십 회원에게 120% 적립" O */}
             <div className="mt-2 rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 text-xs text-[#6B7394]">
-              <div className="text-[#3B4CCA] font-bold mb-1">🔄 멤버십 회원 분배</div>
-              <p>이 지출금액이 {result.memberCount}명의 멤버십 회원에게 전달됩니다.</p>
-              <p>각 회원도 본인 적립금에서 차감 → 비선형공식 → <span className="text-[#3B4CCA] font-bold">120% 적립</span></p>
+              <div className="text-[#3B4CCA] font-bold mb-1">🔄 멤버십 회원 적립</div>
+              <p>이 지출금액이 <span className="text-[#3B4CCA] font-bold">멤버십 회원에게 120% 적립</span>됩니다.</p>
+              <p className="mt-1 text-[10px]">※ 시계열에 따라 분배 회원이 1인 ~ 10인 이상이 될 수 있습니다.</p>
             </div>
 
             {/* 음성 알림 표시 */}

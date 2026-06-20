@@ -35,24 +35,30 @@ export async function connectCard(
   cardOrg: string,
   loginId: string,
   loginPw: string,
-): Promise<{ connected: true }> {
+  options?: { cardType?: "personal" | "business"; businessNumber?: string },
+): Promise<{ connected: true; cardType: "personal" | "business" }> {
   if (!isValidCardOrg(cardOrg)) {
     throw new ApiError("INVALID_INPUT", "Unsupported card company", 400, { field: "cardOrg" });
   }
   if (!loginId || !loginPw) {
     throw new ApiError("INVALID_INPUT", "Card credentials required", 400);
   }
+  const cardType = options?.cardType === "business" ? "business" : "personal";
 
   const body = {
     accountList: [
       {
         countryCode: "KR",
         businessType: "CD",
-        clientType: "P",
+        // CODEF: P = 개인, B = 법인/사업자
+        clientType: cardType === "business" ? "B" : "P",
         organization: CARD_ORGS[cardOrg],
         loginType: "1",
         id: loginId,
         password: codefEncrypt(loginPw),
+        ...(cardType === "business" && options?.businessNumber
+          ? { businessNo: options.businessNumber }
+          : {}),
       },
     ],
   };
@@ -77,12 +83,16 @@ export async function connectCard(
       {
         codefConnectedId: resp.data.connectedId,
         codefCardOrg: cardOrg,
+        codefCardType: cardType,
+        ...(cardType === "business" && options?.businessNumber
+          ? { codefBusinessNumber: options.businessNumber }
+          : {}),
         cardConnectedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
 
-  return { connected: true };
+  return { connected: true, cardType };
 }
 
 interface ApprovalItem {

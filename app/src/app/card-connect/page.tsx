@@ -31,6 +31,8 @@ export default function CardConnectPage() {
   const router = useRouter();
   const [status, setStatus] = useState<CardStatus | null>(null);
   const [cardOrg, setCardOrg] = useState("");
+  const [cardType, setCardType] = useState<"personal" | "business">("personal");
+  const [businessNumber, setBusinessNumber] = useState("");
   const [loginId, setLoginId] = useState("");
   const [loginPw, setLoginPw] = useState("");
   const [busy, setBusy] = useState(false);
@@ -57,12 +59,23 @@ export default function CardConnectPage() {
 
   const handleConnect = async () => {
     if (!cardOrg || !loginId || !loginPw) return;
+    if (cardType === "business" && !/^\d{10}$/.test(businessNumber.replace(/-/g, ""))) {
+      setError("사업자등록번호 10자리를 정확히 입력해 주세요.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      await apiPost("/api/card/connect", { cardOrg, loginId, loginPw });
+      await apiPost("/api/card/connect", {
+        cardOrg,
+        loginId,
+        loginPw,
+        cardType,
+        businessNumber: cardType === "business" ? businessNumber.replace(/-/g, "") : undefined,
+      });
       setLoginId("");
       setLoginPw("");
+      setBusinessNumber("");
       await refreshStatus();
     } catch (err) {
       if (err instanceof ApiClientError) {
@@ -151,7 +164,9 @@ export default function CardConnectPage() {
           style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}>
           <div className="mb-1 text-sm font-bold text-[#3B4CCA]">자동 연동이란?</div>
           <p>카드사 계정을 연결하면 실제 결제 내역을 자동으로 가져와 지출로 등록합니다. 직접 입력보다 정확하고, 가짜 등록이 불가능합니다.</p>
-          <p className="mt-1 text-[11px]">※ 카드사 로그인 정보는 암호화되어 전송되며 다랜드 서버에 저장되지 않습니다.</p>
+          <p className="mt-1"><strong className="text-[#1A1F36]">👤 개인 카드:</strong> 본인 명의 카드. 일상 지출(식비·교통 등) 자동 등록.</p>
+          <p className="mt-1"><strong className="text-[#a855f7]">🏢 사업자/법인 카드:</strong> 사업자등록증 보유자만. 사업장 지출(식자재·인건비·임대료 등) 자동 등록 → 120% 적립 → 사업장 매출 전부가 수익.</p>
+          <p className="mt-2 text-[11px]">※ 카드사 로그인 정보는 암호화되어 전송되며 다랜드 서버에 저장되지 않습니다.</p>
         </div>
 
         {error && (
@@ -201,6 +216,54 @@ export default function CardConnectPage() {
             <div className="mb-3 text-sm font-bold text-[#6B7394]">카드사 연결</div>
             <div className="space-y-3">
               <div>
+                <label className="text-xs text-[#6B7394] mb-1 block">카드 종류</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCardType("personal")}
+                    className="rounded-xl border py-3 text-sm font-bold transition-all"
+                    style={{
+                      borderColor: cardType === "personal" ? "rgba(59, 76, 202, 0.4)" : "var(--card-border)",
+                      background: cardType === "personal" ? "rgba(59, 76, 202, 0.08)" : "var(--card-bg)",
+                      color: cardType === "personal" ? "#3B4CCA" : "var(--text-muted)",
+                    }}
+                  >
+                    👤 개인 카드
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCardType("business")}
+                    className="rounded-xl border py-3 text-sm font-bold transition-all"
+                    style={{
+                      borderColor: cardType === "business" ? "rgba(168, 85, 247, 0.4)" : "var(--card-border)",
+                      background: cardType === "business" ? "rgba(168, 85, 247, 0.08)" : "var(--card-bg)",
+                      color: cardType === "business" ? "#a855f7" : "var(--text-muted)",
+                    }}
+                  >
+                    🏢 사업자/법인 카드
+                  </button>
+                </div>
+                <p className="mt-1 text-[10px] text-[#6B7394]">
+                  {cardType === "personal"
+                    ? "개인 명의 카드입니다."
+                    : "사업자등록번호로 발급된 사업자/법인 카드입니다."}
+                </p>
+              </div>
+
+              {cardType === "business" && (
+                <div>
+                  <label className="text-xs text-[#6B7394] mb-1 block">사업자등록번호 (10자리)</label>
+                  <input
+                    type="text"
+                    value={businessNumber}
+                    onChange={(e) => setBusinessNumber(e.target.value.replace(/[^0-9-]/g, "").slice(0, 12))}
+                    className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-sm placeholder-zinc-400 outline-none focus:border-[#3B4CCA]/50"
+                    placeholder="예: 123-45-67890"
+                  />
+                </div>
+              )}
+
+              <div>
                 <label className="text-xs text-[#6B7394] mb-1 block">카드사 선택</label>
                 <select
                   value={cardOrg}
@@ -238,10 +301,16 @@ export default function CardConnectPage() {
             </div>
             <button
               onClick={handleConnect}
-              disabled={busy || !cardOrg || !loginId || !loginPw}
+              disabled={
+                busy ||
+                !cardOrg ||
+                !loginId ||
+                !loginPw ||
+                (cardType === "business" && businessNumber.replace(/-/g, "").length !== 10)
+              }
               className="mt-4 w-full rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] disabled:opacity-50"
             >
-              {busy ? "연결 중..." : "카드 연결하기"}
+              {busy ? "연결 중..." : `${cardType === "business" ? "사업자 " : ""}카드 연결하기`}
             </button>
             <p className="mt-2 text-[10px] text-[#9CA3C1] leading-relaxed">
               입력하신 정보는 CODEF 보안 인증 서버로 RSA 암호화 전송되며, 다랜드는 비밀번호를 저장하지 않습니다.
