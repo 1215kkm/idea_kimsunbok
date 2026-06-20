@@ -8,12 +8,21 @@ import Icon from "@/components/Icon";
 import { db, isConfigured } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
-const menuItems = [
+interface MenuItem {
+  href: string;
+  label: string;
+  icon: string;
+  desc: string;
+  admin: boolean;
+  badge?: string;
+}
+
+const menuItems: MenuItem[] = [
   { href: "/dashboard", label: "홈", icon: "home", desc: "대시보드", admin: false },
   { href: "/deposit", label: "입금", icon: "savings", desc: "다랜드 내 계좌 충전", admin: false },
   { href: "/stores", label: "지출등록", icon: "credit_card", desc: "잔액 차감 + 120% 적립", admin: false },
-  // 카드 자동 연동: 베타 기간 비활성화 (CODEF 정식 계약 후 재오픈 예정)
-  // { href: "/card-connect", label: "카드 자동 연동", icon: "sync", desc: "카드사 결제내역 자동 등록", admin: false },
+  // 카드 자동 연동: 베타 기간 "준비중" 표시. 정식 출시 시점 CODEF 정식 계약 후 활성화.
+  { href: "/card-connect", label: "카드 자동 연동", icon: "sync", desc: "정식 출시 시 오픈 예정", admin: false, badge: "준비중" },
   { href: "/withdraw", label: "출금", icon: "account_balance", desc: "다랜드 계좌 → 내 은행계좌", admin: false },
   { href: "/card", label: "비선형카드", icon: "badge", desc: "카드 잔액 & 충전데이터", admin: false },
   { href: "/history", label: "내역", icon: "list_alt", desc: "포인트 기록", admin: false },
@@ -116,8 +125,15 @@ export default function HamburgerMenu() {
                   size={22}
                   className={pathname === item.href ? "text-[#3B4CCA]" : "text-[#6B7394]"}
                 />
-                <div>
-                  <div className="text-sm font-bold">{item.label}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold">{item.label}</span>
+                    {item.badge && (
+                      <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-700">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs" style={{ color: "var(--text-muted)" }}>{item.desc}</div>
                 </div>
                 {pathname === item.href && (
