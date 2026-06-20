@@ -12,7 +12,8 @@ const menuItems = [
   { href: "/dashboard", label: "홈", icon: "home", desc: "대시보드", admin: false },
   { href: "/deposit", label: "입금", icon: "savings", desc: "다랜드 내 계좌 충전", admin: false },
   { href: "/stores", label: "지출등록", icon: "credit_card", desc: "잔액 차감 + 120% 적립", admin: false },
-  { href: "/card-connect", label: "카드 자동 연동", icon: "sync", desc: "카드사 결제내역 자동 등록", admin: false },
+  // 카드 자동 연동: 베타 기간 비활성화 (CODEF 정식 계약 후 재오픈 예정)
+  // { href: "/card-connect", label: "카드 자동 연동", icon: "sync", desc: "카드사 결제내역 자동 등록", admin: false },
   { href: "/withdraw", label: "출금", icon: "account_balance", desc: "다랜드 계좌 → 내 은행계좌", admin: false },
   { href: "/card", label: "비선형카드", icon: "badge", desc: "카드 잔액 & 충전데이터", admin: false },
   { href: "/history", label: "내역", icon: "list_alt", desc: "포인트 기록", admin: false },
