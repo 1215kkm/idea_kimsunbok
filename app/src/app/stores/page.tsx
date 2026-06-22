@@ -216,7 +216,7 @@ export default function StoresPage() {
       <div className="px-5 pt-4">
         <div className="text-xs font-bold uppercase tracking-wider text-[#3B4CCA] mb-3">판매자(사업주) & 소비자 지출종류</div>
       </div>
-      <div className="grid grid-cols-4 gap-2 px-5">
+      <div className="grid grid-cols-3 gap-2 px-5">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.id}
