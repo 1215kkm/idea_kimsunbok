@@ -43,8 +43,33 @@ export default function CMSRegisterPage() {
   }
 
   return (
-    <div className="min-h-screen pb-20">
-      {/* 헤더 */}
+    <div className="min-h-screen pb-20 relative">
+      {/* 베타 기간 준비중 오버레이 — 실제 가입 전까지 화면 위에 반투명 검정 */}
+      <div
+        className="fixed inset-0 z-40 flex items-center justify-center pointer-events-auto"
+        style={{ background: "rgba(0, 0, 0, 0.65)" }}
+      >
+        <div className="mx-6 max-w-sm rounded-2xl bg-white p-8 text-center shadow-2xl">
+          <div className="text-6xl mb-4">🚧</div>
+          <h2 className="text-2xl font-black text-[#3B4CCA] mb-2">준비중</h2>
+          <p className="text-sm text-[#6B7394] leading-relaxed">
+            CMS 자동이체 ASP 서비스 등록은<br/>
+            <strong className="text-[#1A1F36]">실제 가입 후</strong>에 활성화됩니다.
+          </p>
+          <p className="mt-3 text-xs text-[#9CA3C1]">
+            베타 기간엔 수동 입금/지출등록으로<br/>
+            비선형공식 적립을 체험해 주세요.
+          </p>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="mt-5 w-full rounded-xl bg-gradient-to-r from-cyan-600 to-purple-600 py-3 text-sm font-bold text-white"
+          >
+            대시보드로 돌아가기
+          </button>
+        </div>
+      </div>
+
+      {/* 헤더 (오버레이 뒤에 보이는 흐릿한 배경) */}
       <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
         <h1 className="text-lg font-bold">CMS 자동이체 - ASP 서비스 등록</h1>
         <p className="text-sm text-[#6B7394]">ASP 서비스 이용료 결제를 위한 CMS 자동이체 등록</p>
