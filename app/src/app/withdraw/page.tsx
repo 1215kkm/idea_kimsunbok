@@ -510,10 +510,10 @@ export default function WithdrawPage() {
             </div>
 
             <div className="grid grid-cols-4 gap-2">
-              {[10000, 50000, 100000].map((amt) => (
+              {[10_000, 50_000, 100_000, 1_000_000, 10_000_000, 100_000_000].map((amt) => (
                 <button key={amt} onClick={() => setWithdrawAmount(String(amt))}
                   className="rounded-lg border border-[#E8EAF0] bg-purple-900/10 py-2 text-xs font-bold text-[#3B4CCA] hover:bg-[#3B4CCA]/8">
-                  {(amt / 10000).toLocaleString()}만
+                  {amt >= 100_000_000 ? `${amt / 100_000_000}억` : amt >= 10_000_000 ? `${amt / 10_000}만` : `${(amt / 10000).toLocaleString()}만`}
                 </button>
               ))}
               <button onClick={() => setWithdrawAmount(String(balance))}

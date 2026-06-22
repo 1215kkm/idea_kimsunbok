@@ -263,12 +263,24 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* 카드 연동 & CMS 바로가기 */}
+      {/* 카드 연동 & CMS 바로가기 — 베타 기간 둘 다 '준비중' 표시 */}
       <div className="mx-5 mt-3 grid grid-cols-2 gap-3">
         <Link
           href="/card-connect"
-          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
+          className="dark-card relative flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30 overflow-hidden"
         >
+          {/* 준비중 반투명 오버레이 */}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ background: "rgba(0, 0, 0, 0.55)" }}
+          >
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-base">🚧</span>
+              <span className="rounded-full bg-amber-500 px-3 py-0.5 text-[10px] font-black text-white">
+                준비중
+              </span>
+            </div>
+          </div>
           <span className="text-2xl">💳</span>
           <div>
             <div className="text-sm font-bold">카드 자동 연동</div>
@@ -277,8 +289,20 @@ export default function DashboardPage() {
         </Link>
         <Link
           href="/cms-register"
-          className="dark-card flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30"
+          className="dark-card relative flex items-center gap-3 rounded-xl border border-[#E8EAF0] bg-white p-4 transition-colors hover:border-[#3B4CCA]/30 overflow-hidden"
         >
+          {/* 준비중 반투명 오버레이 */}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ background: "rgba(0, 0, 0, 0.55)" }}
+          >
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-base">🚧</span>
+              <span className="rounded-full bg-amber-500 px-3 py-0.5 text-[10px] font-black text-white">
+                준비중
+              </span>
+            </div>
+          </div>
           <span className="text-2xl">🔄</span>
           <div>
             <div className="text-sm font-bold">CMS 가입센터</div>
