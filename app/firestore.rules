@@ -48,5 +48,11 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
       allow write: if false;
     }
+
+    match /settings/{docId} {
+      // 시스템 설정(분할모드 등): 관리자 API(/api/admin/settings)로만 접근
+      allow read: if false;
+      allow write: if false;
+    }
   }
 }

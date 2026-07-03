@@ -213,10 +213,10 @@ export const MEMBERSHIP_TIERS: MembershipTier[] = [
 
 /**
  * 회원 자금(잔액)에 따라 단계 자동 결정.
- * - 100만 미만 → 4단계
- * - 1000만 미만 → 5단계
- * - 1억 미만 → 6단계
- * - 그 이상 → 7단계
+ * - 1000만 미만 → 4단계 (백만 단위)
+ * - 1억 미만 → 5단계 (천만 단위)
+ * - 10억 미만 → 6단계 (1억 단위)
+ * - 그 이상 → 7단계 (10억 단위)
  */
 export function determineTier(balance: number): MembershipTier {
   if (balance < 10_000_000) return MEMBERSHIP_TIERS[0]; // 4단계
