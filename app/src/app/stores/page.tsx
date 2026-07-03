@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { isConfigured } from "@/lib/firebase";
-import { calculateNonlinear } from "@/lib/nonlinear-engine";
+import { calculateNonlinear, determineTier, calculateSplitCount } from "@/lib/nonlinear-engine";
 import { saveTransaction as saveDemoTx, getBalance as getDemoBalance } from "@/lib/demo-store";
 import { apiPost, ApiClientError } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
@@ -79,6 +79,9 @@ type ResultState = null | {
   memberCount: number;
   perMemberAmount: number;
   advertiserReward: number;
+  tierLevel: number;
+  tierLabel: string;
+  splitCount: number;
 };
 
 export default function StoresPage() {
@@ -105,6 +108,9 @@ export default function StoresPage() {
     let memberCount = 0;
     let perMemberAmount = 0;
     let advertiserReward = 0;
+    let tierLevel = 4;
+    let tierLabel = "백만 단위";
+    let splitCount = 1;
 
     if (isConfigured) {
       try {
@@ -114,6 +120,8 @@ export default function StoresPage() {
           memberCount: number;
           perMemberAmount: number;
           advertiserReward: number;
+          tier?: { level: number; label: string };
+          splitCount?: number;
         }>("/api/spend/register", {
           categoryId: category.id,
           spendAmount,
@@ -124,6 +132,8 @@ export default function StoresPage() {
         memberCount = r.memberCount;
         perMemberAmount = r.perMemberAmount;
         advertiserReward = r.advertiserReward;
+        if (r.tier) { tierLevel = r.tier.level; tierLabel = r.tier.label; }
+        if (r.splitCount) splitCount = r.splitCount;
       } catch (err) {
         setProcessing(false);
         if (err instanceof ApiClientError) {
@@ -167,6 +177,10 @@ export default function StoresPage() {
       memberCount = nlResult.memberCount;
       perMemberAmount = nlResult.perMemberAmount;
       advertiserReward = nlResult.advertiser.advertiserReward;
+      const demoTier = determineTier(getDemoBalance(user));
+      tierLevel = demoTier.level;
+      tierLabel = demoTier.label;
+      splitCount = calculateSplitCount(spendAmount, demoTier);
     }
 
     setModal(null);
@@ -178,6 +192,9 @@ export default function StoresPage() {
       memberCount,
       perMemberAmount,
       advertiserReward,
+      tierLevel,
+      tierLabel,
+      splitCount,
     });
     setProcessing(false);
     setAmount("");
@@ -336,6 +353,21 @@ export default function StoresPage() {
 
             <div className="mt-3 text-xs text-[#6B7394]">
               원금 {result.amount.toLocaleString()}P + 보너스 {result.bonus.toLocaleString()}P
+            </div>
+
+            {/* 단계 · 빈로그 · 분할 정보 (의뢰자 새 공식) */}
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 text-[11px]">
+              <span className="rounded-full border border-[#3B4CCA]/25 bg-[#3B4CCA]/8 px-2.5 py-0.5 font-bold text-[#3B4CCA]">
+                {result.tierLevel}단계 ({result.tierLabel})
+              </span>
+              <span className="rounded-full border border-cyan-500/25 bg-cyan-500/8 px-2.5 py-0.5 font-bold text-cyan-600">
+                빈로그(d1) 기록
+              </span>
+              {result.splitCount > 1 && (
+                <span className="rounded-full border border-amber-500/30 bg-amber-500/8 px-2.5 py-0.5 font-bold text-amber-600">
+                  {result.splitCount}회 분할
+                </span>
+              )}
             </div>
 
             {/* 다랜드 계좌 안내 */}

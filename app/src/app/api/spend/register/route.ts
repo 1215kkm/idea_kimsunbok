@@ -10,6 +10,7 @@ import {
   MIN_SPEND_PER_TX,
 } from "@/lib/server/spend-categories";
 import { calculateNonlinear, determineTier, calculateSplitCount } from "@/lib/nonlinear-engine";
+import { getSplitMode, SPLIT_AUTO_LIMIT } from "@/lib/server/system-settings";
 
 export const runtime = "nodejs";
 
@@ -45,6 +46,9 @@ export async function POST(req: NextRequest) {
     const category = SPEND_CATEGORIES[body.categoryId];
 
     const nl = calculateNonlinear(spendAmount);
+    // 분할모드 (의뢰자 확정): 10억P까지 자동, 초과분은 관리자 수동 모드에서 별도 처리
+    const splitMode = await getSplitMode();
+    const isManualSplit = splitMode === "manual" && spendAmount > SPLIT_AUTO_LIMIT;
     const db = adminDb();
     const userRef = db.collection("users").doc(user.uid);
 
@@ -85,6 +89,8 @@ export async function POST(req: NextRequest) {
         tier: tier.level,
         tierLabel: tier.label,
         splitCount,
+        splitMode, // auto | manual (관리자 설정)
+        manualSplitPending: isManualSplit, // 수동 모드 + 10억 초과 거래 표시
         category: body.categoryId,
         categoryName: category.name,
         storeName: memo || category.name,
@@ -121,6 +127,7 @@ export async function POST(req: NextRequest) {
       newBalance,
       tier: { level: tier.level, label: tier.label, consumerStep: tier.consumerStep },
       splitCount,
+      splitMode,
       isEmptyLog: true,
     });
   } catch (err) {
