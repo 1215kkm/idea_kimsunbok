@@ -77,7 +77,7 @@
 }
 
 html {
-  font-size: 20px; /* 기본 18px → 20px (+2px, 의뢰자 요청) */
+  font-size: 21px; /* 기본 18px → 21px (+3px, 의뢰자 확정) */
 }
 
 body {

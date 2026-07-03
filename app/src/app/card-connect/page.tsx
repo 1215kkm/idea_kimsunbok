@@ -46,6 +46,32 @@ export default function CardConnectPage() {
           </p>
         </div>
 
+        {/* 정식 출시 시 카드 자동연동 흐름 (의뢰자 확정 — 필히 반영) */}
+        <div
+          className="rounded-2xl border border-[#3B4CCA]/20 p-4"
+          style={{ background: "linear-gradient(135deg, rgba(59, 76, 202, 0.05), rgba(6, 182, 212, 0.05))" }}
+        >
+          <div className="mb-3 text-sm font-bold text-[#3B4CCA]">🔄 정식 출시 시 자동연동 흐름</div>
+          <div className="space-y-2">
+            {[
+              { step: "1", icon: "💳", text: "신용카드로 결제", sub: "어디서든 평소처럼 결제" },
+              { step: "2", icon: "🏦", text: "은행계좌 연동 확인", sub: "결제 내역이 계좌에 반영" },
+              { step: "3", icon: "📩", text: "지출금액 메시지 자동 수신", sub: "결제 금액이 다랜드로 전달" },
+              { step: "4", icon: "⚙️", text: "다랜드 비선형공식 실행", sub: "멤버십 · 소비자 단계 자동 분류" },
+              { step: "5", icon: "✅", text: "120% 재충전 + 금액 메시지 전달", sub: "적립 완료 알림을 즉시 받음" },
+            ].map((s) => (
+              <div key={s.step} className="flex items-center gap-3 rounded-xl bg-white/70 px-3 py-2 dark-card">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3B4CCA]/10 text-[11px] font-black text-[#3B4CCA]">{s.step}</span>
+                <span className="text-base">{s.icon}</span>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-[#1A1F36]">{s.text}</div>
+                  <div className="text-[10px] text-[#6B7394]">{s.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div
           className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs leading-relaxed text-[#6B7394]"
         >

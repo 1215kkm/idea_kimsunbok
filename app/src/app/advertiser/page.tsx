@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 
+// 의뢰자 확정: 리워드 금액 × 모집 인원 선택 메뉴
+const REWARD_AMOUNTS = [10_000, 100_000, 1_000_000];
+const GROUP_SIZES = [10, 100];
+
 const EXAMPLES = [
   { name: "신한은행", icon: "🏦", invest: 10000000000, desc: "비선형카드 발급 프로모션" },
   { name: "삼성전자", icon: "📱", invest: 5000000000, desc: "갤럭시 리워드 광고" },
@@ -23,6 +27,8 @@ export default function AdvertiserPage() {
   const router = useRouter();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const [rewardAmount, setRewardAmount] = useState(REWARD_AMOUNTS[1]); // 기본 10만
+  const [groupSize, setGroupSize] = useState(GROUP_SIZES[1]); // 기본 100명
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
@@ -49,6 +55,69 @@ export default function AdvertiserPage() {
           <div className="text-sm dark-text-muted text-[#6B7394]">광고주가 투자하면</div>
           <div className="mt-1 text-3xl font-black text-[#10B981]">120% 수익 발생</div>
           <div className="mt-2 text-xs dark-text-muted text-[#6B7394]">광고비가 사라지지 않고, 비선형공식으로 순환합니다</div>
+        </div>
+
+        {/* 리워드 광고 설계 — 금액 × 인원 선택 (의뢰자 확정 메뉴) */}
+        <div className="mb-6 rounded-2xl border border-purple-500/20 p-4"
+          style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
+          <div className="mb-3 text-sm font-bold text-[#3B4CCA]">🎁 리워드 광고 설계</div>
+
+          <div className="mb-1 text-xs text-[#6B7394]">1인당 리워드 금액</div>
+          <div className="mb-3 grid grid-cols-3 gap-2">
+            {REWARD_AMOUNTS.map((amt) => (
+              <button key={amt} onClick={() => setRewardAmount(amt)}
+                className="rounded-lg border py-2 text-xs font-bold transition-all"
+                style={{
+                  borderColor: amt === rewardAmount ? "rgba(59, 76, 202, 0.6)" : "var(--card-border)",
+                  background: amt === rewardAmount ? "rgba(59, 76, 202, 0.1)" : "var(--card-bg)",
+                  color: amt === rewardAmount ? "#3B4CCA" : "var(--text-muted)",
+                }}>
+                {formatKorean(amt).replace("원", "P")}
+              </button>
+            ))}
+          </div>
+
+          <div className="mb-1 text-xs text-[#6B7394]">모집 인원</div>
+          <div className="mb-3 grid grid-cols-2 gap-2">
+            {GROUP_SIZES.map((n) => (
+              <button key={n} onClick={() => setGroupSize(n)}
+                className="rounded-lg border py-2 text-xs font-bold transition-all"
+                style={{
+                  borderColor: n === groupSize ? "rgba(59, 76, 202, 0.6)" : "var(--card-border)",
+                  background: n === groupSize ? "rgba(59, 76, 202, 0.1)" : "var(--card-bg)",
+                  color: n === groupSize ? "#3B4CCA" : "var(--text-muted)",
+                }}>
+                {n}명
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-[#E8EAF0] bg-white p-3 text-center dark-card">
+            <div className="text-xs text-[#6B7394]">
+              {formatKorean(rewardAmount).replace("원", "P")} × {groupSize}명 = 총 예산
+            </div>
+            <div className="mt-1 text-2xl font-black text-[#3B4CCA]">
+              {formatKorean(rewardAmount * groupSize).replace("원", "P")}
+            </div>
+            <div className="mt-2 space-y-1 text-xs text-[#6B7394]">
+              <div className="flex justify-between px-2">
+                <span>신규 회원 {groupSize}명에게 지급</span>
+                <span className="font-bold text-[#EF4444]">-{formatKorean(rewardAmount * groupSize).replace("원", "P")}</span>
+              </div>
+              <div className="flex justify-between px-2">
+                <span>비선형공식 120% 적립</span>
+                <span className="font-bold text-[#10B981]">+{formatKorean(Math.round(rewardAmount * groupSize * 1.2)).replace("원", "P")}</span>
+              </div>
+              <div className="flex justify-between border-t border-[#E8EAF0] px-2 pt-1">
+                <span className="font-bold">광고주 순증 (+20%)</span>
+                <span className="font-bold text-[#3B4CCA]">+{formatKorean(Math.round(rewardAmount * groupSize * 0.2)).replace("원", "P")}</span>
+              </div>
+              <div className="flex justify-between px-2">
+                <span>이후 회원 지출의 5% 평생 적립</span>
+                <span className="font-bold text-orange-500">지속 수익</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="mb-4 text-sm font-bold dark-text-muted text-[#6B7394]">광고주 시뮬레이션</div>

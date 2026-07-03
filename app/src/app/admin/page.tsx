@@ -55,6 +55,8 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [splitMode, setSplitMode] = useState<"auto" | "manual">("auto");
+  const [splitBusy, setSplitBusy] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -109,9 +111,30 @@ export default function AdminPage() {
     if (check === "ok") {
       refreshUsers();
       refreshWithdrawals("all");
+      apiGet<{ splitMode: "auto" | "manual" }>("/api/admin/settings")
+        .then((r) => setSplitMode(r.splitMode))
+        .catch(() => { /* 기본 auto 유지 */ });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [check]);
+
+  const handleSplitMode = async (mode: "auto" | "manual") => {
+    if (mode === splitMode || splitBusy) return;
+    setSplitBusy(true);
+    setError(null);
+    try {
+      await apiPost("/api/admin/settings", { splitMode: mode });
+      setSplitMode(mode);
+    } catch (err) {
+      const msg =
+        err instanceof ApiClientError
+          ? `분할모드 변경 실패 [${err.code}] ${err.message}`
+          : "분할모드 변경 실패";
+      setError(msg);
+    } finally {
+      setSplitBusy(false);
+    }
+  };
 
   const handleApprove = async (id: string) => {
     if (!confirm("이 출금 요청을 승인 처리할까요? 외부 송금이 끝났다는 의미입니다.")) return;
@@ -261,6 +284,43 @@ export default function AdminPage() {
               <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
                 <div className="text-xs dark-text-muted text-[#6B7394]">대기 출금 합계</div>
                 <div className="mt-1 text-xl font-black text-amber-500">{pendingAmount.toLocaleString()}P</div>
+              </div>
+            </div>
+
+            {/* 분할모드 (의뢰자 확정): 10억P까지 자동, 관리자가 수동 전환 가능 */}
+            <div
+              className="dark-card rounded-xl border p-4"
+              style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
+            >
+              <div className="mb-1 text-sm font-bold text-[#3B4CCA]">⚙️ 분할모드</div>
+              <p className="mb-3 text-xs" style={{ color: "var(--text-muted)" }}>
+                소비자단계 <strong>10억P까지 자동</strong> 분할 처리 · 초과 대량 거래는 수동 모드에서 관리자가 직접 관리
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleSplitMode("auto")}
+                  disabled={splitBusy}
+                  className="rounded-lg border py-2.5 text-sm font-bold transition-all disabled:opacity-50"
+                  style={{
+                    borderColor: splitMode === "auto" ? "rgba(16, 185, 129, 0.5)" : "var(--card-border)",
+                    background: splitMode === "auto" ? "rgba(16, 185, 129, 0.1)" : "transparent",
+                    color: splitMode === "auto" ? "#10B981" : "var(--text-muted)",
+                  }}
+                >
+                  🤖 자동 모드{splitMode === "auto" ? " (활성)" : ""}
+                </button>
+                <button
+                  onClick={() => handleSplitMode("manual")}
+                  disabled={splitBusy}
+                  className="rounded-lg border py-2.5 text-sm font-bold transition-all disabled:opacity-50"
+                  style={{
+                    borderColor: splitMode === "manual" ? "rgba(245, 158, 11, 0.5)" : "var(--card-border)",
+                    background: splitMode === "manual" ? "rgba(245, 158, 11, 0.1)" : "transparent",
+                    color: splitMode === "manual" ? "#f59e0b" : "var(--text-muted)",
+                  }}
+                >
+                  ✋ 수동 모드{splitMode === "manual" ? " (활성)" : ""}
+                </button>
               </div>
             </div>
 

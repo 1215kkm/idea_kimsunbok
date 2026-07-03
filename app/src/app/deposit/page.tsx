@@ -9,7 +9,15 @@ import { apiPost, ApiClientError } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
-const PRESETS = [10_000, 50_000, 100_000, 500_000, 1_000_000, 100_000_000];
+// 의뢰자 확정: 1만 / 5만 / 10만 / 100만 / 1000만 / 1억 / 100억 / 수기(직접입력)
+const PRESETS = [10_000, 50_000, 100_000, 1_000_000, 10_000_000, 100_000_000, 10_000_000_000];
+
+function presetLabel(p: number): string {
+  if (p >= 100_000_000) return `${p / 100_000_000}억`;
+  if (p >= 10_000_000) return `${p / 10_000_000}천만`;
+  if (p >= 1_000_000) return `${p / 1_000_000}백만`;
+  return `${(p / 10_000).toLocaleString()}만`;
+}
 
 export default function DepositPage() {
   const { user, loading } = useAuth();
@@ -41,7 +49,7 @@ export default function DepositPage() {
   const handleDeposit = async () => {
     const amt = parseInt(amount);
     if (!amt || amt < 1000) {
-      setError("최소 입금 금액은 1,000원 입니다.");
+      setError("최소 입금 금액은 1,000P 입니다.");
       return;
     }
     setProcessing(true);
@@ -87,8 +95,8 @@ export default function DepositPage() {
           style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}
         >
           <div className="text-xs text-[#6B7394]">현재 잔액</div>
-          <div className="mt-1 text-[#3B4CCA] text-4xl font-black">{balance.toLocaleString()}원</div>
-          <div className="mt-1 text-xs text-[#6B7394]">1원 = 1P</div>
+          <div className="mt-1 text-[#3B4CCA] text-4xl font-black">{balance.toLocaleString()}P</div>
+          <div className="mt-1 text-xs text-[#6B7394]">= {balance.toLocaleString()}원 (1P = 1원)</div>
         </div>
 
         <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
@@ -106,10 +114,10 @@ export default function DepositPage() {
           <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-center">
             <div className="text-2xl mb-1">✅</div>
             <div className="text-sm font-bold text-emerald-700">
-              {success.amount.toLocaleString()}원 입금 완료
+              {success.amount.toLocaleString()}P 입금 완료
             </div>
             <div className="text-xs text-[#6B7394] mt-1">
-              현재 잔액: {success.newBalance.toLocaleString()}원
+              현재 잔액: {success.newBalance.toLocaleString()}P
             </div>
           </div>
         )}
@@ -121,7 +129,7 @@ export default function DepositPage() {
         )}
 
         <div className="space-y-3">
-          <label className="text-xs text-[#6B7394] block">입금 금액 (원)</label>
+          <label className="text-xs text-[#6B7394] block">입금 금액 (P · 1P = 1원)</label>
           <input
             type="text"
             inputMode="numeric"
@@ -134,16 +142,25 @@ export default function DepositPage() {
             className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3 text-center text-2xl font-black placeholder-zinc-600 outline-none focus:border-[#3B4CCA]/50"
           />
 
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {PRESETS.map((p) => (
               <button
                 key={p}
                 onClick={() => setAmount(String(p))}
                 className="rounded-lg border border-[#E8EAF0] bg-purple-900/10 py-2 text-xs font-bold text-[#3B4CCA] hover:bg-[#3B4CCA]/8"
               >
-                {p >= 100_000_000 ? `${p / 100_000_000}억` : p >= 1_000_000 ? `${p / 1_000_000}백만` : `${(p / 10_000).toLocaleString()}만`}
+                {presetLabel(p)}
               </button>
             ))}
+            <button
+              onClick={() => {
+                setAmount("");
+                document.querySelector<HTMLInputElement>('input[inputMode="numeric"]')?.focus();
+              }}
+              className="rounded-lg border border-dashed border-[#3B4CCA]/40 py-2 text-xs font-bold text-[#6B7394] hover:bg-[#3B4CCA]/8"
+            >
+              ✏️ 수기
+            </button>
           </div>
 
           <button
