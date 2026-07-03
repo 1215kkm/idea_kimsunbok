@@ -48,13 +48,16 @@ export async function POST(req: NextRequest) {
     const nl = calculateNonlinear(spendAmount);
     // 분할모드 (의뢰자 확정): 10억P까지 자동, 초과분은 관리자 수동 모드에서 별도 처리
     const splitMode = await getSplitMode();
-    const isManualSplit = splitMode === "manual" && spendAmount > SPLIT_AUTO_LIMIT;
+    // >= : 10억(=MAX_SPEND_PER_TX) 거래도 수동 모드에선 pending 대상
+    const isManualSplit = splitMode === "manual" && spendAmount >= SPLIT_AUTO_LIMIT;
     const db = adminDb();
     const userRef = db.collection("users").doc(user.uid);
 
+    let preBalance = 0; // 지출 전 잔액 (응답 tier를 DB 기록과 동일 기준으로)
     const newBalance = await db.runTransaction(async (tx: Transaction) => {
       const snap = await tx.get(userRef);
       const current = (snap.exists ? snap.data()?.totalPoints || 0 : 0) as number;
+      preBalance = current;
       // Model A: 잔액에서 spendAmount 차감 후 비선형공식 120% 적립 (순 +20%)
       if (current < spendAmount) {
         throw new ApiError(
@@ -113,7 +116,7 @@ export async function POST(req: NextRequest) {
       return next;
     });
 
-    const tier = determineTier(newBalance);
+    const tier = determineTier(preBalance);
     const splitCount = calculateSplitCount(spendAmount, tier);
 
     return jsonOk({

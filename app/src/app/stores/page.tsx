@@ -149,9 +149,10 @@ export default function StoresPage() {
     } else {
       // 데모 모드: 클라이언트 계산 + localStorage 저장 (실서비스 영향 없음)
       // Model A: 잔액 차감 후 120% 적립 — 실서버와 동일하게 잔액 부족 시 차단
-      if (getDemoBalance(user) < spendAmount) {
+      const demoBalance = getDemoBalance(user);
+      if (demoBalance < spendAmount) {
         setProcessing(false);
-        setSubmitError("잔액이 부족합니다. 입금 후 다시 시도해 주세요.");
+        setSubmitError(`잔액이 부족합니다. 데모 모드는 잔액(${demoBalance.toLocaleString()}P) 내에서 체험해 주세요.`);
         return;
       }
       const nlResult = calculateNonlinear(spendAmount);
@@ -177,7 +178,7 @@ export default function StoresPage() {
       memberCount = nlResult.memberCount;
       perMemberAmount = nlResult.perMemberAmount;
       advertiserReward = nlResult.advertiser.advertiserReward;
-      const demoTier = determineTier(getDemoBalance(user));
+      const demoTier = determineTier(demoBalance); // 지출 전 잔액 기준 (실서버와 동일)
       tierLevel = demoTier.level;
       tierLabel = demoTier.label;
       splitCount = calculateSplitCount(spendAmount, demoTier);
