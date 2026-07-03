@@ -20,11 +20,11 @@ export interface FundZoneResult {
 
 export interface DistributionChain {
   a: number; // 이탈모드 자유값 (50%)
-  b: number; // A1 자유값 - 멤버십적립 (20%)
+  b: number; // A1 자유값 (8% = 0.8%×10회)
   c: number; // 소비자적립값 (12%)
   d: number; // 보정값 (5%)
   e: number; // 광고주적립값 (5%)
-  f: number; // 수수료 (8%)
+  f: number; // 수수료 (20%)
   valid: boolean;
 }
 
@@ -99,14 +99,14 @@ export function calculateNonlinear(amount: number, memberCount?: number): Nonlin
     canCombine: true,
   };
 
-  // a→f 분배 체인 (의뢰자 새 공식: 광고주 5%, 수수료 8%)
+  // a→f 분배 체인 (의뢰자 확정 공식: b=8%, c=12%, d=5%, e=5%, f=20%)
   const a = escapeAmount; // a:500K(free) - 이탈모드 자유값
-  const b = amount * 0.2; // b:200K - A1 자유값 (멤버십적립)
+  const b = amount * 0.08; // b:80K - A1 자유값 (0.8%×10회 = 8%)
   const cc = amount * 0.12; // c:120K - 소비자적립값
   const d = amount * 0.05; // d:50K - 보정값
-  const e = amount * 0.05; // e:50K - 광고주적립값 (1% → 5% 변경)
-  const f = amount * 0.08; // f:80K - 수수료 (12% → 8% 변경)
-  // 검증: b+cc+d+e+f = 200+120+50+50+80 = 500K = a ✓
+  const e = amount * 0.05; // e:50K - 광고주적립값 (5%)
+  const f = amount * 0.2; // f:200K - 수수료 (20%)
+  // 검증: b+cc+d+e+f = 80+120+50+50+200 = 500K = a ✓ (8+12+5+5+20 = 50%)
 
   const distributionChain: DistributionChain = {
     a, b, c: cc, d, e, f,
@@ -114,7 +114,7 @@ export function calculateNonlinear(amount: number, memberCount?: number): Nonlin
   };
 
   // 멤버십 적립 모드: A1 + b = 120%
-  const membershipAccumulation = b; // 20%
+  const membershipAccumulation = b; // 8% (0.8%×10회)
 
   // 소비자 적립
   const consumerAccumulation = cc; // 12%

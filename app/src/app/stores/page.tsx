@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { isConfigured } from "@/lib/firebase";
 import { calculateNonlinear } from "@/lib/nonlinear-engine";
-import { saveTransaction as saveDemoTx } from "@/lib/demo-store";
+import { saveTransaction as saveDemoTx, getBalance as getDemoBalance } from "@/lib/demo-store";
 import { apiPost, ApiClientError } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
 
@@ -138,6 +138,12 @@ export default function StoresPage() {
       }
     } else {
       // 데모 모드: 클라이언트 계산 + localStorage 저장 (실서비스 영향 없음)
+      // Model A: 잔액 차감 후 120% 적립 — 실서버와 동일하게 잔액 부족 시 차단
+      if (getDemoBalance(user) < spendAmount) {
+        setProcessing(false);
+        setSubmitError("잔액이 부족합니다. 입금 후 다시 시도해 주세요.");
+        return;
+      }
       const nlResult = calculateNonlinear(spendAmount);
       saveDemoTx(user, {
         category: category.id,

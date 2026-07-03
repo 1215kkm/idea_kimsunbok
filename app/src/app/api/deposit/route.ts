@@ -7,7 +7,7 @@ import { ApiError, jsonError, jsonOk } from "@/lib/server/api-error";
 export const runtime = "nodejs";
 
 const MIN_DEPOSIT = 1_000;
-const MAX_DEPOSIT_PER_TX = 10_000_000;
+const MAX_DEPOSIT_PER_TX = 10_000_000_000; // 100억 (의뢰자 확정: 입금 프리셋 최대 100억)
 
 interface Body {
   amount?: unknown;

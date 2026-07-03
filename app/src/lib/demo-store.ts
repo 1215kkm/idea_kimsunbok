@@ -41,7 +41,10 @@ function emailKey(user: { email?: string | null } | null | undefined): string | 
   return user.email.toLowerCase();
 }
 
-/** 거래 1건 추가 + 잔액 자동 증가 */
+/**
+ * 거래 1건 추가 + 잔액 반영.
+ * Model A: 지출금액 차감 후 120% 적립 → 순증 +20% (실서버 /api/spend/register 와 동일)
+ */
 export function saveTransaction(
   user: { email?: string | null; displayName?: string | null },
   tx: Omit<DemoTransaction, "id" | "consumerId" | "userName" | "createdAt">
@@ -65,7 +68,7 @@ export function saveTransaction(
     localStorage.setItem(TX_KEY(key), JSON.stringify(list));
 
     const bal = getBalance(user);
-    localStorage.setItem(BAL_KEY(key), String(bal + record.totalAccumulation));
+    localStorage.setItem(BAL_KEY(key), String(bal - record.amount + record.totalAccumulation));
   } catch {
     // 저장 실패 무시 (quota 초과 등)
   }
@@ -86,14 +89,21 @@ export function getTransactions(user: { email?: string | null } | null | undefin
   }
 }
 
-/** 현재 잔액 조회 (포인트 P 단위) */
+/** 베타 테스터 초기 지급금 (실서버 post-signup 의 BETA_INITIAL_FUNDS 와 동일) */
+export const DEMO_INITIAL_FUNDS = 1_000_000;
+
+/** 현재 잔액 조회 (포인트 P 단위). 최초 접근 시 베타 지급금 100만P 시드. */
 export function getBalance(user: { email?: string | null } | null | undefined): number {
   if (!isBrowser()) return 0;
   const key = emailKey(user);
   if (!key) return 0;
   try {
     const raw = localStorage.getItem(BAL_KEY(key));
-    const n = raw ? parseInt(raw, 10) : 0;
+    if (raw === null) {
+      localStorage.setItem(BAL_KEY(key), String(DEMO_INITIAL_FUNDS));
+      return DEMO_INITIAL_FUNDS;
+    }
+    const n = parseInt(raw, 10);
     return Number.isFinite(n) ? n : 0;
   } catch {
     return 0;
