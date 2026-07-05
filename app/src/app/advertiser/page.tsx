@@ -27,8 +27,8 @@ export default function AdvertiserPage() {
   const router = useRouter();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [showResult, setShowResult] = useState(false);
-  const [rewardAmount, setRewardAmount] = useState(REWARD_AMOUNTS[1]); // 기본 10만
-  const [groupSize, setGroupSize] = useState(GROUP_SIZES[1]); // 기본 100명
+  const [rewardAmount, setRewardAmount] = useState(REWARD_AMOUNTS[2]); // 기본 100만 (의뢰자: "분배비용 1백만원으로 대폭 올려라")
+  const [groupSize, setGroupSize] = useState(GROUP_SIZES[0]); // 기본 10명 (100만×10명 = 1천만 예산)
 
   useEffect(() => {
     if (!loading && !user) router.push("/");
