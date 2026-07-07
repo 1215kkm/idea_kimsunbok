@@ -247,12 +247,12 @@ export interface InviteRewardResult {
 }
 
 /**
- * 광고주가 baseAmount(기본 100,000P)를 분배하면:
+ * 광고주가 baseAmount(기본 1,000,000P — 의뢰자 확정 상향)를 분배하면:
  *  - 신규 가입자에게 baseAmount 지급
  *  - 광고주 본인 지출로 인식 → 비선형공식 120% 적립
  *  - 순변화 = +20% (advertiserSecured - advertiserSpend)
  */
-export function calculateInviteReward(baseAmount: number = 100_000): InviteRewardResult {
+export function calculateInviteReward(baseAmount: number = 1_000_000): InviteRewardResult {
   const rate = DEFAULT_CONFIG.correctionTarget; // 1.2
   const advertiserSecured = Math.round(baseAmount * rate);
   const advertiserNetGain = advertiserSecured - baseAmount;

@@ -229,7 +229,7 @@ export default function StoresPage() {
           <p>1. 어디서든 <strong className="text-[#1A1F36]">신용카드로 결제</strong>합니다</p>
           <p>2. <strong className="text-[#1A1F36]">지출데이터 단말기</strong>가 영수증을 증명합니다</p>
           <p>3. 본인 충전데이터에서 지출금액이 차감됩니다</p>
-          <p>4. 비선형공식으로 <strong className="text-[#3B4CCA]">120% 증액</strong> → <strong className="text-[#10B981]">다랜드 내 계좌에 재충전</strong> (은행 직행 X)</p>
+          <p>4. <strong className="text-[#3B4CCA]">AI코드</strong>(비선형공식)로 <strong className="text-[#3B4CCA]">120% 증액</strong> → <strong className="text-[#10B981]">다랜드 내 계좌에 재충전</strong> (은행 직행 X)</p>
           <p>5. 지출비의 <strong className="text-orange-400">5%가 가입시킨 광고주</strong>에게 적립</p>
           <p>6. 적립 포인트를 <strong className="text-[#1A1F36]">내 은행계좌로 출금</strong> 가능 (1P = 1원)</p>
           <p>7. 다른 멤버십 회원들에게도 분배 → 모두 120% 적립</p>
@@ -342,7 +342,7 @@ export default function StoresPage() {
               {result.category.icon} {result.category.name} -{result.amount.toLocaleString()}원
             </div>
 
-            <div className="my-4 text-xs text-[#3B4CCA]">── 비선형공식 실행 ──</div>
+            <div className="my-4 text-xs text-[#3B4CCA]">── AI코드 · 비선형공식 실행 ──</div>
 
             <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-5xl font-black text-transparent break-keep">
               +{result.earned.toLocaleString()}P

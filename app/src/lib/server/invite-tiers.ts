@@ -1,6 +1,6 @@
 export const INVITE_TIERS = {
   standard: { amount: 100_000, label: "10만P", desc: "일반 회원 초대" },
-  vip: { amount: 1_000_000, label: "100만P", desc: "VIP 초대" },
+  vip: { amount: 1_000_000, label: "100만P", desc: "기본 권장 (의뢰자 확정)" },
   premium: { amount: 10_000_000, label: "1천만P", desc: "프리미엄 초대" },
   enterprise: { amount: 100_000_000, label: "1억P", desc: "사업자 데모용" },
 } as const;
