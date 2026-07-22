@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import { apiPost, ApiClientError } from "@/lib/api-client";
+import { getBalance as getDemoBalance } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -33,7 +34,12 @@ export default function DepositPage() {
   }, [user, loading, router]);
 
   const refreshBalance = useCallback(async () => {
-    if (!user || !isConfigured || !db) return;
+    if (!user) return;
+    // 데모 모드: localStorage 잔액 (사이드바 MY BALANCE와 동일 소스)
+    if (!isConfigured || !db) {
+      setBalance(getDemoBalance(user));
+      return;
+    }
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
       if (snap.exists()) setBalance(snap.data().totalPoints || 0);
@@ -79,7 +85,7 @@ export default function DepositPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
         <div className="flex items-center gap-2">
           <Link href="/dashboard" className="text-[#6B7394] hover:text-[#1A1F36]">&larr;</Link>
           <div>
