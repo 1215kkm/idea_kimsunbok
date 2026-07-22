@@ -131,7 +131,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
         <h1 className="text-lg font-bold">포인트 내역</h1>
         <p className="text-xs dark-text-muted text-[#6B7394]">지출 / 초대 / 출금 등 모든 활동 기록</p>
       </div>
