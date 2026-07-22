@@ -1,6 +1,17 @@
 @import "tailwindcss";
 
-/* ===== Material Symbols Outlined ===== */
+/* ===== Material Symbols Outlined (자체 호스팅 서브셋) =====
+   사용하는 16개 아이콘만 서브셋 (약 260KB). 구글 CDN 의존 제거 →
+   오프라인·CDN 지연·차단 상황에서도 아이콘이 항상 렌더됨.
+   font-display: block → 폰트 로드 전 리거처 텍스트("home") 노출 방지. */
+@font-face {
+  font-family: "Material Symbols Outlined";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("/fonts/material-symbols-subset.woff2") format("woff2");
+}
+
 .material-symbols-outlined {
   font-family: "Material Symbols Outlined";
   font-weight: normal;
