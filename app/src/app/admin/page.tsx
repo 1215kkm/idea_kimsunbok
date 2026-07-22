@@ -229,7 +229,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
         <div className="flex items-center gap-2">
           <span className="text-xl">🛡️</span>
           <div>

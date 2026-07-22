@@ -19,7 +19,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="dark-navbar fixed bottom-0 left-0 right-0 z-50 border-t border-[#E8EAF0] bg-white/95 backdrop-blur-md">
+    <nav className="dark-navbar fixed bottom-0 left-0 right-0 z-50 border-t border-[#E8EAF0] bg-white/95 backdrop-blur-md lg:hidden">
       <div className="mx-auto flex max-w-md items-center justify-around py-2">
         {links.map((l) => (
           <Link

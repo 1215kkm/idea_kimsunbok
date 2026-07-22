@@ -117,7 +117,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
         <div className="text-xs dark-text-muted text-[#6B7394]">안녕하세요</div>
         <div className="text-lg font-bold">
           {user.displayName || "사용자"}님

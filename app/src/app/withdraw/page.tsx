@@ -271,7 +271,7 @@ export default function WithdrawPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
         <div className="flex items-center gap-2">
           <Link href="/dashboard" className="text-[#6B7394] hover:text-[#1A1F36]">&larr;</Link>
           <div>
@@ -281,8 +281,11 @@ export default function WithdrawPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-lg px-5 py-5">
-        <div className="rounded-2xl border border-cyan-500/20 p-5 text-center mb-5"
+      <div className="mx-auto max-w-lg px-5 py-5 lg:max-w-5xl lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start">
+        {/* ===== 메인 컬럼 ===== */}
+        <div>
+        {/* 잔액 — 모바일 전용 (PC는 사이드바 + 우측 패널) */}
+        <div className="rounded-2xl border border-cyan-500/20 p-5 text-center mb-5 lg:hidden"
           style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}>
           <div className="text-xs text-[#6B7394]">다랜드 내 계좌 잔액</div>
           <div className="mt-1 text-[#3B4CCA] text-4xl font-black">{balance.toLocaleString()}P</div>
@@ -422,7 +425,8 @@ export default function WithdrawPage() {
               </div>
             )}
 
-            <div className="rounded-2xl border border-purple-500/20 p-4 text-xs leading-relaxed text-[#6B7394]"
+            {/* 본문 출금 안내 — PC는 우측 패널에 표시하므로 모바일 전용 */}
+            <div className="rounded-2xl border border-purple-500/20 p-4 text-xs leading-relaxed text-[#6B7394] lg:hidden"
               style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
               <div className="mb-2 text-sm font-bold text-[#3B4CCA]">출금 안내</div>
               <p>1. 다랜드 내 계좌의 포인트는 <strong className="text-[#1A1F36]">1원 = 1P</strong>입니다.</p>
@@ -613,6 +617,36 @@ export default function WithdrawPage() {
             </button>
           </div>
         )}
+        </div>
+        {/* ===== /메인 컬럼 ===== */}
+
+        {/* ===== 우측 정보 패널 (PC 전용) ===== */}
+        <aside className="mt-5 hidden flex-col gap-4 lg:mt-0 lg:flex lg:sticky lg:top-[4.5rem]">
+          {/* 출금 가능 잔액 */}
+          <div
+            className="rounded-2xl border border-cyan-500/20 p-5"
+            style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}
+          >
+            <div className="text-xs text-[#6B7394]">출금 가능 잔액</div>
+            <div className="mt-1 text-3xl font-black text-[#3B4CCA]">
+              {balance.toLocaleString()}<span className="text-lg">P</span>
+            </div>
+            <div className="mt-1 text-xs text-[#6B7394]">= {balance.toLocaleString()}원 · 1P = 1원</div>
+          </div>
+
+          {/* 출금 안내 */}
+          <div className="rounded-2xl border p-5" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
+            <div className="mb-2 text-sm font-bold text-[#1A1F36]">📌 출금 안내</div>
+            <ul className="space-y-1.5 text-xs text-[#6B7394]">
+              <li>• 포인트는 <strong className="text-[#1A1F36]">1P = 1원</strong>으로 출금됩니다.</li>
+              <li>• 출금 신청 시 잔액이 즉시 차감(승인 대기)됩니다.</li>
+              <li>• 관리자 검토 후 영업일 기준 1~2일 내 입금됩니다.</li>
+              <li>• 최소 출금 금액: 1,000원 · 수수료 무료</li>
+              <li>• 승인 대기 중인 요청은 직접 취소(환불) 가능합니다.</li>
+            </ul>
+          </div>
+        </aside>
+        {/* ===== /우측 정보 패널 ===== */}
       </div>
 
       <Navbar />

@@ -70,7 +70,7 @@ export default function CMSRegisterPage() {
       </div>
 
       {/* 헤더 (오버레이 뒤에 보이는 흐릿한 배경) */}
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
         <h1 className="text-lg font-bold">CMS 자동이체 - ASP 서비스 등록</h1>
         <p className="text-sm text-[#6B7394]">ASP 서비스 이용료 결제를 위한 CMS 자동이체 등록</p>
       </div>

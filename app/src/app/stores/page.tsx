@@ -214,7 +214,7 @@ export default function StoresPage() {
   return (
     <div className="min-h-screen pb-20">
       {/* 헤더 */}
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
         <h1 className="text-lg font-bold">지출데이터 등록</h1>
         <p className="text-xs dark-text-muted text-[#6B7394]">신용카드 결제 → 지출데이터 단말기 증명 → 120% 재충전</p>
       </div>

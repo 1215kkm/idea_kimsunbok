@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import { apiPost, ApiClientError } from "@/lib/api-client";
+import { getBalance as getDemoBalance } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -33,7 +34,12 @@ export default function DepositPage() {
   }, [user, loading, router]);
 
   const refreshBalance = useCallback(async () => {
-    if (!user || !isConfigured || !db) return;
+    if (!user) return;
+    // 데모 모드: localStorage 잔액 (사이드바 MY BALANCE와 동일 소스)
+    if (!isConfigured || !db) {
+      setBalance(getDemoBalance(user));
+      return;
+    }
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
       if (snap.exists()) setBalance(snap.data().totalPoints || 0);
@@ -79,7 +85,7 @@ export default function DepositPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16">
+      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
         <div className="flex items-center gap-2">
           <Link href="/dashboard" className="text-[#6B7394] hover:text-[#1A1F36]">&larr;</Link>
           <div>
@@ -89,9 +95,12 @@ export default function DepositPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-lg px-5 py-5">
+      <div className="mx-auto max-w-lg px-5 py-5 lg:max-w-5xl lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start">
+        {/* ===== 메인 컬럼 ===== */}
+        <div>
+        {/* 현재 잔액 — 모바일 전용 (PC는 사이드바 + 우측 패널에 표시) */}
         <div
-          className="rounded-2xl border border-cyan-500/20 p-5 text-center mb-5"
+          className="rounded-2xl border border-cyan-500/20 p-5 text-center mb-5 lg:hidden"
           style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}
         >
           <div className="text-xs text-[#6B7394]">현재 잔액</div>
@@ -191,6 +200,50 @@ export default function DepositPage() {
             (사업자 지출이 전부 120% 적립 → 매출 = 수익)
           </p>
         </div>
+        </div>
+        {/* ===== /메인 컬럼 ===== */}
+
+        {/* ===== 우측 정보 패널 (PC 전용) ===== */}
+        <aside className="mt-5 hidden flex-col gap-4 lg:mt-0 lg:flex lg:sticky lg:top-[4.5rem]">
+          {/* 현재 잔액 */}
+          <div
+            className="rounded-2xl border border-cyan-500/20 p-5"
+            style={{ background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.08))" }}
+          >
+            <div className="text-xs text-[#6B7394]">현재 잔액 (사용 가능)</div>
+            <div className="mt-1 text-3xl font-black text-[#3B4CCA]">
+              {balance.toLocaleString()}<span className="text-lg">P</span>
+            </div>
+            <div className="mt-1 text-xs text-[#6B7394]">= {balance.toLocaleString()}원 · 1P = 1원</div>
+          </div>
+
+          {/* 입금 계좌 안내 */}
+          <div className="rounded-2xl border p-5" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
+            <div className="mb-3 text-sm font-bold text-[#1A1F36]">🏦 입금 계좌 안내</div>
+            <div className="mb-2 text-xs text-[#6B7394]">예금주 : <strong className="text-[#1A1F36]">(주)다랜드</strong></div>
+            <div className="space-y-2 text-xs">
+              {([["신한은행", "110-123-456789"], ["국민은행", "123-456-789012"], ["하나은행", "234-567-890123"]] as [string, string][]).map(([bank, acct]) => (
+                <div key={bank} className="flex items-center justify-between rounded-lg bg-[#F7F8FC] px-3 py-2">
+                  <span className="text-[#6B7394]">{bank}</span>
+                  <span className="font-bold text-[#1A1F36]">{acct}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-[10px] text-[#6B7394]">※ 정식 출시 시 실제 입금 계좌로 전환됩니다. (베타: 가상 입금)</p>
+          </div>
+
+          {/* 안내사항 */}
+          <div className="rounded-2xl border p-5" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
+            <div className="mb-2 text-sm font-bold text-[#1A1F36]">📌 안내사항</div>
+            <ul className="space-y-1.5 text-xs text-[#6B7394]">
+              <li>• 입금은 실시간으로 반영됩니다.</li>
+              <li>• 자동이체(CMS)는 신청 후 익월부터 적용됩니다.</li>
+              <li>• 입금 한도는 1회 최대 100억원입니다.</li>
+              <li>• 문의 : 고객센터 1588-0000</li>
+            </ul>
+          </div>
+        </aside>
+        {/* ===== /우측 정보 패널 ===== */}
       </div>
 
       <Navbar />
