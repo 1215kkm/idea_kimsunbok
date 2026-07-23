@@ -6,7 +6,6 @@ import { useEffect, useState, useCallback } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import { getBalance as getDemoBalance, deductBalance as deductDemoBalance } from "@/lib/demo-store";
-import { calculateWithdrawalRefund } from "@/lib/nonlinear-engine";
 import { apiGet, apiPost, ApiClientError } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
@@ -546,24 +545,25 @@ export default function WithdrawPage() {
 
         {step === "confirm" && selectedAccount && selectedBankInfo && (() => {
           const amt = parseInt(withdrawAmount);
-          const refund = calculateWithdrawalRefund(amt);
           return (
           <div className="space-y-4 text-center">
             <div className="text-lg font-bold">출금 확인</div>
 
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-left">
+            {/* 출금 = 시스템 밖(은행)으로 나가는 인출 → 1P=1원 그대로. 지출(120% 적립)과 반대 방향이라
+                120% 확보/시스템 수익 로직을 적용하지 않는다 (총량유지). 탈퇴 전액환불은 별도(account/leave). */}
+            <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/5 p-4 text-left">
               <div className="mb-2 flex items-center gap-2">
-                <span className="text-base">🔗</span>
-                <span className="text-sm font-bold text-amber-700">비선형공식 락(고리) 적용</span>
+                <span className="text-base">💸</span>
+                <span className="text-sm font-bold text-[#3B4CCA]">출금 요약 (1P = 1원)</span>
               </div>
               <div className="space-y-1.5 text-xs text-[#6B7394]">
                 <div className="flex justify-between"><span>출금 신청 금액</span><span className="font-bold text-[#1A1F36]">{amt.toLocaleString()}P</span></div>
-                <div className="flex justify-between"><span>비선형공식 {refund.rate}% 확보</span><span className="font-bold text-[#10B981]">{refund.securedPool.toLocaleString()}P</span></div>
-                <div className="flex justify-between"><span>본인 계좌로 이체 (100%)</span><span className="font-bold text-[#3B4CCA]">{refund.refundAmount.toLocaleString()}원</span></div>
-                <div className="flex justify-between"><span>다랜드 시스템 수익 (20%)</span><span className="font-bold text-amber-600">+{refund.systemProfit.toLocaleString()}P</span></div>
+                <div className="flex justify-between"><span>은행 계좌로 이체</span><span className="font-bold text-[#3B4CCA]">{amt.toLocaleString()}원</span></div>
+                <div className="flex justify-between"><span>수수료</span><span className="font-bold text-[#10B981]">무료</span></div>
               </div>
               <div className="mt-2 rounded-lg bg-white/70 px-2 py-1.5 text-[11px] leading-relaxed text-[#6B7394]">
-                관리자 승인 후 영업일 기준 1~2일 내 입금됩니다.
+                ※ 출금은 다랜드 계좌 밖(은행)으로 나가는 인출이라 <strong className="text-[#1A1F36]">1P = 1원 그대로</strong> 이체됩니다.
+                (지출 시 120% 적립과는 반대 방향 — 총량유지) · 관리자 승인 후 영업일 기준 1~2일 내 입금됩니다.
               </div>
             </div>
 
