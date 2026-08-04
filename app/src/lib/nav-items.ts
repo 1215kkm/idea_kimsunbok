@@ -23,6 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/engine", label: "엔진 설명", icon: "settings", desc: "비선형공식 원리", admin: false },
   { href: "/advertiser", label: "광고주", icon: "business", desc: "광고주 120% 수익", admin: false },
   { href: "/advertiser/invite", label: "리워드 초대", icon: "card_giftcard", desc: "초대하고 +20,000P 수익", admin: false },
+  { href: "/terms", label: "이용약관", icon: "description", desc: "총량유지·적립 방식 (베타)", admin: false },
   { href: "/admin", label: "관리자", icon: "admin_panel_settings", desc: "시스템 관리 패널", admin: true },
   { href: "/account/leave", label: "회원 탈퇴", icon: "logout", desc: "탈퇴 및 환불", admin: false },
 ];
