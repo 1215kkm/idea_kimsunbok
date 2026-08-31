@@ -567,6 +567,35 @@ export default function WithdrawPage() {
               </div>
             </div>
 
+            {/* 총량유지 순환구조 안내 (의뢰자 시안 구조 반영 — 숫자는 정직하게: 출금 100%, 재지출 시에만 120%) */}
+            <div className="rounded-2xl border border-[#3B4CCA]/20 bg-[#3B4CCA]/4 p-4 text-left">
+              <div className="mb-2 text-sm font-bold text-[#3B4CCA]">🔄 총량유지 순환구조 (참고)</div>
+              <div className="overflow-x-auto">
+                <div className="flex min-w-max items-center gap-1">
+                  {[
+                    { i: "🏦", l: "다랜드", p: "100%" },
+                    { i: "🏛️", l: "은행 이체", p: "100%" },
+                    { i: "💳", l: "카드 결제", p: "100%" },
+                    { i: "🔎", l: "OCR", p: "→" },
+                    { i: "🔄", l: "재충전", p: "120%" },
+                  ].map((s, idx, arr) => (
+                    <div key={s.l} className="flex items-center gap-1">
+                      <div className="flex w-16 flex-col items-center rounded-lg border border-[#E8EAF0] bg-white p-1.5 text-center">
+                        <span className="text-base">{s.i}</span>
+                        <span className="text-[9px] font-bold text-[#1A1F36]">{s.l}</span>
+                        <span className="text-[9px] text-[#3B4CCA]">{s.p}</span>
+                      </div>
+                      {idx < arr.length - 1 && <span className="text-[10px] text-[#3B4CCA]">→</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="mt-2 text-[11px] leading-relaxed text-[#6B7394]">
+                출금한 돈을 <strong className="text-[#1A1F36]">실제로 카드로 다시 쓰면</strong>, 그 지출이 OCR로 인식되어 별도 지출로서 120% 재충전됩니다.
+                (출금 자체는 100% 이체 · 120%는 재지출 시 발생) — <Link href="/terms" className="text-[#3B4CCA] underline">이용약관 §3</Link>
+              </p>
+            </div>
+
             <div className="rounded-2xl border border-purple-500/20 p-5"
               style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(6, 182, 212, 0.05))" }}>
               <div className="text-xs text-[#6B7394] mb-2">출금 정보</div>
