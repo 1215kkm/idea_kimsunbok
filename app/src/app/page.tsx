@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
+import Link from "next/link";
 import { apiGet, ApiClientError } from "@/lib/api-client";
 
 interface InviteInfo {
@@ -23,6 +24,9 @@ function LoginPageInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [betaConsent, setBetaConsent] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeMarketing, setAgreeMarketing] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null);
@@ -82,8 +86,8 @@ function LoginPageInner() {
       setError("이름을 입력해주세요.");
       return;
     }
-    if (isSignUp && !betaConsent) {
-      setError("베타 시연 동의에 체크해 주세요.");
+    if (isSignUp && !(agreeTerms && agreePrivacy && betaConsent)) {
+      setError("필수 약관(이용약관·개인정보·베타 시연)에 동의해 주세요.");
       return;
     }
     setSubmitting(true);
@@ -207,18 +211,51 @@ function LoginPageInner() {
         />
 
         {isSignUp && (
-          <label className="flex items-start gap-2 text-xs leading-relaxed text-[#6B7394] cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={betaConsent}
-              onChange={(e) => setBetaConsent(e.target.checked)}
-              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#3B4CCA]"
-            />
-            <span>
-              본 앱이 <strong className="text-[#1A1F36]">베타 시연용</strong>임을 이해하며,{" "}
-              <strong className="text-[#1A1F36]">적립금은 실 화폐가 아님</strong>을 동의합니다. (필수)
-            </span>
-          </label>
+          <div className="space-y-2.5 rounded-xl border border-[#E8EAF0] bg-[#F7F8FC] p-3">
+            {/* 전체 동의 */}
+            <label className="flex items-center gap-2 border-b border-[#E8EAF0] pb-2.5 text-sm font-bold text-[#1A1F36] cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={agreeTerms && agreePrivacy && betaConsent && agreeMarketing}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setAgreeTerms(v); setAgreePrivacy(v); setBetaConsent(v); setAgreeMarketing(v);
+                }}
+                className="h-4 w-4 shrink-0 cursor-pointer accent-[#3B4CCA]"
+              />
+              전체 동의
+            </label>
+
+            {/* 이용약관 (필수) */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-xs text-[#6B7394] cursor-pointer select-none">
+                <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="h-4 w-4 shrink-0 cursor-pointer accent-[#3B4CCA]" />
+                <span>이용약관 동의 <span className="text-[#EF4444]">(필수)</span></span>
+              </label>
+              <Link href="/terms" className="text-[10px] text-[#6B7394] underline hover:text-[#3B4CCA]">보기</Link>
+            </div>
+
+            {/* 개인정보 (필수) */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-xs text-[#6B7394] cursor-pointer select-none">
+                <input type="checkbox" checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)} className="h-4 w-4 shrink-0 cursor-pointer accent-[#3B4CCA]" />
+                <span>개인정보 수집·이용 동의 <span className="text-[#EF4444]">(필수)</span></span>
+              </label>
+              <Link href="/privacy" className="text-[10px] text-[#6B7394] underline hover:text-[#3B4CCA]">보기</Link>
+            </div>
+
+            {/* 베타 시연 (필수) */}
+            <label className="flex items-start gap-2 text-xs leading-relaxed text-[#6B7394] cursor-pointer select-none">
+              <input type="checkbox" checked={betaConsent} onChange={(e) => setBetaConsent(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#3B4CCA]" />
+              <span>본 앱이 <strong className="text-[#1A1F36]">베타 시연용</strong>이며 <strong className="text-[#1A1F36]">적립금은 실 화폐가 아님</strong>에 동의 <span className="text-[#EF4444]">(필수)</span></span>
+            </label>
+
+            {/* 마케팅 (선택) */}
+            <label className="flex items-center gap-2 text-xs text-[#6B7394] cursor-pointer select-none">
+              <input type="checkbox" checked={agreeMarketing} onChange={(e) => setAgreeMarketing(e.target.checked)} className="h-4 w-4 shrink-0 cursor-pointer accent-[#3B4CCA]" />
+              <span>마케팅 정보 수신 동의 <span className="text-[#9CA3C1]">(선택)</span></span>
+            </label>
+          </div>
         )}
 
         {error && <p className="text-center text-sm text-[#EF4444]">{error}</p>}

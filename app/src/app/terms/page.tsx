@@ -180,8 +180,36 @@ export default function TermsPage() {
             </ol>
           </Section>
 
+          {/* ===== 부칙 (법적 카브아웃 — 리스크 관리) ===== */}
+          <div className="rounded-2xl border-2 border-[#3B4CCA]/25 bg-[#3B4CCA]/4 p-5">
+            <h2 className="mb-3 text-base font-bold text-[#3B4CCA]">부칙</h2>
+            <div className="space-y-4 text-[#6B7394]">
+              <div>
+                <div className="mb-1 text-sm font-bold text-[#1A1F36]">제1조 (투자금에 관한 특칙)</div>
+                <p>투자금은 총량유지 비선형공식(Model A)의 총량유지모드를 <strong className="text-[#1A1F36]">적용하지 않습니다.</strong> 투자금의 입금·사용·회수 및 정산은 관계 법령과 별도의 계약 또는 운영정책에 따릅니다.</p>
+              </div>
+              <div>
+                <div className="mb-1 text-sm font-bold text-[#1A1F36]">제2조 (세금·벌금·과징금 등의 처리)</div>
+                <ol className="ml-4 list-decimal space-y-1">
+                  <li>「지출」에서 세금 납부에 관한 항목을 운영할 수 있습니다.</li>
+                  <li><strong className="text-[#1A1F36]">벌금·과징금 등 법령에 따라 본인이 직접 부담하여야 하는 금액</strong>은 다랜드의 적립금·리워드·총량유지모드에 따른 지급 대상으로 처리하지 않으며, 해당 소비자 또는 납부의무자가 본인 부담으로 납부합니다.</li>
+                  <li>세금 등의 납부 가능 여부와 처리방법은 관계 법령 및 해당 기관의 납부기준에 따릅니다.</li>
+                </ol>
+              </div>
+              <div>
+                <div className="mb-1 text-sm font-bold text-[#1A1F36]">제3조 (관계 법령 우선)</div>
+                <p>본 약관 및 부칙의 내용이 <strong className="text-[#1A1F36]">관계 법령의 강행규정과 충돌하는 경우에는 관계 법령을 우선</strong>하여 적용합니다.</p>
+              </div>
+              <div>
+                <div className="mb-1 text-sm font-bold text-[#1A1F36]">제4조 (부칙의 변경 및 시행)</div>
+                <p>회사는 관계 법령의 개정, 서비스 내용의 변경 또는 운영상 필요한 경우 본 부칙을 변경할 수 있으며, 회원의 권리·의무에 중대한 영향을 미치는 변경사항은 사전에 고지합니다. 본 부칙은 정식 출시 시점에 시행됩니다.</p>
+              </div>
+            </div>
+          </div>
+
           <p className="pt-4 text-center text-xs text-[#6B7394]">
-            시행일(예정): 정식 출시 시점 · 본 초안은 베타 테스트용입니다.
+            시행일(예정): 정식 출시 시점 · 본 초안은 베타 테스트용입니다. ·{" "}
+            <Link href="/privacy" className="text-[#3B4CCA] underline">개인정보 처리방침</Link>
           </p>
         </div>
       </div>

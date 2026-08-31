@@ -137,6 +137,16 @@ export default function DepositPage() {
           </div>
         )}
 
+        {/* 회원 등급별 입금 안내 (의뢰자 시안) */}
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+          <div className="flex-1 rounded-xl border border-[#E8EAF0] bg-white px-3 py-2 text-xs text-[#6B7394]">
+            👤 <strong className="text-[#1A1F36]">일반회원</strong> · 1회 최대 1억원 권장
+          </div>
+          <div className="flex-1 rounded-xl border border-[#E8EAF0] bg-white px-3 py-2 text-xs text-[#6B7394]">
+            🏢 <strong className="text-[#1A1F36]">기업회원</strong> 대량입금은 고객센터 문의
+          </div>
+        </div>
+
         <div className="space-y-3">
           <label className="text-xs text-[#6B7394] block">입금 금액 (P · 1P = 1원)</label>
           <input
