@@ -68,6 +68,10 @@ export async function POST(req: NextRequest) {
       } catch (err) {
         if (err instanceof ApiError) {
           inviteError = err.code;
+          // 인증만 안 된 상태 — 코드를 보관해 인증 후 재청구(POST /api/reward/redeem)에 쓴다
+          if (err.code === "EMAIL_NOT_VERIFIED") {
+            await userRef.set({ pendingRewardCode: inviteCode }, { merge: true });
+          }
         } else {
           inviteError = "INTERNAL";
         }

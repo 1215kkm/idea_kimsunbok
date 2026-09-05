@@ -128,6 +128,12 @@ export async function GET(req: NextRequest) {
         ...(rewardNet !== 0 ? [`리워드 원장 순변화 ${rewardNet} (0 이어야 함)`] : []),
         ...(negativeLocked > 0 ? [`lockedPoints 음수 회원 ${negativeLocked}명`] : []),
         ...(Object.keys(byType).some((k) => k.startsWith("unknown:")) ? ["집계 규칙 없는 transactions.type 존재"] : []),
+        ...((byType.untyped_legacy?.count || 0) > 0
+          ? [`type 없는 거래 ${byType.untyped_legacy.count}건 — spend 로 간주해 집계 (검증 필요)`]
+          : []),
+        ...((byType.spend_card?.totalDelta || 0) !== 0
+          ? [`카드 실지출 +120% 무차감 발행 ${byType.spend_card.totalDelta} — 정책 미확정 발행`]
+          : []),
       ],
       transactionCount: txSnap.size,
     });

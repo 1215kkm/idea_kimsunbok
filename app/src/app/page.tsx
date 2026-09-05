@@ -103,6 +103,12 @@ function LoginPageInner() {
             setError("유효하지 않은 초대 코드입니다.");
           else if (result.inviteError === "INACTIVE")
             setError("만료된 초대 코드입니다.");
+          else if (result.inviteError === "EMAIL_NOT_VERIFIED")
+            setError("이메일 인증 후 지급됩니다. 받은 메일의 링크를 눌러 주세요.");
+          else if (result.inviteError === "CAMPAIGN_NOT_ACTIVE" || result.inviteError === "BUDGET_EXHAUSTED")
+            setError("이 캠페인은 현재 지급이 중단되었습니다.");
+          else if (result.inviteError === "INVITE_DEPRECATED")
+            setError("구 초대 코드는 더 이상 지급되지 않습니다.");
           // 가입 자체는 성공이므로 라우팅은 useEffect에서 진행
         }
       } else {
@@ -143,12 +149,12 @@ function LoginPageInner() {
           <div className="mb-1 font-bold text-[#10B981]">🎁 초대 코드 적용됨</div>
           {inviteInfo ? (
             <p>
-              회원가입을 완료하면{" "}
+              가입 후 이메일 인증을 마치면 광고주 예산에서{" "}
               <strong className="text-[#1A1F36]">{inviteInfo.amount.toLocaleString()}P</strong>가
-              자동으로 지급됩니다!
+              지급됩니다.
             </p>
           ) : (
-            <p>회원가입을 완료하면 보상이 자동으로 지급됩니다.</p>
+            <p>가입 후 이메일 인증을 마치면 광고주 예산에서 리워드가 지급됩니다.</p>
           )}
         </div>
       )}

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { isConfigured, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { apiGet, apiPost } from "@/lib/api-client";
+import { ApiClientError, apiGet, apiPost } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -30,7 +30,6 @@ export default function AdvertiserInvitePage() {
   const [tiers, setTiers] = useState<TierOption[]>([]);
   const [active, setActive] = useState<ActiveInvite | null>(null);
   const [balance, setBalance] = useState(0);
-  const [copied, setCopied] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,8 +84,12 @@ export default function AdvertiserInvitePage() {
         redeemCount: 0,
         totalAdvertiserNetGain: 0,
       });
-    } catch {
-      setError("초대 코드 발급에 실패했습니다.");
+    } catch (err) {
+      if (err instanceof ApiClientError && err.code === "INVITE_DEPRECATED") {
+        setError(err.message);
+      } else {
+        setError("초대 코드 발급에 실패했습니다.");
+      }
     } finally {
       setBusy(false);
     }
@@ -107,41 +110,6 @@ export default function AdvertiserInvitePage() {
 
   // 표시 전용: 광고주에게 되돌아오는 포인트는 없다 (2026-09-06 CEO 결정, 기획서 §2)
   const reward = active ? { distributedToNewUser: active.amount } : null;
-
-  const handleCopy = async () => {
-    if (!inviteUrl) return;
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = inviteUrl;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const handleShare = async () => {
-    if (!inviteUrl) return;
-    if (navigator.share && reward) {
-      try {
-        await navigator.share({
-          title: "다랜드 초대",
-          text: `다랜드에 가입하면 ${reward.distributedToNewUser.toLocaleString()}P 드립니다 (광고주 예산에서 지급, 1P=1원)`,
-          url: inviteUrl,
-        });
-      } catch {
-        // cancelled
-      }
-    } else {
-      handleCopy();
-    }
-  };
 
   return (
     <div className="min-h-screen pb-20">
@@ -244,20 +212,25 @@ export default function AdvertiserInvitePage() {
             }}
           >
             <div className="mb-3 text-sm font-bold text-[#6B7394]">내 초대 코드</div>
-            <div className="mb-4 rounded-xl bg-[#F7F8FC] border border-[#E8EAF0] px-4 py-3 text-center">
-              <div className="text-2xl font-black tracking-widest text-[#3B4CCA]">{active.code}</div>
+            {/* GET /api/invite/code 로 받은 코드는 전부 구(베타) 코드 — 지급 경로가 410 으로 닫혔다 */}
+            <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-50 px-3 py-2 text-xs text-[#6B7394]">
+              <span className="font-bold text-amber-700">지급 중단 (베타 초대)</span> — 이 코드는 더 이상
+              리워드가 지급되지 않습니다. 캠페인 제출로 대체됩니다.
+            </div>
+            <div className="mb-4 rounded-xl bg-[#F7F8FC] border border-[#E8EAF0] px-4 py-3 text-center opacity-60">
+              <div className="text-2xl font-black tracking-widest text-[#3B4CCA] line-through">{active.code}</div>
               <div className="mt-1 text-xs text-[#6B7394] break-all">{inviteUrl}</div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={handleCopy}
-                className="rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] transition-transform hover:scale-[1.02] active:scale-95"
+                disabled
+                className="rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] opacity-40 cursor-not-allowed"
               >
-                {copied ? "복사됨!" : "링크 복사"}
+                링크 복사
               </button>
               <button
-                onClick={handleShare}
-                className="rounded-xl bg-gradient-to-r from-[#3B4CCA] to-[#6366F1] py-3 text-sm font-bold text-white transition-transform hover:scale-[1.02] active:scale-95"
+                disabled
+                className="rounded-xl bg-gradient-to-r from-[#3B4CCA] to-[#6366F1] py-3 text-sm font-bold text-white opacity-40 cursor-not-allowed"
               >
                 공유하기
               </button>

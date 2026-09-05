@@ -8,6 +8,7 @@ import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
+  sendEmailVerification,
 } from "firebase/auth";
 import { auth, isConfigured } from "@/lib/firebase";
 import { apiPost } from "@/lib/api-client";
@@ -77,6 +78,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
+    // 가입 리워드는 email_verified 가 true 여야 지급된다 (reward-service 게이트). 메일 실패는 가입을 막지 않는다.
+    try {
+      await sendEmailVerification(cred.user);
+    } catch (err) {
+      console.error("[auth] sendEmailVerification failed", err);
+    }
     // Force fresh ID token, then call server to provision the user document.
     await cred.user.getIdToken(true);
     try {
