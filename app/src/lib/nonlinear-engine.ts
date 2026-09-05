@@ -247,10 +247,14 @@ export interface InviteRewardResult {
 }
 
 /**
- * 광고주가 baseAmount(기본 1,000,000P — 의뢰자 확정 상향)를 분배하면:
- *  - 신규 가입자에게 baseAmount 지급
- *  - 광고주 본인 지출로 인식 → 비선형공식 120% 적립
- *  - 순변화 = +20% (advertiserSecured - advertiserSpend)
+ * 표시 전용 — 어떤 잔액에도 반영 금지 (2026-09-06 CEO 결정, 기획서 docs/admin-reward-plan.md §2).
+ *
+ * 리워드는 광고주 잔액 → 신규회원 잔액 100% 제로섬 이전이다. 이 함수가 돌려주는
+ * advertiserSecured / advertiserNetGain 은 구 "광고주도 120%" 모델의 설명 수치일 뿐이며
+ * users.totalPoints / lockedPoints / transactions 에 절대 쓰지 않는다.
+ * 실제 원장 계산은 lib/reward-ledger.ts + lib/server/reward-service.ts 가 한다.
+ *
+ * @deprecated 잔액 계산 용도로 호출 금지. 남겨 둔 이유: 구 화면·문서 호환.
  */
 export function calculateInviteReward(baseAmount: number = 1_000_000): InviteRewardResult {
   const rate = DEFAULT_CONFIG.correctionTarget; // 1.2

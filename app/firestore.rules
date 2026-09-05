@@ -49,6 +49,33 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /rewardCampaigns/{campaignId} {
+      // 광고주 본인 캠페인만 읽기. 제출·승인·지급·환불은 전부 서버(admin SDK) 트랜잭션.
+      allow read: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /rewardPayouts/{inviteeUid} {
+      // 받은 사람(문서 ID = inviteeUid) 또는 지급한 광고주만 읽기.
+      allow read: if request.auth != null
+        && (request.auth.uid == inviteeUid
+            || resource.data.ownerUid == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /rewardPayoutKeys/{emailHash} {
+      // 이메일 정규화 해시 (1인 1회 보조 키). 클라이언트 전면 차단.
+      allow read: if false;
+      allow write: if false;
+    }
+
+    match /adminAuditLogs/{logId} {
+      // 클라이언트 전면 차단. 관리자 API 로만 조회.
+      allow read: if false;
+      allow write: if false;
+    }
+
     match /settings/{docId} {
       // 시스템 설정(분할모드 등): 관리자 API(/api/admin/settings)로만 접근
       allow read: if false;

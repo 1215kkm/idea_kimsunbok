@@ -7,6 +7,16 @@
  * 실환경(Firebase) 전환 시 동일 스키마로 Firestore에 그대로 이관 가능.
  */
 
+import {
+  canRedeem,
+  lockAmount,
+  remainingBudget,
+  statusAfterPayout,
+  type CampaignStatus,
+  type RewardChannel,
+  type RewardKind,
+} from "./reward-ledger";
+
 export interface DemoTransaction {
   id: string;
   consumerId: string; // 이메일 (데모 환경의 user.uid 대체)
@@ -184,6 +194,237 @@ export function withdrawUser(
   return log;
 }
 
-// 초대 시스템은 서버 사이드 (Next.js API Routes + Firestore inviteCodes/inviteRedemptions
-// 컬렉션)로 이전됨. 데모 모드에서는 디바이스 간 초대가 본질적으로 동작 불가하므로
-// 관련 함수를 제거. 광고주 초대 페이지는 데모 모드에서 disabled 안내 배너로 처리.
+// --- 리워드 캠페인 (데모) ---
+//
+// 실서버는 lib/server/reward-service.ts (Firestore 트랜잭션). 데모 모드는 같은 규칙을
+// localStorage 안에서 흉내 낸다: 예산 잠금(잔액 → 잠금) → 리딤(잠금 → 회원 잔액) → 종료(잔여 반환).
+// Σ(잔액 + 잠금) 은 어떤 단계에서도 변하지 않는다 (기획서 §2, 2026-09-06 CEO 결정).
+// 디바이스 간 초대는 데모에서 본질적으로 불가하므로, 시드 캠페인 2건을 두고 같은 브라우저 안에서만 동작.
+
+export interface DemoCampaign {
+  id: string; // = code
+  code: string;
+  ownerEmail: string;
+  kind: RewardKind;
+  unitAmount: number;
+  headcount: number;
+  budgetLocked: number;
+  budgetPaid: number;
+  budgetRefunded: number;
+  paidCount: number;
+  channels: RewardChannel[];
+  copy: string;
+  status: CampaignStatus;
+  createdAt: number;
+}
+
+const CAMPAIGNS_KEY = "daland-demo-reward-campaigns";
+const PAYOUTS_KEY = "daland-demo-reward-payouts"; // { [inviteeEmail]: campaignId }
+const LOCKED_KEY = (email: string) => `daland-demo-locked-${email}`;
+
+/** 시드 광고주 (데모 전용 계정, 잔액은 getBalance 로 100만P 자동 시드) */
+export const DEMO_ADVERTISER_EMAIL = "advertiser@daland.demo";
+
+const SEED_CAMPAIGNS: DemoCampaign[] = [
+  {
+    id: "DEMO2026",
+    code: "DEMO2026",
+    ownerEmail: DEMO_ADVERTISER_EMAIL,
+    kind: "new_member",
+    unitAmount: 10_000,
+    headcount: 10,
+    budgetLocked: 100_000,
+    budgetPaid: 0,
+    budgetRefunded: 0,
+    paidCount: 0,
+    channels: ["kakao", "instagram"],
+    copy: "다랜드 가입하면 10,000P 드려요",
+    status: "live",
+    createdAt: 1_757_116_800_000, // 2026-09-06
+  },
+  {
+    id: "DEMOWAIT",
+    code: "DEMOWAIT",
+    ownerEmail: DEMO_ADVERTISER_EMAIL,
+    kind: "new_member",
+    unitAmount: 100_000,
+    headcount: 2,
+    budgetLocked: 200_000,
+    budgetPaid: 0,
+    budgetRefunded: 0,
+    paidCount: 0,
+    channels: ["youtube"],
+    copy: "승인 대기 중인 캠페인 (관리자 승인 전에는 지급 안 됨)",
+    status: "pending_review",
+    createdAt: 1_757_116_800_000,
+  },
+];
+
+function readCampaigns(): DemoCampaign[] {
+  if (!isBrowser()) return [];
+  try {
+    const raw = localStorage.getItem(CAMPAIGNS_KEY);
+    if (raw) return JSON.parse(raw) as DemoCampaign[];
+    // 최초 접근: 시드 + 시드 광고주 잠금액 반영 (잔액 100만 − 30만 = 70만, 잠금 30만)
+    const seedLocked = SEED_CAMPAIGNS.reduce((s, c) => s + c.budgetLocked, 0);
+    const advBalance = getBalance({ email: DEMO_ADVERTISER_EMAIL });
+    localStorage.setItem(BAL_KEY(DEMO_ADVERTISER_EMAIL), String(advBalance - seedLocked));
+    localStorage.setItem(LOCKED_KEY(DEMO_ADVERTISER_EMAIL), String(seedLocked));
+    localStorage.setItem(CAMPAIGNS_KEY, JSON.stringify(SEED_CAMPAIGNS));
+    return SEED_CAMPAIGNS.map((c) => ({ ...c }));
+  } catch {
+    return [];
+  }
+}
+
+function writeCampaigns(list: DemoCampaign[]) {
+  if (!isBrowser()) return;
+  try {
+    localStorage.setItem(CAMPAIGNS_KEY, JSON.stringify(list));
+  } catch {
+    // quota 초과 등 무시
+  }
+}
+
+function readPayouts(): Record<string, string> {
+  if (!isBrowser()) return {};
+  try {
+    const raw = localStorage.getItem(PAYOUTS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** 잠금(에스크로) 잔액 */
+export function getLockedBalance(user: { email?: string | null } | null | undefined): number {
+  if (!isBrowser()) return 0;
+  const key = emailKey(user);
+  if (!key) return 0;
+  readCampaigns(); // 시드 보장
+  const n = parseInt(localStorage.getItem(LOCKED_KEY(key)) || "0", 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function setLocked(email: string, value: number) {
+  localStorage.setItem(LOCKED_KEY(email), String(value));
+}
+
+/** 전체 캠페인 (관리자 데모용) / 내 캠페인 */
+export function getCampaigns(user?: { email?: string | null } | null): DemoCampaign[] {
+  const all = readCampaigns();
+  const key = emailKey(user);
+  return key ? all.filter((c) => c.ownerEmail === key) : all;
+}
+
+function makeDemoCode(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < 8; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return out;
+}
+
+export type DemoRewardError =
+  | "INSUFFICIENT_BALANCE"
+  | "NOT_FOUND"
+  | "ALREADY_REDEEMED"
+  | "SELF_INVITE"
+  | "CAMPAIGN_NOT_ACTIVE"
+  | "BUDGET_EXHAUSTED"
+  | "INVALID_STATE";
+
+/** 캠페인 제출 = 예산 잠금 (잔액 → 잠금). 실서버 createCampaign 과 동일 규칙. */
+export function createCampaign(
+  user: { email?: string | null },
+  input: { kind: RewardKind; unitAmount: number; headcount: number; channels: RewardChannel[]; copy: string },
+): { ok: true; campaign: DemoCampaign } | { ok: false; error: DemoRewardError } {
+  if (!isBrowser()) return { ok: false, error: "INVALID_STATE" };
+  const key = emailKey(user);
+  if (!key) return { ok: false, error: "INVALID_STATE" };
+  const budget = lockAmount(input.unitAmount, input.headcount);
+  const balance = getBalance(user);
+  if (balance < budget) return { ok: false, error: "INSUFFICIENT_BALANCE" };
+
+  const list = readCampaigns();
+  let code = makeDemoCode();
+  while (list.some((c) => c.id === code)) code = makeDemoCode();
+  const campaign: DemoCampaign = {
+    id: code,
+    code,
+    ownerEmail: key,
+    kind: input.kind,
+    unitAmount: input.unitAmount,
+    headcount: input.headcount,
+    budgetLocked: budget,
+    budgetPaid: 0,
+    budgetRefunded: 0,
+    paidCount: 0,
+    channels: input.channels,
+    copy: input.copy,
+    status: "pending_review",
+    createdAt: Date.now(),
+  };
+  localStorage.setItem(BAL_KEY(key), String(balance - budget));
+  setLocked(key, getLockedBalance(user) + budget);
+  list.unshift(campaign);
+  writeCampaigns(list);
+  return { ok: true, campaign };
+}
+
+/** 리딤 = 광고주 잠금 → 회원 잔액. 1인 1회, 자기 코드 거부, live/approved 만. */
+export function redeemCampaign(
+  user: { email?: string | null },
+  codeInput: string,
+): { ok: true; amount: number; newBalance: number } | { ok: false; error: DemoRewardError } {
+  if (!isBrowser()) return { ok: false, error: "INVALID_STATE" };
+  const key = emailKey(user);
+  if (!key) return { ok: false, error: "INVALID_STATE" };
+  const code = (codeInput || "").trim().toUpperCase();
+  const payouts = readPayouts();
+  if (payouts[key]) return { ok: false, error: "ALREADY_REDEEMED" };
+  const list = readCampaigns();
+  const c = list.find((x) => x.id === code);
+  if (!c) return { ok: false, error: "NOT_FOUND" };
+  if (c.ownerEmail === key) return { ok: false, error: "SELF_INVITE" };
+  if (!canRedeem(c.status)) return { ok: false, error: "CAMPAIGN_NOT_ACTIVE" };
+  if (remainingBudget(c) < c.unitAmount) return { ok: false, error: "BUDGET_EXHAUSTED" };
+  const ownerLocked = getLockedBalance({ email: c.ownerEmail });
+  if (ownerLocked < c.unitAmount) return { ok: false, error: "INVALID_STATE" };
+
+  setLocked(c.ownerEmail, ownerLocked - c.unitAmount);
+  const newBalance = getBalance(user) + c.unitAmount;
+  localStorage.setItem(BAL_KEY(key), String(newBalance));
+  c.budgetPaid += c.unitAmount;
+  c.paidCount += 1;
+  c.status = statusAfterPayout(c, c.unitAmount, c.status);
+  writeCampaigns(list);
+  payouts[key] = c.id;
+  localStorage.setItem(PAYOUTS_KEY, JSON.stringify(payouts));
+  return { ok: true, amount: c.unitAmount, newBalance };
+}
+
+/** 종료·거절 = 잔여 예산을 광고주 잔액으로 반환. 승인·정지·재개는 상태만. */
+export function setCampaignStatus(
+  campaignId: string,
+  next: CampaignStatus,
+): { ok: true; refunded: number } | { ok: false; error: DemoRewardError } {
+  if (!isBrowser()) return { ok: false, error: "INVALID_STATE" };
+  const list = readCampaigns();
+  const c = list.find((x) => x.id === campaignId);
+  if (!c) return { ok: false, error: "NOT_FOUND" };
+  if (c.status === "ended" || c.status === "rejected") return { ok: false, error: "INVALID_STATE" };
+  let refunded = 0;
+  if (next === "ended" || next === "rejected") {
+    refunded = remainingBudget(c);
+    if (refunded > 0) {
+      const ownerLocked = getLockedBalance({ email: c.ownerEmail });
+      if (ownerLocked < refunded) return { ok: false, error: "INVALID_STATE" };
+      setLocked(c.ownerEmail, ownerLocked - refunded);
+      localStorage.setItem(BAL_KEY(c.ownerEmail), String(getBalance({ email: c.ownerEmail }) + refunded));
+      c.budgetRefunded += refunded;
+    }
+  }
+  c.status = next;
+  writeCampaigns(list);
+  return { ok: true, refunded };
+}

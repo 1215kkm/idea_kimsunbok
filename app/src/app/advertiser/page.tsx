@@ -46,15 +46,15 @@ export default function AdvertiserPage() {
     <div className="min-h-screen pb-20">
       <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
         <h1 className="text-lg font-bold">광고주 대시보드</h1>
-        <p className="text-xs dark-text-muted text-[#6B7394]">광고주도 120% 수익</p>
+        <p className="text-xs dark-text-muted text-[#6B7394]">리워드 캠페인으로 신규 회원 유치</p>
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-6">
         <div className="dark-card mb-6 rounded-2xl border border-emerald-500/30 p-5 text-center"
           style={{ background: "linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 182, 212, 0.08))" }}>
-          <div className="text-sm dark-text-muted text-[#6B7394]">광고주가 투자하면</div>
-          <div className="mt-1 text-3xl font-black text-[#10B981]">120% 수익 발생</div>
-          <div className="mt-2 text-xs dark-text-muted text-[#6B7394]">광고비가 사라지지 않고, 비선형공식으로 순환합니다</div>
+          <div className="text-sm dark-text-muted text-[#6B7394]">리워드 캠페인이란</div>
+          <div className="mt-1 text-2xl font-black text-[#3B4CCA]">내 포인트 → 신규 회원에게 1인당 정액 지급</div>
+          <div className="mt-2 text-xs dark-text-muted text-[#6B7394]">예산은 제출 시 잠기고, 가입한 회원에게 그대로 이전됩니다. 남은 예산은 종료 시 전액 반환.</div>
         </div>
 
         {/* 리워드 광고 설계 — 금액 × 인원 선택 (의뢰자 확정 메뉴) */}
@@ -104,17 +104,13 @@ export default function AdvertiserPage() {
                 <span>신규 회원 {groupSize}명에게 지급</span>
                 <span className="font-bold text-[#EF4444]">-{formatKorean(rewardAmount * groupSize).replace("원", "P")}</span>
               </div>
-              <div className="flex justify-between px-2">
-                <span>비선형공식 120% 적립</span>
-                <span className="font-bold text-[#10B981]">+{formatKorean(Math.round(rewardAmount * groupSize * 1.2)).replace("원", "P")}</span>
-              </div>
               <div className="flex justify-between border-t border-[#E8EAF0] px-2 pt-1">
-                <span className="font-bold">광고주 순증 (+20%)</span>
-                <span className="font-bold text-[#3B4CCA]">+{formatKorean(Math.round(rewardAmount * groupSize * 0.2)).replace("원", "P")}</span>
+                <span className="font-bold">광고주가 얻는 것</span>
+                <span className="font-bold text-[#3B4CCA]">회원 {groupSize}명</span>
               </div>
               <div className="flex justify-between px-2">
-                <span>이후 회원 지출의 5% 평생 적립</span>
-                <span className="font-bold text-orange-500">지속 수익</span>
+                <span>미지급 잔여 예산</span>
+                <span className="font-bold text-[#10B981]">종료 시 전액 반환</span>
               </div>
             </div>
           </div>

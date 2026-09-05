@@ -33,6 +33,10 @@ const TX_LABEL: Record<string, string> = {
   invite_advertiser: "초대 수익",
   withdrawal_request: "출금 요청",
   withdrawal_refund: "출금 환불",
+  reward_lock: "리워드 예산 잠금",
+  reward_out: "리워드 지급",
+  reward_in: "가입 리워드 수령",
+  reward_refund: "리워드 예산 반환",
 };
 
 export default function DashboardPage() {
@@ -219,7 +223,8 @@ export default function DashboardPage() {
             {recentTxs.map((tx) => {
               const label = (tx.type && TX_LABEL[tx.type]) || "거래";
               const title = tx.storeName || tx.categoryName || label;
-              const isMinus = tx.type === "withdrawal_request";
+              const isMinus =
+                tx.type === "withdrawal_request" || tx.type === "reward_lock" || tx.type === "reward_out";
               const sign = isMinus ? "-" : "+";
               const color = isMinus ? "#EF4444" : "#10B981";
               const display = tx.totalAccumulation || tx.amount || 0;

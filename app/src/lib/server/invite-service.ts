@@ -1,8 +1,18 @@
+/**
+ * [폐기 예정 — 읽기 전용] 구 초대 코드 시스템 (inviteCodes / inviteRedemptions)
+ *
+ * 2026-09-06 CEO 결정 (기획서 docs/admin-reward-plan.md §2, §4.3, §8-1·§8-6):
+ *  - 구 redeemInviteCode 는 광고주 잔액 차감 없이 신규회원 +100%, 광고주 +20% 를 "무에서 생성"했다.
+ *  - 리워드는 100% 제로섬 이전이어야 하므로 신규 지급 경로는 lib/server/reward-service.ts 로 교체.
+ *  - 기존 inviteCodes / inviteRedemptions 문서는 소급 차감 없이 보존하고,
+ *    총량 정합 API(/api/admin/ledger/totals)에서 "베타 조정" 항목으로 분리 집계한다.
+ *  - 이 파일의 redeemInviteCode 는 즉시 410(INVITE_DEPRECATED) 를 던진다. 코드 발급 함수는
+ *    구 화면 호환(읽기)을 위해 남겨 두지만 POST 라우트는 410 을 반환한다.
+ */
 import { randomBytes } from "crypto";
 import { adminDb } from "./firebase-admin";
 import { ApiError } from "./api-error";
 import { INVITE_TIERS, isValidTier, type InviteTierId } from "./invite-tiers";
-import { calculateInviteReward } from "@/lib/nonlinear-engine";
 import { FieldValue, type Transaction } from "firebase-admin/firestore";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // exclude I, O, 0, 1
@@ -90,115 +100,14 @@ export async function getActiveInviteForUser(ownerUid: string) {
 }
 
 /**
- * Redeem an invite code for a newly-signed-up user.
- * - Idempotent: if inviteRedemptions/{inviteeUid} already exists, throws ALREADY_REDEEMED
- * - Self-invite check
- * - amount/reward calculated from server-side INVITE_TIERS only (code's stored amount is double-checked)
+ * @deprecated 2026-09-06 — 무에서 포인트 생성 경로. 항상 410 INVITE_DEPRECATED.
+ * 신규 가입 리워드는 reward-service.redeemCampaignCode 를 사용한다.
+ * 호출부(post-signup)는 reward-service.redeemCampaignCode 로 이미 교체됨. 남은 호출 없음.
  */
-export async function redeemInviteCode(
-  inviteeUid: string,
-  code: string,
-): Promise<{
-  distributedToNewUser: number;
-  advertiserNetGain: number;
-  inviterUid: string;
-  tierId: InviteTierId;
-}> {
-  if (typeof code !== "string" || !/^[A-Z0-9]{8}$/.test(code)) {
-    throw new ApiError("INVALID_INPUT", "Invalid invite code format", 400, {
-      field: "inviteCode",
-    });
-  }
-  const db = adminDb();
-  const codeRef = db.collection("inviteCodes").doc(code);
-  const redemptionRef = db.collection("inviteRedemptions").doc(inviteeUid);
-
-  return await db.runTransaction(async (tx: Transaction) => {
-    const [redemptionSnap, codeSnap] = await Promise.all([
-      tx.get(redemptionRef),
-      tx.get(codeRef),
-    ]);
-    if (redemptionSnap.exists) {
-      throw new ApiError("ALREADY_REDEEMED", "User already redeemed an invite", 409);
-    }
-    if (!codeSnap.exists) {
-      throw new ApiError("NOT_FOUND", "Invite code not found", 404);
-    }
-    const codeData = codeSnap.data()!;
-    if (codeData.active === false) {
-      throw new ApiError("INACTIVE", "Invite code is no longer active", 410);
-    }
-    const inviterUid = codeData.ownerUid as string;
-    if (inviterUid === inviteeUid) {
-      throw new ApiError("SELF_INVITE", "Cannot redeem your own invite", 400);
-    }
-    const tierId = codeData.tierId as InviteTierId;
-    if (!isValidTier(tierId)) {
-      throw new ApiError("INTERNAL", "Stored tier is invalid", 500);
-    }
-    const tier = INVITE_TIERS[tierId];
-    const reward = calculateInviteReward(tier.amount);
-
-    const inviterRef = db.collection("users").doc(inviterUid);
-    const inviteeRef = db.collection("users").doc(inviteeUid);
-    const inviterSnap = await tx.get(inviterRef);
-    const inviteeSnap = await tx.get(inviteeRef);
-
-    const inviterPoints = (inviterSnap.exists ? inviterSnap.data()?.totalPoints || 0 : 0) as number;
-    const inviteePoints = (inviteeSnap.exists ? inviteeSnap.data()?.totalPoints || 0 : 0) as number;
-
-    tx.set(
-      inviterRef,
-      { totalPoints: inviterPoints + reward.advertiserNetGain },
-      { merge: true },
-    );
-    tx.set(
-      inviteeRef,
-      { totalPoints: inviteePoints + reward.distributedToNewUser },
-      { merge: true },
-    );
-
-    tx.create(redemptionRef, {
-      inviteeUid,
-      inviterUid,
-      code,
-      tierId,
-      amount: reward.distributedToNewUser,
-      advertiserNetGain: reward.advertiserNetGain,
-      redeemedAt: FieldValue.serverTimestamp(),
-    });
-
-    tx.update(codeRef, {
-      redeemCount: FieldValue.increment(1),
-      totalAdvertiserNetGain: FieldValue.increment(reward.advertiserNetGain),
-    });
-
-    const inviteeTxRef = db.collection("transactions").doc();
-    tx.create(inviteeTxRef, {
-      consumerId: inviteeUid,
-      type: "invite_invitee",
-      amount: reward.distributedToNewUser,
-      totalAccumulation: reward.distributedToNewUser,
-      inviteCode: code,
-      inviterUid,
-      createdAt: FieldValue.serverTimestamp(),
-    });
-    const inviterTxRef = db.collection("transactions").doc();
-    tx.create(inviterTxRef, {
-      consumerId: inviterUid,
-      type: "invite_advertiser",
-      amount: reward.advertiserSpend,
-      totalAccumulation: reward.advertiserNetGain,
-      inviteCode: code,
-      inviteeUid,
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    return {
-      distributedToNewUser: reward.distributedToNewUser,
-      advertiserNetGain: reward.advertiserNetGain,
-      inviterUid,
-      tierId,
-    };
-  });
+export async function redeemInviteCode(): Promise<never> {
+  throw new ApiError(
+    "INVITE_DEPRECATED",
+    "구 초대 코드 지급은 중단되었습니다. 리워드 캠페인 코드(/api/reward/redeem)를 사용해 주세요.",
+    410,
+  );
 }

@@ -10,7 +10,14 @@ export type ApiErrorCode =
   | "SELF_INVITE"
   | "ALREADY_REDEEMED"
   | "INSUFFICIENT_BALANCE"
-  | "INACTIVE";
+  | "INACTIVE"
+  | "INVITE_DEPRECATED"
+  | "CAMPAIGN_NOT_ACTIVE"
+  | "BUDGET_EXHAUSTED"
+  | "INVALID_STATE"
+  | "EMAIL_NOT_VERIFIED"
+  | "DAILY_CAP_REACHED"
+  | "INSUFFICIENT_QUALIFICATION";
 
 export class ApiError extends Error {
   code: ApiErrorCode;

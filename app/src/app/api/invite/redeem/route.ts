@@ -1,27 +1,18 @@
-import type { NextRequest } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
-import { ApiError, jsonError, jsonOk } from "@/lib/server/api-error";
-import { redeemInviteCode } from "@/lib/server/invite-service";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest) {
-  try {
-    const user = await requireAuth(req);
-    const body = (await req.json().catch(() => ({}))) as { inviteCode?: unknown };
-    if (typeof body.inviteCode !== "string") {
-      throw new ApiError("INVALID_INPUT", "inviteCode is required", 400, {
-        field: "inviteCode",
-      });
-    }
-    const result = await redeemInviteCode(user.uid, body.inviteCode.trim().toUpperCase());
-    return jsonOk({
-      ok: true,
-      distributedToNewUser: result.distributedToNewUser,
-      advertiserNetGain: result.advertiserNetGain,
-      tierId: result.tierId,
-    });
-  } catch (err) {
-    return jsonError(err);
-  }
+/**
+ * 410 Gone — 구 초대 코드 지급 경로 (2026-09-06 CEO 결정, 기획서 §4.3).
+ * 광고주 잔액 차감 없이 포인트를 생성하던 경로라 영구 폐쇄. 대체: POST /api/reward/redeem
+ */
+export async function POST() {
+  return NextResponse.json(
+    {
+      error: "INVITE_DEPRECATED",
+      message: "구 초대 코드 지급은 중단되었습니다. 리워드 캠페인 코드(/api/reward/redeem)를 사용해 주세요.",
+      replacement: "/api/reward/redeem",
+    },
+    { status: 410, headers: { "Cache-Control": "no-store" } },
+  );
 }

@@ -3,7 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/server/firebase-admin";
 import { requireAuth, isAdminEmail } from "@/lib/server/auth";
 import { ApiError, jsonError, jsonOk } from "@/lib/server/api-error";
-import { redeemInviteCode } from "@/lib/server/invite-service";
+import { redeemCampaignCode } from "@/lib/server/reward-service";
 
 export const runtime = "nodejs";
 
@@ -55,11 +55,16 @@ export async function POST(req: NextRequest) {
       totalPoints = BETA_INITIAL_FUNDS;
     }
 
+    // 가입 리워드 = 광고주 캠페인 에스크로에서 제로섬 이전 (reward-service). 구 redeemInviteCode 는 410.
     if (inviteCode) {
       try {
-        const result = await redeemInviteCode(user.uid, inviteCode);
+        // 이메일 미인증이면 EMAIL_NOT_VERIFIED 로 돌아온다 — 인증 후 POST /api/reward/redeem 으로 다시 청구
+        const result = await redeemCampaignCode(
+          { uid: user.uid, email: user.email, emailVerified: user.emailVerified },
+          inviteCode,
+        );
         inviteRedeemed = true;
-        totalPoints += result.distributedToNewUser;
+        totalPoints = result.newBalance;
       } catch (err) {
         if (err instanceof ApiError) {
           inviteError = err.code;

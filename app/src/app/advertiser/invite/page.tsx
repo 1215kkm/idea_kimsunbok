@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { isConfigured, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { calculateInviteReward } from "@/lib/nonlinear-engine";
 import { apiGet, apiPost } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
@@ -106,7 +105,8 @@ export default function AdvertiserInvitePage() {
       ? `${window.location.origin}/?invite=${active.code}`
       : "";
 
-  const reward = active ? calculateInviteReward(active.amount) : null;
+  // 표시 전용: 광고주에게 되돌아오는 포인트는 없다 (2026-09-06 CEO 결정, 기획서 §2)
+  const reward = active ? { distributedToNewUser: active.amount } : null;
 
   const handleCopy = async () => {
     if (!inviteUrl) return;
@@ -132,7 +132,7 @@ export default function AdvertiserInvitePage() {
       try {
         await navigator.share({
           title: "다랜드 초대",
-          text: `다랜드에 가입하고 ${reward.distributedToNewUser.toLocaleString()}P를 받으세요! 쓸수록 쌓이는 120%의 마법`,
+          text: `다랜드에 가입하면 ${reward.distributedToNewUser.toLocaleString()}P 드립니다 (광고주 예산에서 지급, 1P=1원)`,
           url: inviteUrl,
         });
       } catch {
@@ -152,7 +152,7 @@ export default function AdvertiserInvitePage() {
           </Link>
           <div>
             <h1 className="text-lg font-bold">리워드 초대</h1>
-            <p className="text-xs dark-text-muted text-[#6B7394]">초대할수록 나도 120% 수익</p>
+            <p className="text-xs dark-text-muted text-[#6B7394]">내 포인트로 신규 회원 유치</p>
           </div>
         </div>
       </div>
@@ -180,11 +180,11 @@ export default function AdvertiserInvitePage() {
               "linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 182, 212, 0.08))",
           }}
         >
-          <div className="text-xs text-[#6B7394]">초대 리워드 총 수익</div>
-          <div className="mt-1 text-3xl font-black text-[#10B981]">
-            +{(active?.totalAdvertiserNetGain ?? 0).toLocaleString()}P
+          <div className="text-xs text-[#6B7394]">초대로 유치한 회원</div>
+          <div className="mt-1 text-3xl font-black text-[#3B4CCA]">
+            {(active?.redeemCount ?? 0).toLocaleString()}명
           </div>
-          <div className="mt-1 text-xs text-[#6B7394]">총 {active?.redeemCount ?? 0}명 초대 완료</div>
+          <div className="mt-1 text-xs text-[#6B7394]">지급된 리워드는 내 포인트에서 회원에게 이전됩니다</div>
         </div>
 
         {/* tier 선택 */}
@@ -224,10 +224,8 @@ export default function AdvertiserInvitePage() {
               {active ? (
                 <>
                   현재 활성 코드:{" "}
-                  <strong className="text-[#3B4CCA]">{active.amount.toLocaleString()}P</strong> · 광고주 순수익{" "}
-                  <strong className="text-[#10B981]">
-                    +{calculateInviteReward(active.amount).advertiserNetGain.toLocaleString()}P
-                  </strong>
+                  <strong className="text-[#3B4CCA]">{active.amount.toLocaleString()}P</strong> · 가입 1명당 내 포인트에서{" "}
+                  <strong className="text-[#EF4444]">-{active.amount.toLocaleString()}P</strong>
                 </>
               ) : (
                 <>tier를 선택하면 새 초대 코드가 발급됩니다.</>
@@ -284,11 +282,10 @@ export default function AdvertiserInvitePage() {
             {showHowItWorks && (
               <div className="mt-3 space-y-2 text-xs text-[#6B7394]">
                 {[
-                  { step: "1", text: `광고주(나)가 ${reward.advertiserSpend.toLocaleString()}P를 분배`, color: "#a855f7" },
-                  { step: "2", text: `신규 가입자에게 ${reward.distributedToNewUser.toLocaleString()}P 지급`, color: "#06b6d4" },
-                  { step: "3", text: "광고주 본인 지출로 인식 → 비선형공식 실행", color: "#f59e0b" },
-                  { step: "4", text: `120% 적립 → ${reward.advertiserSecured.toLocaleString()}P 확보`, color: "#10b981" },
-                  { step: "5", text: `순수익 +${reward.advertiserNetGain.toLocaleString()}P (데이터 노동 보상)`, color: "#ec4899" },
+                  { step: "1", text: `광고주(나)가 ${reward.distributedToNewUser.toLocaleString()}P × 인원만큼 예산을 잠금`, color: "#a855f7" },
+                  { step: "2", text: `신규 가입자 1명당 ${reward.distributedToNewUser.toLocaleString()}P 가 내 잠금 예산에서 이전`, color: "#06b6d4" },
+                  { step: "3", text: "광고주에게 되돌아오는 포인트는 없음 — 얻는 것은 회원", color: "#f59e0b" },
+                  { step: "4", text: "모집 종료 시 남은 예산은 내 잔액으로 전액 반환", color: "#10b981" },
                 ].map((s) => (
                   <div key={s.step} className="flex items-center gap-3">
                     <div
