@@ -8,3 +8,7 @@ node_modules/
 **/serviceAccount*.json
 **/firebase-adminsdk-*.json
 **/*-firebase-adminsdk.json
+
+# 로컬 전용 시안·캡처 (레포에 넣지 않음)
+.pt-images/
+9월5일 리워드/

@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="A">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>다랜드 관리자 시안 v0.1 — 강디 (A 네이비 확정 / B 보라 대안)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Agbalumo&display=swap">
+<style>
+/* =====================================================================
+   토큰 — A (본안, 기본 로드): 앱 네이비 — CEO 확정 (기획서 §8-4)
+   브랜드 HEX 는 app/src/app/globals.css 값만 사용. 구조(radius·shadow·
+   spacing·폰트 스케일·컴포넌트)는 활성 스타일 #1 Crowny Class 그대로.
+   ===================================================================== */
+:root {
+  --primary: #3B4CCA; --primary-light: #5B6BD6; --primary-rgb: 59, 76, 202;
+  --primary-dark: color-mix(in srgb, #3B4CCA 85%, #000);
+  --secondary: #5B6BD6; --secondary-light: #9BA6F0;
+  --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  /* 사이드바: 참조 이미지처럼 위→아래 한 색조 그라데이션 (짙은 네이비 → 네이비 → 밝은 네이비) */
+  --sidebar-gradient: linear-gradient(180deg, color-mix(in srgb, #3B4CCA 88%, #000) 0%, var(--primary) 55%, var(--primary-light) 100%);
+
+  --dark-bg: #1B1D21; --dark-tertiary: #2B2D35; --dark-border: #3D3D54;
+  --light-bg: #F7F8FC; --light-card: #FFFFFF; --light-border: #E8EAF0; --light-hover: #F9FAFB;
+  --text-primary: #FFFFFF; --text-dark: #1A1F36; --text-secondary: #9CA3AF; --text-muted: #6B7394;
+  --btn-secondary-bg: #F3F4F6; --btn-secondary-text: #374151; --btn-outline-border: #D1D5DB;
+
+  --success: #10B981; --success-light: #DCFCE7;
+  --warning: #F59E0B; --warning-light: #FEF3C7;
+  --error:   #EF4444; --error-light:   #FEE2E2;
+  --info:    #3B82F6; --info-light:    #DBEAFE;
+
+  /* §2.6 분류 칩 — 브랜드 칩은 네이비 기반 */
+  --chip-purple-bg: rgba(59,76,202,.08); --chip-purple-text: #3B4CCA;
+  --chip-blue-bg: rgba(59,130,246,.10);   --chip-blue-text: #1D4ED8;
+  --chip-green-bg: rgba(34,197,94,.10);   --chip-green-text: #15803D;
+  --chip-orange-bg: rgba(245,158,11,.12); --chip-orange-text: #B45309;
+  --chip-pink-bg: rgba(236,72,153,.10);   --chip-pink-text: #BE185D;
+
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px; --radius-xl: 16px; --radius-2xl: 20px; --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05); --shadow-md: 0 4px 6px rgba(0,0,0,.07);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,.10); --shadow-xl: 0 20px 25px rgba(0,0,0,.15);
+  --shadow-primary: 0 4px 14px rgba(var(--primary-rgb), .35);
+  --spacing-xs: 4px; --spacing-sm: 8px; --spacing-md: 16px; --spacing-lg: 24px; --spacing-xl: 32px;
+  --font-xs: 16px; --font-sm: 16px; --font-md: 16px; --font-lg: 18px; --font-xl: 20px; --font-2xl: 26px; --font-3xl: 32px;
+  --transition-fast: .15s ease; --transition-normal: .2s ease; --transition-slow: .3s ease;
+  --sidebar-width: 240px;   /* 기획서 §3.1 지정 (Crowny 기본 260 → 관리자 240) */
+  --chrome-height: 56px;    /* 시안 전용 상단 바 (실제 제품엔 없음) */
+  --font-family-base: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-display: 'Agbalumo', var(--font-family-base);
+}
+
+/* =====================================================================
+   토큰 — B (토글 대안): Crowny Class #1 보라 — 참조 이미지 원색
+   (styles/01-crowny-class.md §15). 구조는 A 와 동일, 브랜드 HEX 만 교체.
+   ===================================================================== */
+html[data-theme="B"] {
+  --primary: #8A38F5; --primary-dark: #7030D4; --primary-light: #A855F7; --primary-rgb: 138, 56, 245;
+  --secondary: #D53A6B; --secondary-light: #F472B6;
+  --gradient: linear-gradient(135deg, #8A38F5 0%, #D53A6B 100%);
+  --sidebar-gradient: linear-gradient(180deg, #7030D4 0%, #8A38F5 55%, #A855F7 100%);
+  --light-bg: #F3F4F6; --light-border: #E5E7EB; --text-dark: #1F2937; --text-muted: #6B7280;
+  --success: #22C55E;
+  --chip-purple-bg: rgba(138,56,245,.10); --chip-purple-text: #6B46C1;
+}
+
+/* ===== 베이스 ===== */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: var(--font-family-base); font-size: var(--font-md); line-height: 1.6;
+  color: var(--text-dark); background: var(--light-bg);
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .30); }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--text-muted); }
+.ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
+.ic-sm { width: 16px; height: 16px; }
+.hide { display: none !important; }
+
+/* ===== 시안 전용 상단 바 (화면 탭 + A/B 토글) ===== */
+.chrome {
+  position: sticky; top: 0; z-index: 60; height: var(--chrome-height);
+  background: var(--dark-bg); color: var(--text-primary); border-bottom: 1px solid var(--dark-border);
+  display: flex; align-items: center; gap: var(--spacing-md); padding: 0 var(--spacing-lg);
+}
+.chrome .title { font-weight: 700; white-space: nowrap; }
+.chrome .title span { color: var(--text-secondary); font-weight: 400; margin-left: var(--spacing-sm); }
+.chrome .tabs { display: flex; gap: var(--spacing-xs); margin-left: var(--spacing-md); overflow-x: auto; }
+.chrome .tab {
+  padding: 8px 16px; border-radius: var(--radius-md); color: var(--text-secondary); font-weight: 600; white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+.chrome .tab:hover { background: var(--dark-tertiary); color: var(--text-primary); }
+.chrome .tab:active { transform: scale(.97); }
+.chrome .tab.active { background: var(--gradient); color: var(--text-primary); }
+.chrome .spacer { flex: 1; }
+.seg { display: flex; background: var(--dark-tertiary); border-radius: var(--radius-md); padding: 3px; gap: 3px; }
+.seg button { padding: 6px 14px; border-radius: 8px; color: var(--text-secondary); font-weight: 600; white-space: nowrap; transition: all var(--transition-fast); }
+.seg button.active { background: var(--gradient); color: var(--text-primary); }
+.seg button:active { transform: scale(.97); }
+.seg .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; margin-right: 6px; }
+.seg .sw-a { background: linear-gradient(135deg, #3B4CCA, #5B6BD6); }
+.seg .sw-b { background: linear-gradient(135deg, #8A38F5, #D53A6B); }
+
+/* ===== 앱 셸 ===== */
+.app { display: flex; min-height: calc(100vh - var(--chrome-height)); }
+.sidebar {
+  width: var(--sidebar-width); flex: 0 0 var(--sidebar-width);
+  background: var(--sidebar-gradient); color: var(--text-primary);
+  position: sticky; top: var(--chrome-height); height: calc(100vh - var(--chrome-height));
+  display: flex; flex-direction: column; padding: var(--spacing-lg) var(--spacing-md);
+  transition: transform var(--transition-normal); z-index: 55;
+}
+.brand { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-xs); padding: var(--spacing-sm) 0 var(--spacing-lg); }
+.brand .mark {
+  width: 48px; height: 48px; border-radius: var(--radius-lg); background: rgba(255,255,255,.18);
+  display: grid; place-items: center; font-family: var(--font-family-display); font-size: var(--font-2xl); line-height: 1;
+  box-shadow: var(--shadow-md);
+}
+.brand .name { font-size: var(--font-xl); font-weight: 700; line-height: 1.3; }
+.brand .role { font-size: var(--font-xs); opacity: .85; }
+.nav { display: flex; flex-direction: column; gap: var(--spacing-xs); }
+.nav button {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 10px 14px;
+  border-radius: var(--radius-lg); color: rgba(255,255,255,.88); font-size: var(--font-md); font-weight: 500; text-align: left;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+.nav button:hover { background: rgba(255,255,255,.10); color: var(--text-primary); }
+.nav button:active { transform: scale(.98); }
+.nav button.active { background: rgba(255,255,255,.22); color: var(--text-primary); font-weight: 700; box-shadow: var(--shadow-sm); }
+.nav .cnt { margin-left: auto; min-width: 28px; height: 28px; padding: 0 8px; border-radius: var(--radius-full); background: rgba(255,255,255,.22); display: grid; place-items: center; font-size: var(--font-xs); font-weight: 700; }
+.sidebar .foot { margin-top: auto; padding-top: var(--spacing-md); border-top: 1px solid rgba(255,255,255,.18); }
+.sidebar .foot button { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; border-radius: var(--radius-lg); color: var(--text-primary); font-weight: 600; width: 100%; }
+.sidebar .foot button:hover { background: rgba(255,255,255,.10); }
+.sidebar .ver { font-size: var(--font-xs); opacity: .7; padding: 0 14px; }
+
+.main { flex: 1; min-width: 0; padding: var(--spacing-lg) var(--spacing-xl) 64px; }
+.screen { display: none; }
+.screen.active { display: block; animation: fadein .2s ease; }
+@keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ===== 헤더 ===== */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-md); margin-bottom: var(--spacing-lg); }
+.topbar h1 { margin: 0; font-size: var(--font-2xl); line-height: 1.3; }
+.topbar .sub { color: var(--text-muted); }
+.topbar .tools { display: flex; align-items: center; gap: var(--spacing-sm); }
+.search { position: relative; }
+.search input {
+  width: 300px; height: 44px; padding: 0 14px 0 42px; border-radius: var(--radius-md); border: 1px solid var(--light-border);
+  background: var(--light-card); transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.search input::placeholder { color: var(--text-muted); }
+.search input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .12); }
+.search .ic { position: absolute; left: 14px; top: 12px; color: var(--text-muted); }
+.btn-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-md); border: 1px solid var(--light-border); background: var(--light-card);
+  display: grid; place-items: center; position: relative; color: var(--text-dark);
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.btn-icon:hover { background: var(--light-hover); box-shadow: var(--shadow-sm); }
+.btn-icon:active { transform: scale(.95); }
+.btn-icon .dot { position: absolute; top: -6px; right: -6px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--radius-full); background: var(--error); color: var(--text-primary); font-size: var(--font-xs); font-weight: 700; display: grid; place-items: center; line-height: 1; }
+.btn-icon.spin .ic { animation: spin .6s linear; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.hamburger { display: none; }
+
+/* ===== 버튼 ===== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 20px;
+  border-radius: var(--radius-md); font-weight: 600; white-space: nowrap;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), background var(--transition-fast), filter var(--transition-fast);
+}
+.btn:active { transform: translateY(0) scale(.97); filter: brightness(.94); }
+.btn-primary { background: var(--gradient); color: var(--text-primary); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-primary); }
+.btn-secondary { background: var(--btn-secondary-bg); color: var(--btn-secondary-text); }
+.btn-secondary:hover { background: var(--light-border); }
+.btn-outline { background: transparent; border: 1px solid var(--btn-outline-border); color: var(--text-dark); }
+.btn-outline:hover { background: var(--light-hover); }
+.btn-danger { background: var(--error-light); color: var(--error); }
+.btn-danger:hover { background: var(--error); color: var(--text-primary); }
+.btn-sm { min-height: 36px; padding: 6px 12px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.btn.loading { position: relative; color: transparent !important; pointer-events: none; }
+.btn.loading::after { content: ""; position: absolute; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5); border-top-color: #fff; animation: spin .7s linear infinite; }
+@media (hover: none) { .btn-sm { min-height: 44px; } }
+
+/* ===== 카드 ===== */
+.card { background: var(--light-card); border: 1px solid var(--light-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); padding: 20px; }
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: var(--spacing-md); }
+.card-head h2 { margin: 0; font-size: var(--font-xl); line-height: 1.3; flex: 1; }
+.card-head .tile { width: 32px; height: 32px; border-radius: 8px; background: rgba(var(--primary-rgb), .10); color: var(--primary); display: grid; place-items: center; }
+.card-head .tile .ic { width: 18px; height: 18px; }
+.card-head .actions { display: flex; gap: var(--spacing-sm); }
+.card-foot { margin-top: var(--spacing-md); color: var(--text-muted); }
+.card-foot b { color: var(--text-dark); font-weight: 600; }
+
+/* KPI */
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); }
+.kpi { display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: transform var(--transition-normal), box-shadow var(--transition-normal); }
+.kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.kpi:active { transform: translateY(0) scale(.99); }
+.kpi .tile { width: 44px; height: 44px; border-radius: var(--radius-lg); display: grid; place-items: center; }
+.kpi .tile.primary { background: rgba(var(--primary-rgb), .10); color: var(--primary); }
+.kpi .tile.warning { background: var(--warning-light); color: var(--warning); }
+.kpi .tile.success { background: var(--success-light); color: var(--success); }
+.kpi .tile.info { background: var(--info-light); color: var(--info); }
+.kpi .tile.error { background: var(--error-light); color: var(--error); }
+.kpi .label { color: var(--text-muted); }
+.kpi .value { font-size: var(--font-3xl); font-weight: 800; line-height: 1.2; letter-spacing: -.01em; }
+.kpi .value small { font-size: var(--font-lg); font-weight: 600; color: var(--text-muted); margin-left: 4px; }
+.kpi .delta { display: flex; align-items: center; gap: 6px; }
+.kpi .delta.up { color: var(--success); }
+.kpi .delta.warn { color: var(--warning); }
+.kpi .delta.err { color: var(--error); }
+
+/* 2×2 + 우측 */
+.grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-lg); margin-bottom: var(--spacing-lg); }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); }
+.stat { border: 1px solid var(--light-border); border-radius: var(--radius-lg); padding: var(--spacing-md); transition: background var(--transition-fast); }
+.stat:hover { background: var(--light-hover); }
+.stat .label { color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.stat .value { font-size: var(--font-2xl); font-weight: 800; line-height: 1.3; }
+.stat .value.primary { color: var(--primary); }
+.stat .note { color: var(--text-muted); }
+
+/* 진행바 */
+.bar-track { height: 10px; border-radius: var(--radius-full); background: var(--light-border); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: var(--radius-full); background: var(--gradient); transition: width var(--transition-slow); }
+.bar-fill.error { background: var(--error); }
+.bar-fill.success { background: var(--success); }
+
+/* 배지 */
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: var(--radius-full); font-weight: 600; line-height: 1.4; white-space: nowrap; }
+.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.badge.pending  { background: var(--warning-light); color: var(--chip-orange-text); }
+.badge.live     { background: var(--success-light); color: var(--chip-green-text); }
+.badge.paused   { background: var(--info-light);    color: var(--chip-blue-text); }
+.badge.ended    { background: var(--btn-secondary-bg); color: var(--btn-secondary-text); }
+.badge.rejected { background: var(--error-light);   color: var(--error); }
+.badge.ok       { background: var(--success-light); color: var(--chip-green-text); }
+.badge.mismatch { background: var(--error-light);   color: var(--error); }
+.badge.lg { padding: 8px 16px; font-size: var(--font-lg); }
+.badge.lg::before { width: 10px; height: 10px; }
+
+/* 분류 칩 (유형·채널) */
+.chip { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: var(--radius-full); font-weight: 600; white-space: nowrap; }
+.chip.purple { background: var(--chip-purple-bg); color: var(--chip-purple-text); }
+.chip.blue { background: var(--chip-blue-bg); color: var(--chip-blue-text); }
+.chip.green { background: var(--chip-green-bg); color: var(--chip-green-text); }
+.chip.orange { background: var(--chip-orange-bg); color: var(--chip-orange-text); }
+.chip.pink { background: var(--chip-pink-bg); color: var(--chip-pink-text); }
+.chip.gray { background: var(--btn-secondary-bg); color: var(--btn-secondary-text); }
+.ch { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; font-weight: 700; font-size: var(--font-xs); margin-right: -4px; border: 2px solid var(--light-card); }
+.ch.yt { background: var(--chip-pink-bg); color: var(--chip-pink-text); }
+.ch.kk { background: var(--chip-orange-bg); color: var(--chip-orange-text); }
+.ch.ig { background: var(--chip-purple-bg); color: var(--chip-purple-text); }
+.ch.nv { background: var(--chip-green-bg); color: var(--chip-green-text); }
+.ch.fb { background: var(--chip-blue-bg); color: var(--chip-blue-text); }
+.ch.ot { background: var(--btn-secondary-bg); color: var(--btn-secondary-text); }
+
+/* 필터 칩 */
+.filters { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); margin-bottom: var(--spacing-md); }
+.fchip {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 16px; border-radius: var(--radius-full);
+  border: 1px solid var(--light-border); background: var(--light-card); font-weight: 600; color: var(--text-dark);
+  transition: all var(--transition-fast);
+}
+.fchip:hover { background: var(--light-hover); border-color: var(--btn-outline-border); }
+.fchip:active { transform: scale(.97); }
+.fchip.active { background: var(--gradient); color: var(--text-primary); border-color: transparent; box-shadow: var(--shadow-primary); }
+.fchip .n { padding: 0 8px; min-width: 24px; border-radius: var(--radius-full); background: rgba(0,0,0,.06); font-weight: 700; text-align: center; }
+.fchip.active .n { background: rgba(255,255,255,.25); }
+
+/* 테이블 */
+.tbl-wrap { overflow-x: auto; }
+table.tbl { width: 100%; border-collapse: collapse; min-width: 720px; }
+.tbl th { text-align: left; color: var(--text-muted); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--light-border); white-space: nowrap; }
+.tbl td { padding: 12px; border-bottom: 1px solid var(--light-border); vertical-align: middle; }
+.tbl tbody tr { transition: background var(--transition-fast); }
+.tbl tbody tr:hover { background: var(--light-hover); }
+.tbl tbody tr.clickable { cursor: pointer; }
+.tbl tbody tr.selected { box-shadow: inset 3px 0 0 var(--primary); background: rgba(var(--primary-rgb), .04); }
+.tbl .r { text-align: right; }
+.tbl .row-actions { display: flex; gap: 6px; justify-content: flex-end; opacity: 0; transition: opacity var(--transition-fast); }
+.tbl tbody tr:hover .row-actions, .tbl tbody tr:focus-within .row-actions, .tbl tbody tr.selected .row-actions { opacity: 1; }
+@media (hover: none) { .tbl .row-actions { opacity: 1; } }
+.tbl tr.danger td { background: var(--error-light); }
+.tbl tr.danger td .num-diff { color: var(--error); font-weight: 700; }
+.tbl .empty td { text-align: center; padding: 40px 12px; color: var(--text-muted); }
+.tbl strong { font-weight: 700; }
+.tbl .sub { display: block; color: var(--text-muted); }
+
+/* 예산 3단 미니바 */
+.bbar { display: flex; height: 10px; width: 160px; border-radius: var(--radius-full); background: var(--light-border); overflow: hidden; }
+.bbar .paid { background: var(--gradient); }
+.bbar .left { background: rgba(var(--primary-rgb), .30); }
+.bbar .refund { background: var(--btn-outline-border); }
+.bbar-legend { display: flex; gap: 12px; color: var(--text-muted); margin-top: 4px; white-space: nowrap; }
+.bbar-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+
+/* 바차트 */
+.chart { display: flex; align-items: flex-end; gap: var(--spacing-lg); height: 260px; padding-top: 8px; }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end; }
+.bar-group .pct { font-weight: 700; }
+.bar-group .bar { width: 44px; border-radius: 10px 10px 4px 4px; background: var(--gradient); transition: height var(--transition-slow), filter var(--transition-fast); }
+.bar-group .bar:hover { filter: brightness(1.08); }
+.bar-group .bar.weak { background: rgba(var(--primary-rgb), .30); }
+.bar-group .lbl { text-align: center; line-height: 1.3; }
+.bar-group .lbl .muted { display: block; }
+.legend { display: flex; gap: var(--spacing-md); color: var(--text-muted); margin-top: var(--spacing-md); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+/* 정합식 스트립 */
+.formula { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; }
+.term { flex: 1 1 160px; min-width: 160px; border: 1px solid var(--light-border); border-radius: var(--radius-lg); padding: 12px 14px; background: var(--light-card); transition: box-shadow var(--transition-fast), transform var(--transition-fast); }
+.term:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.term .label { color: var(--text-muted); line-height: 1.4; }
+.term .value { font-size: var(--font-xl); font-weight: 800; line-height: 1.3; margin: 4px 0; }
+.term .src { color: var(--text-muted); }
+.term.lhs { border-color: var(--primary); background: rgba(var(--primary-rgb), .05); }
+.term.lhs .value { color: var(--primary); }
+.term.beta { border-color: var(--error); background: var(--error-light); }
+.term.beta .value { color: var(--error); }
+.term.zero .value { color: var(--text-muted); }
+.op { display: grid; place-items: center; font-size: var(--font-2xl); font-weight: 700; color: var(--text-muted); padding: 0 2px; }
+
+/* 정합 비교 */
+.compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--spacing-md); align-items: center; }
+.compare .side { border: 1px solid var(--light-border); border-radius: var(--radius-lg); padding: var(--spacing-md); }
+.compare .side .value { font-size: var(--font-2xl); font-weight: 800; }
+.compare .diff { text-align: center; padding: var(--spacing-md); border-radius: var(--radius-lg); background: var(--error-light); min-width: 220px; }
+.compare .diff .value { font-size: var(--font-2xl); font-weight: 800; color: var(--error); }
+.callout { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius-lg); background: var(--warning-light); color: var(--chip-orange-text); margin-top: var(--spacing-md); }
+.callout .ic { margin-top: 3px; }
+.callout b { font-weight: 700; }
+
+/* 드로어 */
+.scrim { position: fixed; inset: var(--chrome-height) 0 0 0; background: rgba(0,0,0,.35); opacity: 0; pointer-events: none; transition: opacity var(--transition-normal); z-index: 45; }
+.scrim.show { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; top: var(--chrome-height); right: 0; bottom: 0; width: 520px; max-width: 100vw;
+  background: var(--light-card); box-shadow: var(--shadow-xl); transform: translateX(100%); transition: transform var(--transition-normal);
+  z-index: 50; display: flex; flex-direction: column;
+}
+.drawer.open { transform: none; }
+.drawer .d-head { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--light-border); }
+.drawer .d-head h3 { margin: 0; font-size: var(--font-xl); flex: 1; }
+.drawer .d-body { padding: 20px; overflow-y: auto; flex: 1; }
+.drawer .d-foot { padding: 16px 20px; border-top: 1px solid var(--light-border); display: flex; gap: var(--spacing-sm); justify-content: flex-end; }
+.preview { border-radius: var(--radius-xl); background: var(--gradient); color: var(--text-primary); padding: 20px; box-shadow: var(--shadow-primary); }
+.preview .eyebrow { opacity: .85; }
+.preview .headline { font-size: var(--font-2xl); font-weight: 800; line-height: 1.3; margin: 4px 0 8px; }
+.preview .cta { display: inline-block; margin-top: 10px; background: rgba(255,255,255,.92); color: var(--primary); border-radius: var(--radius-md); padding: 8px 16px; font-weight: 700; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin: var(--spacing-md) 0; }
+.meta div { border-bottom: 1px solid var(--light-border); padding: 6px 0; }
+.meta .k { color: var(--text-muted); display: block; }
+.meta .v { font-weight: 600; }
+.tabs { display: flex; border-bottom: 1px solid var(--light-border); margin-bottom: var(--spacing-md); }
+.tabs button { padding: 12px 20px; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color var(--transition-fast); }
+.tabs button:hover { color: var(--text-dark); }
+.tabs button.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tabs button:active { transform: scale(.98); }
+.mini-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: var(--spacing-md); }
+.mini-stats .stat .value { font-size: var(--font-xl); }
+.reason { padding: 12px 14px; border-radius: var(--radius-lg); background: var(--error-light); color: var(--error); font-weight: 600; }
+
+/* 토스트 */
+.toast { position: fixed; right: 16px; bottom: 16px; z-index: 70; background: var(--dark-bg); color: var(--text-primary); border-radius: var(--radius-lg); padding: 12px 16px; box-shadow: var(--shadow-xl); display: flex; align-items: center; gap: 10px; transform: translateY(20px); opacity: 0; transition: all var(--transition-normal); pointer-events: none; max-width: 420px; }
+.toast.show { transform: none; opacity: 1; }
+.toast .ic { color: var(--success); }
+.toast.error .ic { color: var(--error); }
+
+/* 스켈레톤 (loading 상태 예시 — 강개발 참고) */
+.skeleton { background: linear-gradient(90deg, var(--light-border) 25%, var(--light-hover) 50%, var(--light-border) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: var(--radius-sm); }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ===== 반응형 ===== */
+@media (max-width: 1280px) {
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .main { padding: var(--spacing-lg); }
+}
+@media (max-width: 1024px) {
+  .sidebar { position: fixed; left: 0; top: var(--chrome-height); transform: translateX(-100%); box-shadow: var(--shadow-xl); }
+  .sidebar.open { transform: none; }
+  .hamburger { display: grid; }
+  .grid-2-1 { grid-template-columns: 1fr; }
+  .search input { width: 200px; }
+  .drawer { width: 100vw; }
+  .compare { grid-template-columns: 1fr; }
+  .chrome .title span { display: none; }
+}
+@media (max-width: 640px) {
+  .kpis { grid-template-columns: 1fr; }
+  .topbar { flex-wrap: wrap; }
+  .search { display: none; }
+  .stat-grid { grid-template-columns: 1fr; }
+  .mini-stats { grid-template-columns: repeat(2, 1fr); }
+  .chart { gap: 10px; }
+  .bar-group .bar { width: 28px; }
+  .chrome { padding: 0 12px; gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Lucide 아이콘 스프라이트 (인라인 SVG, 외부 의존 없음) -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></symbol>
+  <symbol id="i-dashboard" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-user-plus" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></symbol>
+  <symbol id="i-deposit" viewBox="0 0 24 24"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></symbol>
+  <symbol id="i-withdraw" viewBox="0 0 24 24"><path d="m18 9-6-6-6 6"/><path d="M12 3v14"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
+  <symbol id="i-megaphone" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+  <symbol id="i-notice" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-coins" viewBox="0 0 24 24"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-transfer" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+</svg>
+
+<!-- ===== 시안 전용 상단 바 ===== -->
+<div class="chrome">
+  <div class="title">다랜드 관리자 시안 <span>v0.1 · 강디 · 2026-09-06 · 1440px 기준</span></div>
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-screen="dashboard" role="tab">1 대시보드</button>
+    <button class="tab" data-screen="reward" role="tab">2 리워드광고 관리</button>
+    <button class="tab" data-screen="ledger" role="tab">3 총량 모니터</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="seg" aria-label="색상 안 전환">
+    <button class="active" data-theme="A"><span class="sw sw-a"></span>A 네이비 (앱 팔레트 · 확정)</button>
+    <button data-theme="B"><span class="sw sw-b"></span>B 보라 (Crowny #1 · 참조 원색)</button>
+  </div>
+</div>
+
+<div class="app">
+  <!-- ===== 사이드바 (AdminShell) ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="mark">D</div>
+      <div class="name">다랜드</div>
+      <div class="role">관리자</div>
+    </div>
+    <nav class="nav" aria-label="관리자 메뉴">
+      <button class="active" data-nav="dashboard"><svg class="ic"><use href="#i-dashboard"/></svg>대시보드</button>
+      <button data-nav="members"><svg class="ic"><use href="#i-users"/></svg>회원</button>
+      <button data-nav="deposits"><svg class="ic"><use href="#i-deposit"/></svg>입금</button>
+      <button data-nav="spend"><svg class="ic"><use href="#i-receipt"/></svg>지출·OCR</button>
+      <button data-nav="withdraw"><svg class="ic"><use href="#i-withdraw"/></svg>출금<span class="cnt">7</span></button>
+      <button data-nav="reward"><svg class="ic"><use href="#i-megaphone"/></svg>리워드광고<span class="cnt" id="navPending">4</span></button>
+      <button data-nav="ledger"><svg class="ic"><use href="#i-scale"/></svg>총량 모니터</button>
+      <button data-nav="notices"><svg class="ic"><use href="#i-notice"/></svg>공지</button>
+      <button data-nav="settings"><svg class="ic"><use href="#i-settings"/></svg>설정</button>
+    </nav>
+    <div class="foot">
+      <button type="button"><svg class="ic"><use href="#i-logout"/></svg>로그아웃</button>
+      <div class="ver">DaLand Admin · v0.1 (시안)</div>
+    </div>
+  </aside>
+  <div class="scrim" id="sideScrim"></div>
+
+  <main class="main">
+
+    <!-- ================================================================
+         화면 1. 대시보드
+         ================================================================ -->
+    <section class="screen active" id="screen-dashboard">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn-icon hamburger" id="hamburger" aria-label="메뉴 열기"><svg class="ic"><use href="#i-menu"/></svg></button>
+          <div>
+            <h1>안녕하세요, 강경모 님</h1>
+            <div class="sub">다랜드 관리자 — 2026-09-06 (토) 11:02 기준 · 1P = 1원</div>
+          </div>
+        </div>
+        <div class="tools">
+          <div class="search"><svg class="ic"><use href="#i-search"/></svg><input type="search" placeholder="회원 이메일 · 캠페인 ID 검색" aria-label="검색"></div>
+          <button class="btn-icon" aria-label="대기 알림 11건"><svg class="ic"><use href="#i-bell"/></svg><span class="dot" id="bellCount">11</span></button>
+          <button class="btn-icon js-refresh" aria-label="새로고침"><svg class="ic"><use href="#i-refresh"/></svg></button>
+        </div>
+      </header>
+
+      <div class="kpis">
+        <div class="card kpi" tabindex="0" data-go="members">
+          <div class="tile primary"><svg class="ic"><use href="#i-user-plus"/></svg></div>
+          <div class="label">오늘 가입</div>
+          <div class="value num">23<small>명</small></div>
+          <div class="delta up"><svg class="ic ic-sm"><use href="#i-activity"/></svg>어제 17명 · 캠페인 경유 19명</div>
+        </div>
+        <div class="card kpi" tabindex="0" data-go="reward">
+          <div class="tile warning"><svg class="ic"><use href="#i-clock"/></svg></div>
+          <div class="label">승인 대기 캠페인</div>
+          <div class="value num" id="kpiPendingDash">4<small>건</small></div>
+          <div class="delta warn"><svg class="ic ic-sm"><use href="#i-chevron"/></svg>가장 오래된 건 26시간 경과</div>
+        </div>
+        <div class="card kpi" tabindex="0" data-go="reward">
+          <div class="tile success"><svg class="ic"><use href="#i-transfer"/></svg></div>
+          <div class="label">오늘 리워드 지급</div>
+          <div class="value num">1,200,000<small>P</small></div>
+          <div class="delta"><span class="muted">광고주 예산 → 회원 이전 · 12건</span></div>
+        </div>
+        <div class="card kpi" tabindex="0" data-go="withdraw">
+          <div class="tile info"><svg class="ic"><use href="#i-withdraw"/></svg></div>
+          <div class="label">출금 대기</div>
+          <div class="value num">7<small>건</small></div>
+          <div class="delta"><span class="muted">합계 2,340,000 P</span></div>
+        </div>
+      </div>
+
+      <div class="grid-2-1">
+        <div class="card">
+          <div class="card-head">
+            <div class="tile"><svg class="ic"><use href="#i-scale"/></svg></div>
+            <h2>총량 모니터</h2>
+            <div class="actions"><button class="btn btn-outline btn-sm" data-go="ledger">상세 보기<svg class="ic ic-sm"><use href="#i-chevron"/></svg></button></div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat">
+              <div class="label">입금 총량 (Σ입금)</div>
+              <div class="value num primary">84,300,000 P</div>
+              <div class="note">deposits.confirmed · 100% 반영</div>
+            </div>
+            <div class="stat">
+              <div class="label">출금 총량 (Σ출금 완료)</div>
+              <div class="value num">12,150,000 P</div>
+              <div class="note">withdrawals.completed · 100% 반영</div>
+            </div>
+            <div class="stat">
+              <div class="label">120% 증액 발행 (Σ증액)</div>
+              <div class="value num">6,420,000 P</div>
+              <div class="note">카드 결제 + OCR 검증분에만</div>
+            </div>
+            <div class="stat">
+              <div class="label">리워드 이전 (누적)</div>
+              <div class="value num">3,400,000 P</div>
+              <div class="note">광고주 → 회원 이동 · 합계 변화 0</div>
+            </div>
+          </div>
+          <div class="card-foot">정합식: <b>Σ회원 잔액 = Σ입금 − Σ출금(완료) + Σ증액 − Σ포인트 결제 차감 + 0(리워드) + 베타 조정</b>. 이 식이 안 맞으면 어딘가에서 포인트가 무에서 생성된 것입니다.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="tile" style="background:var(--error-light);color:var(--error)"><svg class="ic"><use href="#i-alert"/></svg></div>
+            <h2>정합 상태</h2>
+            <span class="badge mismatch">불일치</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between"><span class="muted">좌변 Σ회원 잔액</span><b class="num">76,290,000 P</b></div>
+            <div style="display:flex;justify-content:space-between"><span class="muted">우변 정식 항목 합</span><b class="num">75,690,000 P</b></div>
+            <div style="display:flex;justify-content:space-between;color:var(--error)"><span>차이</span><b class="num">+600,000 P</b></div>
+          </div>
+          <div style="margin:16px 0 6px" class="muted">차이 / 좌변 = 0.79%</div>
+          <div class="bar-track"><div class="bar-fill error" style="width:8%"></div></div>
+          <div class="callout"><svg class="ic"><use href="#i-alert"/></svg><div>차이 전액이 <b>베타 조정 (inviteRedemptions 47건)</b>. 정식 항목으로 설명되지 않는 잔액 → P0-1 원장 수정 근거.</div></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:16px" data-go="ledger">총량 모니터에서 원인 보기</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--spacing-lg)">
+        <div class="card-head">
+          <div class="tile"><svg class="ic"><use href="#i-chart"/></svg></div>
+          <h2>채널별 송출·가입 전환 <span class="muted" style="font-weight:400">(최근 30일)</span></h2>
+        </div>
+        <div class="chart" id="chart"></div>
+        <div class="legend"><span><i style="background:var(--primary)"></i>막대 높이 = 도달 (공유 링크 클릭)</span><span><i style="background:rgba(var(--primary-rgb),.30)"></i>전환율 5% 미만</span><span>위 숫자 = 가입 전환율 (가입 ÷ 도달)</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="tile"><svg class="ic"><use href="#i-activity"/></svg></div>
+          <h2>최근 활동</h2>
+          <div class="actions"><button class="btn btn-outline btn-sm"><svg class="ic ic-sm"><use href="#i-download"/></svg>CSV</button></div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>시각</th><th>회원</th><th>유형</th><th class="r">금액</th><th>상태</th><th class="r"></th></tr></thead>
+            <tbody>
+              <tr class="clickable" data-go="reward"><td class="num">10:42</td><td><strong>kim***@gmail.com</strong><span class="sub">RC-0925 ← ㈜블루오션 예산</span></td><td><span class="chip purple">리워드 지급</span></td><td class="r num">+1,000,000 P</td><td><span class="badge ok">완료</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">열기<svg class="ic ic-sm"><use href="#i-chevron"/></svg></button></div></td></tr>
+              <tr class="clickable" data-go="reward"><td class="num">10:31</td><td><strong>㈜한빛식품</strong><span class="sub">광고주 · 잔액 12,400,000 P</span></td><td><span class="chip orange">캠페인 제출</span></td><td class="r num">5,000,000 P 잠금</td><td><span class="badge pending">승인 대기</span></td><td class="r"><div class="row-actions"><button class="btn btn-primary btn-sm">승인하기</button></div></td></tr>
+              <tr class="clickable" data-go="withdraw"><td class="num">10:05</td><td><strong>lee***@naver.com</strong></td><td><span class="chip blue">출금 요청</span></td><td class="r num">350,000 P</td><td><span class="badge pending">대기</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">열기<svg class="ic ic-sm"><use href="#i-chevron"/></svg></button></div></td></tr>
+              <tr class="clickable" data-go="deposits"><td class="num">09:48</td><td><strong>park***@kakao.com</strong></td><td><span class="chip green">입금</span></td><td class="r num">+2,000,000 P</td><td><span class="badge ok">확인</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">열기<svg class="ic ic-sm"><use href="#i-chevron"/></svg></button></div></td></tr>
+              <tr class="clickable" data-go="spend"><td class="num">09:20</td><td><strong>choi***@gmail.com</strong><span class="sub">임대료 · 카드 결제</span></td><td><span class="chip green">지출 (카드+OCR)</span></td><td class="r num">100,000 → 120,000 P</td><td><span class="badge ok">OCR 검증</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">열기<svg class="ic ic-sm"><use href="#i-chevron"/></svg></button></div></td></tr>
+              <tr class="clickable" data-go="members"><td class="num">09:02</td><td><strong>jung***@gmail.com</strong><span class="sub">캠페인 코드 BLUE10 경유</span></td><td><span class="chip gray">가입</span></td><td class="r num">—</td><td><span class="badge paused">이메일 인증 완료</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">열기<svg class="ic ic-sm"><use href="#i-chevron"/></svg></button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         화면 2. 리워드광고 관리
+         ================================================================ -->
+    <section class="screen" id="screen-reward">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn-icon hamburger" aria-label="메뉴 열기"><svg class="ic"><use href="#i-menu"/></svg></button>
+          <div>
+            <h1>리워드광고 관리</h1>
+            <div class="sub">캠페인 승인 · 송출 · 지급 · 성과 — 리워드는 광고주 예산에서 회원에게 이전됩니다 (합계 변화 0)</div>
+          </div>
+        </div>
+        <div class="tools">
+          <div class="search"><svg class="ic"><use href="#i-search"/></svg><input type="search" placeholder="캠페인 ID · 광고주 검색" aria-label="검색"></div>
+          <button class="btn-icon" aria-label="대기 알림"><svg class="ic"><use href="#i-bell"/></svg><span class="dot">11</span></button>
+          <button class="btn-icon js-refresh" aria-label="새로고침"><svg class="ic"><use href="#i-refresh"/></svg></button>
+        </div>
+      </header>
+
+      <div class="kpis">
+        <div class="card kpi" tabindex="0" data-filter="pending">
+          <div class="tile warning"><svg class="ic"><use href="#i-clock"/></svg></div>
+          <div class="label">승인 대기</div>
+          <div class="value num" id="kpiPending">4<small>건</small></div>
+          <div class="delta warn">클릭하면 대기 건만 보기</div>
+        </div>
+        <div class="card kpi" tabindex="0" data-filter="live">
+          <div class="tile success"><svg class="ic"><use href="#i-play"/></svg></div>
+          <div class="label">진행 중</div>
+          <div class="value num" id="kpiLive">2<small>건</small></div>
+          <div class="delta"><span class="muted">일시정지 1건 별도</span></div>
+        </div>
+        <div class="card kpi" tabindex="0">
+          <div class="tile primary"><svg class="ic"><use href="#i-transfer"/></svg></div>
+          <div class="label">오늘 지급</div>
+          <div class="value num">1,200,000<small>P</small></div>
+          <div class="delta"><span class="muted">12명 · 광고주 예산에서 이전</span></div>
+        </div>
+        <div class="card kpi" tabindex="0">
+          <div class="tile info"><svg class="ic"><use href="#i-lock"/></svg></div>
+          <div class="label">잠긴 예산 총합</div>
+          <div class="value num" id="kpiLocked">30,160,000<small>P</small></div>
+          <div class="delta"><span class="muted">에스크로 · 출금 가능 잔액에서 제외</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="tile"><svg class="ic"><use href="#i-megaphone"/></svg></div>
+          <h2>캠페인</h2>
+          <div class="actions"><button class="btn btn-outline btn-sm"><svg class="ic ic-sm"><use href="#i-download"/></svg>CSV</button></div>
+        </div>
+        <div class="filters" id="filters">
+          <button class="fchip active" data-status="all">전체<span class="n">9</span></button>
+          <button class="fchip" data-status="pending">승인 대기<span class="n">4</span></button>
+          <button class="fchip" data-status="live">진행 중<span class="n">2</span></button>
+          <button class="fchip" data-status="paused">일시정지<span class="n">1</span></button>
+          <button class="fchip" data-status="ended">종료<span class="n">1</span></button>
+          <button class="fchip" data-status="rejected">거절<span class="n">1</span></button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="campTable" style="min-width:1180px">
+            <thead><tr>
+              <th>캠페인 ID</th><th>광고주</th><th>종류</th><th class="r">1인 금액</th><th class="r">인원</th><th>예산 (지급 / 잠김 / 반환)</th><th>채널</th><th>상태</th><th>제출일</th><th class="r">액션</th>
+            </tr></thead>
+            <tbody id="campBody"></tbody>
+          </table>
+        </div>
+        <div class="card-foot">행을 누르면 우측에 상세(문구 미리보기 · 지급내역 · 성과)가 열립니다. 액션 버튼은 행 위에 마우스를 올리면 나타납니다 (터치 기기는 상시).</div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         화면 3. 총량 모니터
+         ================================================================ -->
+    <section class="screen" id="screen-ledger">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn-icon hamburger" aria-label="메뉴 열기"><svg class="ic"><use href="#i-menu"/></svg></button>
+          <div>
+            <h1>총량 모니터</h1>
+            <div class="sub">회원 잔액 합계가 원장 항목의 합과 같은지 매일 확인합니다 · 1P = 1원</div>
+          </div>
+        </div>
+        <div class="tools">
+          <button class="btn btn-secondary"><svg class="ic"><use href="#i-download"/></svg>CSV 내보내기</button>
+          <button class="btn btn-primary js-snapshot"><svg class="ic"><use href="#i-camera"/></svg>스냅샷 생성</button>
+        </div>
+      </header>
+
+      <div class="kpis">
+        <div class="card kpi" tabindex="0">
+          <div class="tile primary"><svg class="ic"><use href="#i-wallet"/></svg></div>
+          <div class="label">Σ회원 잔액 (좌변)</div>
+          <div class="value num">76,290,000<small>P</small></div>
+          <div class="delta"><span class="muted">users.totalPoints + 에스크로 잠김</span></div>
+        </div>
+        <div class="card kpi" tabindex="0">
+          <div class="tile info"><svg class="ic"><use href="#i-deposit"/></svg></div>
+          <div class="label">Σ입금 − Σ출금</div>
+          <div class="value num">72,150,000<small>P</small></div>
+          <div class="delta"><span class="muted">84,300,000 − 12,150,000</span></div>
+        </div>
+        <div class="card kpi" tabindex="0">
+          <div class="tile success"><svg class="ic"><use href="#i-coins"/></svg></div>
+          <div class="label">Σ120% 증액 발행</div>
+          <div class="value num">6,420,000<small>P</small></div>
+          <div class="delta"><span class="muted">카드 결제 + OCR 검증분</span></div>
+        </div>
+        <div class="card kpi" tabindex="0">
+          <div class="tile warning"><svg class="ic"><use href="#i-lock"/></svg></div>
+          <div class="label">Σ리워드 잠김</div>
+          <div class="value num">30,160,000<small>P</small></div>
+          <div class="delta"><span class="muted">rewardCampaigns.budgetLocked − paid − refunded</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--spacing-lg)">
+        <div class="card-head">
+          <div class="tile"><svg class="ic"><use href="#i-scale"/></svg></div>
+          <h2>정합식 — 2026-09-06 11:02 스냅샷</h2>
+          <span class="badge mismatch lg">불일치 +600,000 P</span>
+        </div>
+        <div class="formula">
+          <div class="term lhs"><div class="label">Σ회원 잔액</div><div class="value num">76,290,000 P</div><div class="src">users.totalPoints + 에스크로</div></div>
+          <div class="op">=</div>
+          <div class="term"><div class="label">Σ입금</div><div class="value num">84,300,000 P</div><div class="src">deposits.confirmed</div></div>
+          <div class="op">−</div>
+          <div class="term"><div class="label">Σ출금 (완료)</div><div class="value num">12,150,000 P</div><div class="src">withdrawals.completed</div></div>
+          <div class="op">+</div>
+          <div class="term"><div class="label">Σ120% 증액</div><div class="value num">6,420,000 P</div><div class="src">transactions.spend.bonus</div></div>
+          <div class="op">−</div>
+          <div class="term"><div class="label">Σ포인트 결제 차감</div><div class="value num">2,880,000 P</div><div class="src">spend.principal (포인트 결제분)</div></div>
+          <div class="op">+</div>
+          <div class="term zero"><div class="label">리워드 이전 (제로섬)</div><div class="value num">0 P</div><div class="src">reward_out −3,400,000 / reward_in +3,400,000</div></div>
+          <div class="op">+</div>
+          <div class="term beta"><div class="label">베타 조정</div><div class="value num">600,000 P</div><div class="src">inviteRedemptions 47건 · 무에서 생성</div></div>
+        </div>
+
+        <div class="compare" style="margin-top:var(--spacing-lg)">
+          <div class="side">
+            <div class="muted">좌변 · Σ회원 잔액</div>
+            <div class="value num" style="color:var(--primary)">76,290,000 P</div>
+            <div class="muted">회원 1,284명 + 캠페인 에스크로 9건</div>
+          </div>
+          <div class="diff">
+            <div class="muted">차이 (좌변 − 우변)</div>
+            <div class="value num">+600,000 P</div>
+            <div style="color:var(--error);font-weight:600">= 베타 조정 전액</div>
+          </div>
+          <div class="side">
+            <div class="muted">우변 · 정식 항목 5개 합</div>
+            <div class="value num">75,690,000 P</div>
+            <div class="muted">84,300,000 − 12,150,000 + 6,420,000 − 2,880,000 + 0</div>
+          </div>
+        </div>
+        <div class="callout"><svg class="ic"><use href="#i-alert"/></svg><div><b>정식 항목만으로 설명되지 않는 잔액 600,000 P</b>가 있습니다. 출처는 베타 기간 <b>inviteRedemptions</b> (광고주 잔액 차감 없이 신규회원 +100%, 광고주 +20% 생성). 기획서 §8-6: 소급 차감 없이 "베타 조정"으로 분리 표기, P0-1 원장 수정 후 신규 생성 0 이 되어야 합니다.</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="tile"><svg class="ic"><use href="#i-clock"/></svg></div>
+          <h2>일자별 스냅샷</h2>
+          <div class="actions"><button class="btn btn-outline btn-sm">불일치만 보기</button></div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>일자</th><th class="r">좌변 Σ회원 잔액</th><th class="r">우변 정식 항목 합</th><th class="r">차이</th><th class="r">베타 조정</th><th>상태</th><th class="r"></th></tr></thead>
+            <tbody id="snapBody">
+              <tr class="danger"><td class="num">2026-09-06 11:02</td><td class="r num">76,290,000</td><td class="r num">75,690,000</td><td class="r num num-diff">+600,000</td><td class="r num">600,000</td><td><span class="badge mismatch">불일치</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">상세</button></div></td></tr>
+              <tr class="danger"><td class="num">2026-09-05 00:00</td><td class="r num">75,110,000</td><td class="r num">74,510,000</td><td class="r num num-diff">+600,000</td><td class="r num">600,000</td><td><span class="badge mismatch">불일치</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">상세</button></div></td></tr>
+              <tr class="danger"><td class="num">2026-09-04 00:00</td><td class="r num">73,820,000</td><td class="r num">73,320,000</td><td class="r num num-diff">+500,000</td><td class="r num">500,000</td><td><span class="badge mismatch">불일치</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">상세</button></div></td></tr>
+              <tr class="danger"><td class="num">2026-09-03 00:00</td><td class="r num">72,400,000</td><td class="r num">71,900,000</td><td class="r num num-diff">+500,000</td><td class="r num">500,000</td><td><span class="badge mismatch">불일치</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">상세</button></div></td></tr>
+              <tr class="danger"><td class="num">2026-09-02 00:00</td><td class="r num">70,950,000</td><td class="r num">70,650,000</td><td class="r num num-diff">+300,000</td><td class="r num">300,000</td><td><span class="badge mismatch">불일치</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">상세</button></div></td></tr>
+              <tr><td class="num">2026-09-01 00:00</td><td class="r num">69,300,000</td><td class="r num">69,300,000</td><td class="r num">0</td><td class="r num">0</td><td><span class="badge ok">일치</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">상세</button></div></td></tr>
+              <tr><td class="num">2026-08-31 00:00</td><td class="r num">68,120,000</td><td class="r num">68,120,000</td><td class="r num">0</td><td class="r num">0</td><td><span class="badge ok">일치</span></td><td class="r"><div class="row-actions"><button class="btn btn-outline btn-sm">상세</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-foot">스냅샷은 매일 00:00 자동 + 수동 생성. 불일치가 발생하면 텔레그램으로 알립니다 (P1-9). 단위: P (1P = 1원).</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== 캠페인 상세 드로어 (absolute 오버레이 — 테이블 폭 유지) ===== -->
+<div class="scrim" id="drawerScrim"></div>
+<aside class="drawer" id="drawer" aria-label="캠페인 상세">
+  <div class="d-head">
+    <h3 id="dTitle">RC-0000</h3>
+    <span class="badge" id="dBadge"></span>
+    <button class="btn-icon" id="dClose" aria-label="닫기"><svg class="ic"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="d-body">
+    <div class="preview">
+      <div class="eyebrow" id="pOwner">광고주</div>
+      <div class="headline" id="pHeadline">가입 시 100,000 P 지급</div>
+      <div id="pCopy"></div>
+      <span class="cta">코드 입력하고 가입하기</span>
+    </div>
+    <div class="meta" id="dMeta"></div>
+    <div id="dReason" class="reason hide"></div>
+    <div class="tabs">
+      <button class="active" data-tab="payouts">지급내역</button>
+      <button data-tab="stats">성과</button>
+    </div>
+    <div id="tab-payouts">
+      <div class="tbl-wrap"><table class="tbl" style="min-width:0"><thead><tr><th>회원</th><th>조건</th><th class="r">금액</th><th>시각</th></tr></thead><tbody id="payBody"></tbody></table></div>
+    </div>
+    <div id="tab-stats" class="hide">
+      <div class="mini-stats" id="statBox"></div>
+      <div class="muted" style="margin-bottom:6px">모집 진행률 (지급 인원 ÷ 모집 인원)</div>
+      <div class="bar-track"><div class="bar-fill" id="statBar" style="width:0"></div></div>
+      <div class="card-foot">도달 = 공유 링크 클릭. 플랫폼 API 게시가 아니라 광고주가 직접 올린 링크 기준입니다 (기획서 §7.2).</div>
+    </div>
+  </div>
+  <div class="d-foot" id="dFoot"></div>
+</aside>
+
+<div class="toast" id="toast"><svg class="ic"><use href="#i-check"/></svg><span id="toastMsg"></span></div>
+
+<script>
+/* ===================================================================
+   데모 데이터 — 정직 표기: 리워드 = 광고주 예산 → 회원 이전만
+   =================================================================== */
+const STATUS = { pending:'승인 대기', live:'진행 중', paused:'일시정지', ended:'종료', rejected:'거절' };
+const CH = { yt:['YT','유튜브'], kk:['K','카카오'], ig:['IG','인스타그램'], nv:['N','네이버'], fb:['FB','페이스북'], ot:['+','기타'] };
+const fmt = n => n.toLocaleString('ko-KR');
+
+const CAMPAIGNS = [
+  { id:'RC-0931', owner:'㈜한빛식품', kind:1, unit:100000, head:50, paid:0, refund:0, ch:['yt','kk'], status:'pending', date:'09-06 10:31', code:'HANBIT50', reach:0, signup:0 },
+  { id:'RC-0930', owner:'김선복', kind:1, unit:10000, head:200, paid:0, refund:0, ch:['ig'], status:'pending', date:'09-06 09:12', code:'SUNBOK20', reach:0, signup:0 },
+  { id:'RC-0929', owner:'㈜다온컴퍼니', kind:1, unit:10000000, head:1, paid:0, refund:0, ch:['yt','nv','fb'], status:'pending', date:'09-05 17:40', code:'DAON1000', reach:0, signup:0 },
+  { id:'RC-0928', owner:'에코마트 성수점', kind:2, unit:100000, head:30, paid:0, refund:0, ch:['kk'], status:'pending', date:'09-05 09:02', code:'ECO30', reach:0, signup:0 },
+  { id:'RC-0925', owner:'㈜블루오션', kind:1, unit:1000000, head:10, paid:3000000, refund:0, ch:['yt','ig','kk'], status:'live', date:'09-03 14:20', code:'BLUE10', reach:1240, signup:3 },
+  { id:'RC-0921', owner:'이정훈', kind:1, unit:10000, head:100, paid:640000, refund:0, ch:['ig','kk'], status:'live', date:'09-01 11:05', code:'JH100', reach:2310, signup:64 },
+  { id:'RC-0917', owner:'서울피트니스', kind:1, unit:100000, head:40, paid:1200000, refund:0, ch:['nv','ig'], status:'paused', date:'08-29 16:33', code:'FIT40', reach:920, signup:12, note:'광고주 요청 (예산 재검토)' },
+  { id:'RC-0910', owner:'㈜다온컴퍼니', kind:1, unit:100000, head:20, paid:2000000, refund:0, ch:['yt','fb'], status:'ended', date:'08-20 10:00', code:'DAON20', reach:1780, signup:20 },
+  { id:'RC-0908', owner:'박민아', kind:2, unit:10000, head:500, paid:0, refund:5000000, ch:['ot'], status:'rejected', date:'08-18 13:15', code:'MINA500', reach:0, signup:0, reason:'광고 종류 ② 기존 DB 연동 — 제3자 제공 동의 증빙 없음 (기획서 §7.3)' },
+];
+
+const MEMBERS = ['kim***@gmail.com','park***@naver.com','lee***@kakao.com','choi***@gmail.com','jung***@naver.com','han***@gmail.com','yoon***@daum.net'];
+
+/* ===================================================================
+   화면 전환 (시안 탭 + 사이드바 + KPI 딥링크)
+   =================================================================== */
+const SCREENS = ['dashboard','reward','ledger'];
+function showScreen(name) {
+  if (!SCREENS.includes(name)) { toast(`"${navLabel(name)}" 메뉴는 이번 시안 범위 밖입니다 (P0 이관 / P1)`, true); return; }
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + name));
+  document.querySelectorAll('.chrome .tab').forEach(t => t.classList.toggle('active', t.dataset.screen === name));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.nav === name));
+  closeSidebar(); closeDrawer();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function navLabel(k) { const b = document.querySelector(`.nav [data-nav="${k}"]`); return b ? b.textContent.replace(/\d+$/, '').trim() : k; }
+document.querySelectorAll('.chrome .tab').forEach(t => t.addEventListener('click', () => showScreen(t.dataset.screen)));
+document.querySelectorAll('.nav button').forEach(b => b.addEventListener('click', () => showScreen(b.dataset.nav)));
+document.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); showScreen(el.dataset.go); }));
+document.querySelectorAll('.kpi[data-filter]').forEach(el => el.addEventListener('click', () => setFilter(el.dataset.filter)));
+
+/* A/B 색 토글 */
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.documentElement.dataset.theme = b.dataset.theme;
+  document.querySelectorAll('.seg button').forEach(x => x.classList.toggle('active', x === b));
+}));
+
+/* 모바일 사이드바 */
+const sidebar = document.getElementById('sidebar'), sideScrim = document.getElementById('sideScrim');
+document.querySelectorAll('.hamburger').forEach(h => h.addEventListener('click', () => { sidebar.classList.add('open'); sideScrim.classList.add('show'); }));
+function closeSidebar() { sidebar.classList.remove('open'); sideScrim.classList.remove('show'); }
+sideScrim.addEventListener('click', closeSidebar);
+
+/* 새로고침 — 누르는 맛 */
+document.querySelectorAll('.js-refresh').forEach(b => b.addEventListener('click', () => { b.classList.add('spin'); setTimeout(() => { b.classList.remove('spin'); toast('최신 데이터로 갱신했습니다'); }, 600); }));
+document.querySelectorAll('.js-snapshot').forEach(b => b.addEventListener('click', () => {
+  b.classList.add('loading'); setTimeout(() => { b.classList.remove('loading'); toast('스냅샷을 생성했습니다 — 불일치 +600,000 P (베타 조정)'); }, 900);
+}));
+
+/* ===================================================================
+   바차트
+   =================================================================== */
+const CHANNELS = [
+  ['유튜브', 1240, 96], ['카카오', 2310, 214], ['인스타그램', 1780, 121], ['네이버', 920, 58], ['페이스북', 410, 17], ['기타 (링크 직접)', 660, 44],
+];
+(function renderChart() {
+  const max = Math.max(...CHANNELS.map(c => c[1]));
+  document.getElementById('chart').innerHTML = CHANNELS.map(([name, reach, signup]) => {
+    const rate = signup / reach * 100;
+    return `<div class="bar-group">
+      <div class="pct num">${rate.toFixed(1)}%</div>
+      <div class="bar ${rate < 5 ? 'weak' : ''}" style="height:${Math.round(reach / max * 170)}px" title="도달 ${fmt(reach)} · 가입 ${fmt(signup)}"></div>
+      <div class="lbl">${name}<span class="muted num">도달 ${fmt(reach)} · 가입 ${fmt(signup)}</span></div>
+    </div>`;
+  }).join('');
+})();
+
+/* ===================================================================
+   캠페인 테이블 (DataTable + StatusBadge + BudgetBar)
+   =================================================================== */
+let currentFilter = 'all', selectedId = null;
+const locked = c => c.unit * c.head;
+const remaining = c => locked(c) - c.paid - c.refund;
+
+function budgetBar(c) {
+  const L = locked(c), p = c.paid / L * 100, r = c.refund / L * 100, left = 100 - p - r;
+  return `<div class="bbar" title="지급 ${fmt(c.paid)} / 잠김 ${fmt(L)} / 반환 ${fmt(c.refund)}">
+    <div class="paid" style="width:${p}%"></div><div class="left" style="width:${left}%"></div><div class="refund" style="width:${r}%"></div></div>
+    <div class="bbar-legend num">${c.refund ? `<span><i style="background:var(--btn-outline-border)"></i>반환 ${fmt(c.refund)}</span>` : `<span><i style="background:var(--primary)"></i>${fmt(c.paid)}</span><span><i style="background:rgba(var(--primary-rgb),.3)"></i>잔여 ${fmt(remaining(c))}</span>`}</div>`;
+}
+function channelIcons(chs) { return chs.map(k => `<span class="ch ${k}" title="${CH[k][1]}">${CH[k][0]}</span>`).join(''); }
+function actionButtons(c, sm = true) {
+  const s = sm ? ' btn-sm' : '';
+  switch (c.status) {
+    case 'pending': return `<button class="btn btn-primary${s}" data-act="approve" data-id="${c.id}"><svg class="ic ic-sm"><use href="#i-check"/></svg>승인</button><button class="btn btn-danger${s}" data-act="reject" data-id="${c.id}"><svg class="ic ic-sm"><use href="#i-x"/></svg>거절</button>`;
+    case 'live': return `<button class="btn btn-secondary${s}" data-act="pause" data-id="${c.id}"><svg class="ic ic-sm"><use href="#i-pause"/></svg>정지</button><button class="btn btn-danger${s}" data-act="end" data-id="${c.id}"><svg class="ic ic-sm"><use href="#i-stop"/></svg>종료</button>`;
+    case 'paused': return `<button class="btn btn-primary${s}" data-act="resume" data-id="${c.id}"><svg class="ic ic-sm"><use href="#i-play"/></svg>재개</button><button class="btn btn-danger${s}" data-act="end" data-id="${c.id}"><svg class="ic ic-sm"><use href="#i-stop"/></svg>종료</button>`;
+    default: return `<button class="btn btn-outline${s}" data-act="open" data-id="${c.id}">상세<svg class="ic ic-sm"><use href="#i-chevron"/></svg></button>`;
+  }
+}
+function renderTable() {
+  const rows = CAMPAIGNS.filter(c => currentFilter === 'all' || c.status === currentFilter);
+  const body = document.getElementById('campBody');
+  if (!rows.length) { body.innerHTML = `<tr class="empty"><td colspan="10">해당 상태의 캠페인이 없습니다.</td></tr>`; return; }
+  body.innerHTML = rows.map(c => `<tr class="clickable ${c.id === selectedId ? 'selected' : ''}" data-id="${c.id}" tabindex="0">
+    <td><strong>${c.id}</strong><span class="sub">${c.code}</span></td>
+    <td>${c.owner}</td>
+    <td><span class="chip ${c.kind === 1 ? 'purple' : 'orange'}">${c.kind === 1 ? '① 신규 가입' : '② 기존 DB'}</span></td>
+    <td class="r num">${fmt(c.unit)} P</td>
+    <td class="r num">${fmt(c.head)}명</td>
+    <td>${budgetBar(c)}</td>
+    <td>${channelIcons(c.ch)}</td>
+    <td><span class="badge ${c.status}">${STATUS[c.status]}</span></td>
+    <td class="num">${c.date}</td>
+    <td class="r"><div class="row-actions">${actionButtons(c)}</div></td>
+  </tr>`).join('');
+}
+function recount() {
+  const n = s => CAMPAIGNS.filter(c => c.status === s).length;
+  document.querySelectorAll('#filters .fchip').forEach(f => { const s = f.dataset.status; f.querySelector('.n').textContent = s === 'all' ? CAMPAIGNS.length : n(s); });
+  document.getElementById('kpiPending').innerHTML = `${n('pending')}<small>건</small>`;
+  document.getElementById('kpiPendingDash').innerHTML = `${n('pending')}<small>건</small>`;
+  document.getElementById('kpiLive').innerHTML = `${n('live')}<small>건</small>`;
+  document.getElementById('navPending').textContent = n('pending');
+  document.getElementById('bellCount').textContent = n('pending') + 7;
+  const lockedSum = CAMPAIGNS.filter(c => ['pending','live','paused'].includes(c.status)).reduce((a, c) => a + remaining(c), 0);
+  document.getElementById('kpiLocked').innerHTML = `${fmt(lockedSum)}<small>P</small>`;
+}
+function setFilter(s) {
+  currentFilter = s;
+  document.querySelectorAll('#filters .fchip').forEach(f => f.classList.toggle('active', f.dataset.status === s));
+  showScreen('reward'); renderTable();
+}
+document.querySelectorAll('#filters .fchip').forEach(f => f.addEventListener('click', () => setFilter(f.dataset.status)));
+
+/* 행 클릭 → 드로어 / 액션 버튼 */
+document.getElementById('campTable').addEventListener('click', e => {
+  const btn = e.target.closest('[data-act]');
+  if (btn) { e.stopPropagation(); doAction(btn.dataset.act, btn.dataset.id); return; }
+  const tr = e.target.closest('tr[data-id]');
+  if (tr) openDrawer(tr.dataset.id);
+});
+document.getElementById('campTable').addEventListener('keydown', e => { const tr = e.target.closest('tr[data-id]'); if (tr && e.key === 'Enter') openDrawer(tr.dataset.id); });
+
+/* ===================================================================
+   드로어
+   =================================================================== */
+const drawer = document.getElementById('drawer'), drawerScrim = document.getElementById('drawerScrim');
+function openDrawer(id) {
+  const c = CAMPAIGNS.find(x => x.id === id); if (!c) return;
+  selectedId = id; renderTable();
+  document.getElementById('dTitle').textContent = c.id;
+  const badge = document.getElementById('dBadge'); badge.className = 'badge ' + c.status; badge.textContent = STATUS[c.status];
+  document.getElementById('pOwner').textContent = `${c.owner} · 코드 ${c.code}`;
+  document.getElementById('pHeadline').textContent = `가입 시 ${fmt(c.unit)} P 지급`;
+  document.getElementById('pCopy').textContent = c.kind === 1
+    ? `${c.owner} 코드로 다랜드에 가입하고 이메일 인증을 마치면 ${fmt(c.unit)} P를 드립니다. 1P = 1원 · 선착순 ${fmt(c.head)}명 · 1인 1회.`
+    : `${c.owner} 기존 회원이 다랜드에 가입하면 ${fmt(c.unit)} P를 드립니다. 1P = 1원 · 1인 1회. (기존 DB 연동은 제3자 제공 동의가 있어야 진행됩니다)`;
+  document.getElementById('dMeta').innerHTML = [
+    ['종류', c.kind === 1 ? '① 신규 회원 가입 리워드' : '② 기존사이트 회원 DB 연동 (P2)'],
+    ['1인 금액', `${fmt(c.unit)} P`], ['모집 인원', `${fmt(c.head)}명`],
+    ['예산 잠김', `${fmt(locked(c))} P (제출 시 에스크로)`], ['지급 / 잔여', `${fmt(c.paid)} / ${fmt(remaining(c))} P`],
+    ['채널', c.ch.map(k => CH[k][1]).join(' · ')], ['제출일', `2026-${c.date}`],
+    ['지급 조건', '가입 + 이메일 인증 + 1인 1회 (P0)'],
+  ].map(([k, v]) => `<div><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
+  const reason = document.getElementById('dReason');
+  reason.style.background = ''; reason.style.color = '';
+  if (c.reason) { reason.textContent = '거절 사유: ' + c.reason + ' · 예산 전액 반환됨'; reason.classList.remove('hide'); }
+  else if (c.note) { reason.textContent = '정지 사유: ' + c.note; reason.classList.remove('hide'); reason.style.background = 'var(--info-light)'; reason.style.color = 'var(--chip-blue-text)'; }
+  else { reason.classList.add('hide'); }
+  // 지급내역
+  const n = Math.round(c.paid / c.unit), shown = Math.min(n, 5);
+  document.getElementById('payBody').innerHTML = n === 0
+    ? `<tr class="empty"><td colspan="4">아직 지급된 건이 없습니다.</td></tr>`
+    : Array.from({ length: shown }, (_, i) => `<tr><td>${MEMBERS[i % MEMBERS.length]}</td><td><span class="chip green">가입+인증</span></td><td class="r num">+${fmt(c.unit)} P</td><td class="num">09-0${6 - (i % 4)} ${String(10 + i * 2).padStart(2, '0')}:${String(12 + i * 7).padStart(2, '0')}</td></tr>`).join('')
+      + (n > shown ? `<tr><td colspan="4" class="muted" style="text-align:center">외 ${fmt(n - shown)}건 — 전체 보기</td></tr>` : '');
+  // 성과
+  const rate = c.reach ? (c.signup / c.reach * 100).toFixed(1) + '%' : '—';
+  document.getElementById('statBox').innerHTML = [['도달', fmt(c.reach)], ['가입', fmt(c.signup)], ['지급', `${fmt(n)}명`], ['전환율', rate]]
+    .map(([k, v]) => `<div class="stat"><div class="label">${k}</div><div class="value num">${v}</div></div>`).join('');
+  document.getElementById('statBar').style.width = Math.min(100, n / c.head * 100) + '%';
+  document.getElementById('dFoot').innerHTML = actionButtons(c, false);
+  drawer.classList.add('open'); drawerScrim.classList.add('show');
+}
+function closeDrawer() { drawer.classList.remove('open'); drawerScrim.classList.remove('show'); if (selectedId) { selectedId = null; renderTable(); } }
+document.getElementById('dClose').addEventListener('click', closeDrawer);
+drawerScrim.addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrawer(); closeSidebar(); } });
+document.getElementById('dFoot').addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b) doAction(b.dataset.act, b.dataset.id); });
+document.querySelectorAll('.tabs button').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('active', x === t));
+  document.getElementById('tab-payouts').classList.toggle('hide', t.dataset.tab !== 'payouts');
+  document.getElementById('tab-stats').classList.toggle('hide', t.dataset.tab !== 'stats');
+}));
+
+/* ===================================================================
+   액션 — 파괴적 동작은 confirm 1회, 끝나면 다음 대기 건 자동 열림
+   =================================================================== */
+function doAction(act, id) {
+  const c = CAMPAIGNS.find(x => x.id === id); if (!c) return;
+  if (act === 'open') { openDrawer(id); return; }
+  if (act === 'approve') { c.status = 'live'; afterAction(`${c.id} 승인 — 송출을 시작합니다. 광고주 예산 ${fmt(locked(c))} P 는 그대로 잠김.`, true); return; }
+  if (act === 'reject') {
+    const r = prompt(`${c.id} 거절 사유를 입력해 주세요 (광고주에게 그대로 전달됩니다)`, '');
+    if (r === null) return;
+    c.status = 'rejected'; c.reason = r || '사유 미기재'; c.refund = remaining(c);
+    afterAction(`${c.id} 거절 — 잠긴 예산 ${fmt(c.refund)} P 를 광고주에게 반환했습니다.`, true); return;
+  }
+  if (act === 'pause') { c.status = 'paused'; c.note = '관리자 정지'; afterAction(`${c.id} 일시정지 — 지급이 멈춥니다. 예산은 잠긴 채 유지.`); return; }
+  if (act === 'resume') { c.status = 'live'; delete c.note; afterAction(`${c.id} 재개 — 지급을 다시 시작합니다.`); return; }
+  if (act === 'end') {
+    if (!confirm(`${c.id} 를 종료할까요?\n잔여 예산 ${fmt(remaining(c))} P 가 광고주에게 반환됩니다. (되돌릴 수 없음)`)) return;
+    c.refund = remaining(c); c.status = 'ended';
+    afterAction(`${c.id} 종료 — 잔여 ${fmt(c.refund)} P 반환 완료.`);
+  }
+}
+function afterAction(msg, gotoNextPending = false) {
+  recount(); renderTable(); toast(msg);
+  const next = gotoNextPending ? CAMPAIGNS.find(x => x.status === 'pending') : null;
+  if (next) openDrawer(next.id); else closeDrawer();
+}
+
+/* 토스트 — 2초 자동 닫힘 */
+let toastTimer;
+function toast(msg, isError = false) {
+  const t = document.getElementById('toast'); document.getElementById('toastMsg').textContent = msg;
+  t.classList.toggle('error', isError); t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+recount(); renderTable();
+</script>
+</body>
+</html>
