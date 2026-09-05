@@ -36,6 +36,10 @@ const TYPE_META: Record<
   invite_advertiser: { label: "광고주 초대 수익", icon: "📢", color: "#10B981", sign: "plus" },
   withdrawal_request: { label: "출금 요청", icon: "🏦", color: "#EF4444", sign: "minus" },
   withdrawal_refund: { label: "출금 환불", icon: "↩️", color: "#10B981", sign: "plus" },
+  reward_lock: { label: "리워드 예산 잠금", icon: "🔒", color: "#EF4444", sign: "minus" },
+  reward_out: { label: "리워드 지급 (잠금 예산에서)", icon: "📤", color: "#6B7394", sign: "minus" },
+  reward_in: { label: "가입 리워드 수령", icon: "🎁", color: "#10B981", sign: "plus" },
+  reward_refund: { label: "리워드 잔여 예산 반환", icon: "↩️", color: "#10B981", sign: "plus" },
 };
 
 export default function HistoryPage() {
@@ -92,7 +96,9 @@ export default function HistoryPage() {
           } else if (
             data.type === "invite_invitee" ||
             data.type === "invite_advertiser" ||
-            data.type === "withdrawal_refund"
+            data.type === "withdrawal_refund" ||
+            data.type === "reward_in" ||
+            data.type === "reward_refund"
           ) {
             earned += data.totalAccumulation || 0;
           } else if (!data.type) {
