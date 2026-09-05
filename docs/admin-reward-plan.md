@@ -81,15 +81,18 @@
 ### 2.2 원장 흐름 (P0 구현 대상)
 
 ```
-[광고주]                 [캠페인 에스크로]           [신규회원]
-totalPoints ─(예산 잠금)─▶ rewardCampaigns.budgetLocked
-                             │
-                             ├─(가입+조건 충족)─▶ totalPoints +unit
-                             │   rewardPayouts 1건 생성 (payout)
-                             │   transactions type=reward_in (회원) / reward_out (광고주)
-                             │
-                             └─(종료·취소·거절)─▶ 광고주 totalPoints 잔여 반환 (refund)
+[광고주]                              [캠페인 에스크로]                      [신규회원]
+totalPoints −budget ─(제출: 잠금)─▶ 광고주 users.lockedPoints +budget
+                                     (= rewardCampaigns.budgetLocked 합계)
+                                        │
+                                        ├─(가입+조건 충족: 리딤)─▶ lockedPoints −unit → 회원 totalPoints +unit
+                                        │   rewardPayouts 1건 생성 (payout)
+                                        │   transactions type=reward_in (회원) / reward_out (광고주)
+                                        │
+                                        └─(거절·종료·취소)─▶ lockedPoints −잔여 → 광고주 totalPoints +잔여 (refund)
 ```
+
+세 이동 어디서도 `Σ totalPoints + Σ lockedPoints` 는 변하지 않는다 (잠금·리딤·반환 전부 좌우 합 0). `lockedPoints` 는 출금 가능 잔액에서 제외된다 (§7.4).
 
 - 예산 잠금 시점: 캠페인 **제출** 시 (승인 전에 잠가야 승인 후 잔액 부족으로 지급 실패하는 일이 없다). 거절되면 즉시 전액 반환.
 - 지급 조건 (P0): 캠페인 코드/링크로 가입 + 이메일 인증 + 1인 1회 (`rewardPayouts/{inviteeUid}` 문서 ID로 멱등). 기존 `inviteRedemptions/{inviteeUid}` 패턴 유지.
@@ -149,7 +152,7 @@ totalPoints ─(예산 잠금)─▶ rewardCampaigns.budgetLocked
 | **공지** | 게시 중 / 예약 / 조회 / 마지막 발행 | 제목·대상(전체/광고주/기업)·게시일·상태 | 작성·게시·내리기 | P1 |
 | **설정** | — | 분배 모드(기존 auto/manual), 광고주 자격 하한(10만), 리워드 프리셋, 캠페인 최소 인원, 관리자 이메일 allowlist | 저장 (감사 로그) | P0 (이관) / P1 (확장) |
 
-총량 모니터 정합식: `Σ users.totalPoints == Σ deposit − Σ withdraw(completed) + Σ spend.bonus − Σ spend.principal(포인트결제분) + 0(리워드는 제로섬)`. 이 식이 안 맞으면 어딘가에서 무에서 생성됐다는 신호다. 지금 코드로 돌리면 `inviteRedemptions` 만큼 안 맞을 것 — 그게 P0-1의 증거 화면이 된다.
+총량 모니터 정합식: `Σ users.totalPoints + Σ users.lockedPoints(캠페인 에스크로 잠김) == Σ deposit − Σ withdraw(completed) + Σ spend.bonus − Σ spend.principal(포인트결제분) + 0(리워드는 제로섬) + 베타 조정(§8-6, 기존 inviteRedemptions 분)`. 좌변에 에스크로 항을 넣는 이유: 제출 시 `totalPoints → lockedPoints` 로 옮기므로 `totalPoints` 만 보면 잠긴 예산만큼 총량이 줄어든 것처럼 보인다. 검산: `Σ users.lockedPoints == Σ rewardCampaigns(status ∈ live·approved·paused·pending_review).budgetLocked − budgetPaid − budgetRefunded`. 이 식이 안 맞으면 어딘가에서 무에서 생성됐다는 신호다. 지금 코드로 돌리면 `inviteRedemptions` 만큼 안 맞을 것 — 그게 P0-1의 증거 화면이 되고, P0-1 이후엔 그 차이가 "베타 조정" 항목으로 분리 표기된다.
 
 ---
 
@@ -173,6 +176,13 @@ totalPoints ─(예산 잠금)─▶ rewardCampaigns.budgetLocked
 ### 4.2 신규 컬렉션 스키마 (P0 필수 2개 + P1 3개)
 
 ```ts
+// users/{uid}  (기존 컬렉션에 필드 추가)                          [P0]
+{
+  ...기존,
+  totalPoints: number,       // 출금·지출 가능 잔액
+  lockedPoints: number,      // 캠페인 에스크로 잠김 (제출 시 totalPoints → 여기로, 리딤 시 회원 totalPoints 로, 거절·종료 시 totalPoints 로 반환). 출금 가능 잔액에서 제외
+}
+
 // rewardCampaigns/{campaignId}                                  [P0]
 {
   ownerUid, kind: "new_member" | "existing_db",   // cd9c4af8 광고 종류 ①②
@@ -331,7 +341,7 @@ P2-6 1분 쇼츠 영상 템플릿 — 외부 생성 API 비용 산정           
 |---|---|
 | 다계정 가입으로 리워드 수령 | 1인 1회 멱등 + 이메일 인증 + P1 첫 입금 조건 + 관리자 지급 역전(reverse) 기능 |
 | 광고주 잔액 부족 상태에서 승인 | 제출 시 잠금 → 승인 시점 잔액 무관 |
-| 캠페인 승인 후 광고주 출금 시도 | 잠긴 예산은 출금 가능 잔액에서 제외 (`withdraw/request` 검증 추가) |
+| 캠페인 승인 후 광고주 출금 시도 | 잠긴 예산은 이미 `totalPoints` 에서 빠져 `lockedPoints` 로 옮겨져 있으므로 출금 가능 잔액 = `totalPoints` 그대로. `withdraw/request` 는 `lockedPoints` 를 건드리지 않는다는 것만 테스트로 고정 (강체크) |
 | 관리자 실수·내부 조작 | `adminAuditLogs` 전건 기록, 잔액 직접 수정은 사유 필수 |
 | 기존 `inviteRedemptions` 데이터 | 무에서 생성된 포인트가 이미 있음. 소급 차감 여부 §8-6 |
 
