@@ -10,8 +10,10 @@
 import {
   canRedeem,
   lockAmount,
+  nextStatus,
   remainingBudget,
   statusAfterPayout,
+  type AdminAction,
   type CampaignStatus,
   type RewardChannel,
   type RewardKind,
@@ -125,10 +127,20 @@ export function deductBalance(user: { email?: string | null }, amount: number): 
   if (!isBrowser()) return 0;
   const key = emailKey(user);
   if (!key) return 0;
-  const next = Math.max(0, getBalance(user) - amount);
+  const before = getBalance(user);
+  const next = Math.max(0, before - amount);
   localStorage.setItem(BAL_KEY(key), String(next));
+  // 관리자 총량 모니터 우변 항목 (withdrawal_request) — 실제 차감분만 기록
+  try {
+    const prev = parseInt(localStorage.getItem(WITHDRAWN_KEY) || "0", 10);
+    localStorage.setItem(WITHDRAWN_KEY, String((Number.isFinite(prev) ? prev : 0) + (before - next)));
+  } catch {
+    // 무시
+  }
   return next;
 }
+
+const WITHDRAWN_KEY = "daland-demo-withdrawn-total";
 
 /** 회원 통계 (총 지출, 총 적립, 거래 건수) */
 export function getStats(user: { email?: string | null } | null | undefined): {
@@ -216,10 +228,21 @@ export interface DemoCampaign {
   copy: string;
   status: CampaignStatus;
   createdAt: number;
+  dailyCap?: number;
+  rejectReason?: string;
+  endReason?: string;
+  reviewedAt?: number;
+  endedAt?: number;
 }
 
 const CAMPAIGNS_KEY = "daland-demo-reward-campaigns";
-const PAYOUTS_KEY = "daland-demo-reward-payouts"; // { [inviteeEmail]: campaignId }
+const PAYOUTS_KEY = "daland-demo-reward-payouts"; // { [inviteeEmail]: campaignId | DemoPayout }
+
+export interface DemoPayout {
+  campaignId: string;
+  amount: number;
+  paidAt: number;
+}
 const LOCKED_KEY = (email: string) => `daland-demo-locked-${email}`;
 
 /** 시드 광고주 (데모 전용 계정, 잔액은 getBalance 로 100만P 자동 시드) */
@@ -271,6 +294,7 @@ function readCampaigns(): DemoCampaign[] {
     localStorage.setItem(BAL_KEY(DEMO_ADVERTISER_EMAIL), String(advBalance - seedLocked));
     localStorage.setItem(LOCKED_KEY(DEMO_ADVERTISER_EMAIL), String(seedLocked));
     localStorage.setItem(CAMPAIGNS_KEY, JSON.stringify(SEED_CAMPAIGNS));
+    seedAdvertiserTransactions();
     return SEED_CAMPAIGNS.map((c) => ({ ...c }));
   } catch {
     return [];
@@ -286,11 +310,18 @@ function writeCampaigns(list: DemoCampaign[]) {
   }
 }
 
-function readPayouts(): Record<string, string> {
+function readPayouts(): Record<string, DemoPayout> {
   if (!isBrowser()) return {};
   try {
     const raw = localStorage.getItem(PAYOUTS_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, string | DemoPayout>;
+    const out: Record<string, DemoPayout> = {};
+    for (const [email, v] of Object.entries(parsed)) {
+      // 구 형식(문자열 campaignId)은 금액·시각을 모른다 → 0 / 0 으로 읽고 새 저장 때 객체로 승격
+      out[email] = typeof v === "string" ? { campaignId: v, amount: 0, paidAt: 0 } : v;
+    }
+    return out;
   } catch {
     return {};
   }
@@ -398,7 +429,7 @@ export function redeemCampaign(
   c.paidCount += 1;
   c.status = statusAfterPayout(c, c.unitAmount, c.status);
   writeCampaigns(list);
-  payouts[key] = c.id;
+  payouts[key] = { campaignId: c.id, amount: c.unitAmount, paidAt: Date.now() };
   localStorage.setItem(PAYOUTS_KEY, JSON.stringify(payouts));
   return { ok: true, amount: c.unitAmount, newBalance };
 }
@@ -427,4 +458,172 @@ export function setCampaignStatus(
   c.status = next;
   writeCampaigns(list);
   return { ok: true, refunded };
+}
+
+
+// --- 관리자 데모 (admin/* 화면이 Firebase 없이도 동작하도록) ---
+
+/** 시드 광고주 지출 2건 — 잔액 규칙(−amount +120%)을 그대로 태워 총량 정합이 맞게 한다 */
+function seedAdvertiserTransactions() {
+  const adv = { email: DEMO_ADVERTISER_EMAIL, displayName: "데모 광고주" };
+  if (getTransactions(adv).length > 0) return;
+  const base = 1_757_116_800_000; // 2026-09-06
+  const seeds: Array<{ category: string; categoryName: string; amount: number; memo: string; at: number }> = [
+    { category: "rent", categoryName: "임대료", amount: 50_000, memo: "9월 임대료 (데모)", at: base - 3 * 3_600_000 },
+    { category: "utilities", categoryName: "공과금", amount: 30_000, memo: "전기요금 (데모)", at: base - 3_600_000 },
+  ];
+  for (const sd of seeds) {
+    const bonus = Math.round(sd.amount * 0.2);
+    const rec = saveTransaction(adv, {
+      category: sd.category,
+      categoryName: sd.categoryName,
+      storeName: sd.memo,
+      amount: sd.amount,
+      memo: sd.memo,
+      totalAccumulation: sd.amount + bonus,
+      nonlinearResult: {
+        principal: sd.amount,
+        bonus,
+        totalAccumulation: sd.amount + bonus,
+        rate: 1.2,
+        memberCount: 1,
+        perMemberAmount: sd.amount + bonus,
+        advertiserReward: 0,
+      },
+    });
+    if (rec) {
+      // 시각을 시드 기준으로 되돌린다 (saveTransaction 은 Date.now 를 쓴다)
+      try {
+        const raw = localStorage.getItem(TX_KEY(DEMO_ADVERTISER_EMAIL));
+        const list: DemoTransaction[] = raw ? JSON.parse(raw) : [];
+        const found = list.find((t) => t.id === rec.id);
+        if (found) found.createdAt = sd.at;
+        localStorage.setItem(TX_KEY(DEMO_ADVERTISER_EMAIL), JSON.stringify(list));
+      } catch {
+        // 무시
+      }
+    }
+  }
+}
+
+export interface DemoUserRow {
+  email: string;
+  name: string;
+  balance: number;
+  locked: number;
+  txCount: number;
+  isAdvertiser: boolean;
+}
+
+/** 브라우저에 잔액 키가 있는 모든 데모 회원 */
+export function getDemoUsers(): DemoUserRow[] {
+  if (!isBrowser()) return [];
+  const campaigns = readCampaigns(); // 시드 보장
+  const rows: DemoUserRow[] = [];
+  let currentName = "";
+  let currentEmail = "";
+  try {
+    const saved = localStorage.getItem("daland-demo-user");
+    if (saved) {
+      const parsed = JSON.parse(saved) as { displayName?: string; email?: string };
+      currentName = parsed.displayName || "";
+      currentEmail = (parsed.email || "").toLowerCase();
+    }
+  } catch {
+    // 무시
+  }
+  const owners = new Set(campaigns.map((c) => c.ownerEmail));
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith("daland-demo-balance-")) continue;
+    const email = k.slice("daland-demo-balance-".length);
+    const u = { email };
+    rows.push({
+      email,
+      name: email === DEMO_ADVERTISER_EMAIL ? "데모 광고주" : email === currentEmail ? currentName : "",
+      balance: getBalance(u),
+      locked: getLockedBalance(u),
+      txCount: getTransactions(u).length,
+      isAdvertiser: owners.has(email),
+    });
+  }
+  return rows.sort((a, b) => a.email.localeCompare(b.email));
+}
+
+/** 모든 데모 회원의 거래 (최신순) */
+export function getAllDemoTransactions(): DemoTransaction[] {
+  const all: DemoTransaction[] = [];
+  for (const u of getDemoUsers()) all.push(...getTransactions({ email: u.email }));
+  return all.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+/** 캠페인별 지급내역 (관리자 드로어) */
+export function getDemoPayoutsForCampaign(campaignId: string): Array<{ email: string; amount: number; paidAt: number }> {
+  const payouts = readPayouts();
+  const c = readCampaigns().find((x) => x.id === campaignId);
+  return Object.entries(payouts)
+    .filter(([, p]) => p.campaignId === campaignId)
+    .map(([email, p]) => ({ email, amount: p.amount || c?.unitAmount || 0, paidAt: p.paidAt }))
+    .sort((a, b) => b.paidAt - a.paidAt);
+}
+
+/** 오늘(로컬 자정 이후) 지급 합계·건수 */
+export function getDemoTodayPayouts(): { amount: number; count: number } {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  let amount = 0;
+  let count = 0;
+  for (const p of Object.values(readPayouts())) {
+    if (p.paidAt >= start.getTime()) {
+      amount += p.amount;
+      count += 1;
+    }
+  }
+  return { amount, count };
+}
+
+/** 데모 출금 누적 (deductBalance 기록) */
+export function getDemoWithdrawnTotal(): number {
+  if (!isBrowser()) return 0;
+  const n = parseInt(localStorage.getItem(WITHDRAWN_KEY) || "0", 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** 관리자 액션 (승인·거절·정지·재개·종료) — 실서버 applyAdminAction 과 같은 전이표·반환 규칙 */
+export function adminCampaignAction(
+  campaignId: string,
+  action: AdminAction,
+  reason?: string,
+): { ok: true; from: CampaignStatus; to: CampaignStatus; refunded: number } | { ok: false; error: DemoRewardError } {
+  const list = readCampaigns();
+  const c = list.find((x) => x.id === campaignId);
+  if (!c) return { ok: false, error: "NOT_FOUND" };
+  const from = c.status;
+  const to = nextStatus(from, action);
+  if (!to) return { ok: false, error: "INVALID_STATE" };
+  const r = setCampaignStatus(campaignId, to);
+  if (!r.ok) return r;
+  // setCampaignStatus 가 저장한 목록을 다시 읽어 사유·시각을 덧붙인다
+  const after = readCampaigns();
+  const saved = after.find((x) => x.id === campaignId);
+  if (saved) {
+    saved.reviewedAt = Date.now();
+    if (to === "rejected") saved.rejectReason = reason || "";
+    if (to === "ended") {
+      saved.endReason = reason || "";
+      saved.endedAt = Date.now();
+    }
+    writeCampaigns(after);
+  }
+  return { ok: true, from, to, refunded: r.refunded };
+}
+
+/** 캠페인 일일 지급 상한 (데모는 저장만, 리딤 게이트는 실서버에만 있음) */
+export function setDemoDailyCap(campaignId: string, dailyCap: number): boolean {
+  const list = readCampaigns();
+  const c = list.find((x) => x.id === campaignId);
+  if (!c) return false;
+  c.dailyCap = dailyCap;
+  writeCampaigns(list);
+  return true;
 }
