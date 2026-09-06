@@ -1,12 +1,20 @@
 "use client";
 
 import { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import BackButton from "@/components/BackButton";
 import DesktopSidebar from "@/components/DesktopSidebar";
 import DesktopHeader from "@/components/DesktopHeader";
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  // 관리자(/admin/*)는 자체 셸(app/admin/layout.tsx)을 쓴다 — 사용자 사이드바·헤더·햄버거 없음
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    return <>{children}</>;
+  }
+
   return (
     <>
       {/* PC: 좌측 고정 사이드바 (lg 이상) */}
