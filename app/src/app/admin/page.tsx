@@ -1,501 +1,306 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
-import { isConfigured, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
-import { apiGet, apiPost, ApiClientError } from "@/lib/api-client";
-import Navbar from "@/components/Navbar";
+import { useCallback, useEffect, useState } from "react";
+import { useAdmin } from "@/components/admin/AdminContext";
+import { errorMessage, getDashboard, getTotals } from "@/lib/admin-data";
+import { ACTIVITY_META, type ActivityItem, type AdminDashboard, type LedgerTotals } from "@/lib/admin-types";
+import { fmt, fmtElapsed, fmtP, fmtShort, fmtSigned, maskEmail } from "@/lib/admin-format";
+import PageHeader from "@/components/admin/PageHeader";
+import KpiCard from "@/components/admin/KpiCard";
+import DataTable, { type Column } from "@/components/admin/DataTable";
+import StatusBadge from "@/components/admin/StatusBadge";
+import AdminIcon from "@/components/admin/AdminIcon";
+import { useToast } from "@/components/admin/Toast";
 
-interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  totalPoints: number;
-  membershipLevel: number;
-  createdAt: number | null;
-}
-
-interface AdminWithdrawal {
-  id: string;
-  userId: string;
-  userName?: string;
-  userEmail?: string;
-  amount: number;
-  status: "pending" | "completed" | "rejected";
-  bankInfo: { bank: string; accountNumber: string; holder: string };
-  requestedAt: number | null;
-  processedAt: number | null;
-  rejectReason: string | null;
-}
-
-const BANK_NAMES: Record<string, string> = {
-  shinhan: "신한은행",
-  kb: "국민은행",
-  woori: "우리은행",
-  hana: "하나은행",
-  nh: "농협은행",
-  kakao: "카카오뱅크",
-  toss: "토스뱅크",
-};
-
-type TabType = "overview" | "users" | "withdrawals";
-type CheckState = "checking" | "ok" | "denied" | "demo";
-
-export default function AdminPage() {
-  const { user, loading } = useAuth();
+/** 대시보드 (P0-5): KPI 4 · 총량 검산 2×2 + 정합 상태 · 채널 바차트 자리(P1) · 최근 활동 20건 */
+export default function AdminDashboardPage() {
+  const { adminName, refreshBadges } = useAdmin();
   const router = useRouter();
-  const [tab, setTab] = useState<TabType>("overview");
-  const [check, setCheck] = useState<CheckState>("checking");
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [withdrawals, setWithdrawals] = useState<AdminWithdrawal[]>([]);
-  const [withdrawalStatus, setWithdrawalStatus] = useState<"pending" | "completed" | "rejected" | "all">("all");
-  const [userSearch, setUserSearch] = useState("");
-  const [busy, setBusy] = useState(false);
+  const toast = useToast();
+  const [dash, setDash] = useState<AdminDashboard | null>(null);
+  const [totals, setTotals] = useState<LedgerTotals | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [splitMode, setSplitMode] = useState<"auto" | "manual">("auto");
-  const [splitBusy, setSplitBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/");
-      return;
-    }
-    if (!loading && user) {
-      if (!isConfigured) {
-        setCheck("demo");
-        return;
-      }
-      if (!db) {
-        setCheck("denied");
-        return;
-      }
-      getDoc(doc(db, "users", user.uid))
-        .then((snap) => {
-          const role = snap.exists() ? snap.data().role : null;
-          if (role === "admin") setCheck("ok");
-          else setCheck("denied");
-        })
-        .catch(() => setCheck("denied"));
-    }
-  }, [user, loading, router]);
-
-  const refreshUsers = useCallback(async () => {
-    if (check !== "ok") return;
-    try {
-      const r = await apiGet<{ items: AdminUser[] }>("/api/admin/users");
-      setUsers(r.items || []);
-    } catch (err) {
-      if (err instanceof ApiClientError) setError(err.code);
-    }
-  }, [check]);
-
-  const refreshWithdrawals = useCallback(
-    async (status: typeof withdrawalStatus = withdrawalStatus) => {
-      if (check !== "ok") return;
+  const load = useCallback(
+    async (silent = false) => {
+      setRefreshing(true);
+      setError(null);
       try {
-        const r = await apiGet<{ items: AdminWithdrawal[] }>(
-          `/api/admin/withdraw/list?status=${status}`,
-        );
-        setWithdrawals(r.items || []);
+        const [d, t] = await Promise.all([getDashboard(), getTotals()]);
+        setDash(d);
+        setTotals(t);
+        refreshBadges();
+        if (!silent) toast("최신 데이터로 갱신했습니다");
       } catch (err) {
-        if (err instanceof ApiClientError) setError(err.code);
+        const msg = errorMessage(err, "대시보드 조회 실패");
+        setError(msg);
+        console.error("[admin/dashboard]", err);
+      } finally {
+        setRefreshing(false);
       }
     },
-    [check, withdrawalStatus],
+    [refreshBadges, toast],
   );
 
   useEffect(() => {
-    if (check === "ok") {
-      refreshUsers();
-      refreshWithdrawals("all");
-      apiGet<{ splitMode: "auto" | "manual" }>("/api/admin/settings")
-        .then((r) => setSplitMode(r.splitMode))
-        .catch(() => { /* 기본 auto 유지 */ });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [check]);
+    load(true);
+  }, [load]);
 
-  const handleSplitMode = async (mode: "auto" | "manual") => {
-    if (mode === splitMode || splitBusy) return;
-    setSplitBusy(true);
-    setError(null);
-    try {
-      await apiPost("/api/admin/settings", { splitMode: mode });
-      setSplitMode(mode);
-    } catch (err) {
-      const msg =
-        err instanceof ApiClientError
-          ? `분할모드 변경 실패 [${err.code}] ${err.message}`
-          : "분할모드 변경 실패";
-      setError(msg);
-    } finally {
-      setSplitBusy(false);
-    }
-  };
+  const now = new Date();
+  const b = totals?.byType || {};
+  const deposit = b.deposit?.amount || 0;
+  const withdrawn = (b.withdrawal_request?.amount || 0) - (b.withdrawal_refund?.amount || 0);
+  const bonusIssued = (b.spend_bonus?.totalDelta || 0) - (b.spend_principal?.amount || 0) + (b.spend_card?.totalDelta || 0);
+  const rewardMoved = b.reward_in?.amount || 0;
+  const mismatch = totals ? totals.diff !== 0 : false;
+  const warnCount = totals?.warnings.length || 0;
+  const diffRatio = totals && totals.left.sum !== 0 ? Math.abs(totals.diff) / Math.abs(totals.left.sum) : 0;
 
-  const handleApprove = async (id: string) => {
-    if (!confirm("이 출금 요청을 승인 처리할까요? 외부 송금이 끝났다는 의미입니다.")) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await apiPost("/api/admin/withdraw/approve", { requestId: id });
-      await refreshWithdrawals();
-    } catch (err) {
-      const msg =
-        err instanceof ApiClientError
-          ? `승인 실패 [${err.code}] ${err.message}`
-          : `승인 실패: ${(err as Error)?.message || "알 수 없는 오류"}`;
-      setError(msg);
-      alert(msg);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleReject = async (id: string) => {
-    const reason = prompt("반려 사유를 입력해 주세요");
-    if (reason === null) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await apiPost("/api/admin/withdraw/reject", {
-        requestId: id,
-        reason,
-      });
-      await refreshWithdrawals();
-    } catch (err) {
-      const msg =
-        err instanceof ApiClientError
-          ? `반려 실패 [${err.code}] ${err.message}`
-          : `반려 실패: ${(err as Error)?.message || "알 수 없는 오류"}`;
-      setError(msg);
-      alert(msg);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (loading || check === "checking") {
-    return <div className="flex min-h-screen items-center justify-center dark-text-muted">로딩 중...</div>;
-  }
-  if (check === "demo") {
-    return (
-      <div className="flex min-h-screen items-center justify-center px-6 text-center">
-        <div>
-          <div className="text-2xl mb-2">🛡️</div>
-          <div className="text-sm text-[#6B7394]">관리자 패널은 Firebase 실연동 환경에서만 동작합니다.</div>
-        </div>
-      </div>
-    );
-  }
-  if (check === "denied") {
-    return (
-      <div className="flex min-h-screen items-center justify-center px-6 text-center">
-        <div>
-          <div className="text-2xl mb-2">🚫</div>
-          <div className="text-sm text-[#EF4444]">관리자 권한이 없습니다.</div>
-          <button onClick={() => router.push("/dashboard")} className="mt-4 rounded-xl bg-[#3B4CCA] px-4 py-2 text-sm text-white">
-            대시보드로 이동
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const filteredUsers = users.filter((u) => {
-    if (!userSearch.trim()) return true;
-    const q = userSearch.toLowerCase();
-    return (
-      u.name.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.role.toLowerCase().includes(q)
-    );
-  });
-
-  const totalPointsAcrossUsers = users.reduce((s, u) => s + (u.totalPoints || 0), 0);
-  const pendingCount = withdrawals.filter((w) => w.status === "pending").length;
-  const pendingAmount = withdrawals
-    .filter((w) => w.status === "pending")
-    .reduce((s, w) => s + w.amount, 0);
-
-  const tabs: { key: TabType; label: string; icon: string }[] = [
-    { key: "overview", label: "총괄", icon: "📊" },
-    { key: "users", label: "회원", icon: "👥" },
-    { key: "withdrawals", label: "출금", icon: "💸" },
+  const columns: Column<ActivityItem>[] = [
+    { key: "at", header: "시각", render: (r) => <span className="ad-num">{fmtShort(r.at)}</span> },
+    {
+      key: "user",
+      header: "회원",
+      render: (r) => (
+        <>
+          <strong>{r.userName || maskEmail(r.userEmail) || r.userId.slice(0, 8)}</strong>
+          {r.userName && r.userEmail && <span className="ad-sub">{maskEmail(r.userEmail)}</span>}
+          {r.campaignId && <span className="ad-sub">캠페인 {r.campaignId}</span>}
+          {r.categoryName && <span className="ad-sub">{r.categoryName}{r.source === "card_codef" ? " · 카드" : ""}</span>}
+        </>
+      ),
+    },
+    {
+      key: "type",
+      header: "유형",
+      render: (r) => {
+        const meta = ACTIVITY_META[r.type];
+        if (!meta) return <span className="ad-chip gray">{r.type || "구 거래 (type 없음)"}</span>;
+        return <span className={`ad-chip ${meta.chip}`}>{meta.label}</span>;
+      },
+    },
+    {
+      key: "amount",
+      header: "금액",
+      align: "right",
+      render: (r) => {
+        if (r.type === "spend") return <span className="ad-num">{fmt(r.amount)} → {fmt(r.totalAccumulation)} P</span>;
+        if (r.type === "reward_lock") return <span className="ad-num">{fmt(r.amount)} P 잠금</span>;
+        if (r.type === "reward_out") return <span className="ad-num">{fmt(r.amount)} P 이전</span>;
+        return <span className="ad-num">{fmtSigned(r.totalAccumulation || r.amount)} P</span>;
+      },
+    },
+    {
+      key: "status",
+      header: "상태",
+      render: (r) =>
+        r.type === "reward_lock" ? (
+          <StatusBadge tone="pending" label="승인 대기" />
+        ) : r.type === "withdrawal_request" ? (
+          <StatusBadge tone="pending" label="요청" />
+        ) : (
+          <StatusBadge tone="ok" label="완료" />
+        ),
+    },
+    {
+      key: "open",
+      header: "",
+      align: "right",
+      render: (r) => {
+        const meta = ACTIVITY_META[r.type];
+        const href = meta?.href || "/admin/ledger";
+        return (
+          <div className="ad-row-actions">
+            <Link href={href} className="ad-btn ad-btn-outline ad-btn-sm" onClick={(e) => e.stopPropagation()}>
+              열기
+              <AdminIcon name="chevron" small />
+            </Link>
+          </div>
+        );
+      },
+    },
   ];
 
   return (
-    <div className="min-h-screen pb-20">
-      <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🛡️</span>
-          <div>
-            <h1 className="text-lg font-bold">관리자 패널</h1>
-            <p className="text-xs dark-text-muted text-[#6B7394]">다랜드 시스템 관리</p>
+    <>
+      <PageHeader
+        title={`안녕하세요, ${adminName} 님`}
+        sub={`다랜드 관리자 — ${now.toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" })} ${now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false })} 기준 · 1P = 1원`}
+        onRefresh={() => load()}
+        refreshing={refreshing}
+      />
+
+      {error && (
+        <div className="ad-callout error" style={{ marginTop: 0, marginBottom: "var(--ad-sp-lg)" }}>
+          <AdminIcon name="alert" />
+          <div>{error}</div>
+        </div>
+      )}
+
+      <div className="ad-kpis">
+        <KpiCard
+          icon="user-plus"
+          tone="primary"
+          label="오늘 가입"
+          value={dash ? dash.todaySignups : null}
+          unit="명"
+          delta="한국 시간 00:00 이후"
+          onClick={() => router.push("/admin/members")}
+        />
+        <KpiCard
+          icon="clock"
+          tone="warning"
+          label="승인 대기 캠페인"
+          value={dash ? dash.pendingCampaigns : null}
+          unit="건"
+          delta={dash?.oldestPendingAt ? `가장 오래된 건 ${fmtElapsed(dash.oldestPendingAt)}` : "대기 건 없음"}
+          deltaTone={dash?.pendingCampaigns ? "warn" : "muted"}
+          onClick={() => router.push("/admin/reward?status=pending_review")}
+        />
+        <KpiCard
+          icon="transfer"
+          tone="success"
+          label="오늘 리워드 지급"
+          value={dash ? dash.todayRewardPaid : null}
+          unit="P"
+          delta={dash ? `광고주 예산 → 회원 이전 · ${dash.todayRewardCount}건` : undefined}
+          onClick={() => router.push("/admin/reward")}
+        />
+        <KpiCard
+          icon="withdraw"
+          tone="info"
+          label="출금 대기"
+          value={dash ? dash.pendingWithdrawals : null}
+          unit="건"
+          delta={dash ? `합계 ${fmtP(dash.pendingWithdrawalAmount)}` : undefined}
+          onClick={() => router.push("/admin/withdrawals?status=pending")}
+        />
+      </div>
+
+      <div className="ad-grid-2-1">
+        <div className="ad-card">
+          <div className="ad-card-head">
+            <div className="ad-tile">
+              <AdminIcon name="scale" />
+            </div>
+            <h2>총량 검산</h2>
+            <div className="ad-actions">
+              <Link href="/admin/ledger" className="ad-btn ad-btn-outline ad-btn-sm">
+                상세 보기
+                <AdminIcon name="chevron" small />
+              </Link>
+            </div>
           </div>
+          <div className="ad-stat-grid">
+            <Stat label="입금 총량 (Σ입금)" value={totals ? fmtP(deposit) : null} note="transactions.deposit · 100% 반영" primary />
+            <Stat label="출금 총량 (Σ출금 − 환불)" value={totals ? fmtP(withdrawn) : null} note="withdrawal_request − withdrawal_refund" />
+            <Stat label="120% 증액 발행 (Σ증액)" value={totals ? fmtP(bonusIssued) : null} note="포인트 결제 증액분 + 카드 실지출 발행" />
+            <Stat label="리워드 이전 (누적)" value={totals ? fmtP(rewardMoved) : null} note="광고주 → 회원 이동 · 합계 변화 0" />
+          </div>
+          <div className="ad-card-foot">
+            정합식: <b>Σ회원 잔액 + Σ잠김 = Σ입금 − Σ출금 + Σ증액 − Σ포인트 결제 차감 + 0(리워드) + 베타 조정 + 베타 초기 지급</b>. 이 식이 안 맞으면 어딘가에서 포인트가 무에서 생성된 것입니다.
+          </div>
+        </div>
+
+        <div className="ad-card">
+          <div className="ad-card-head">
+            <div className={`ad-tile ${mismatch ? "error" : ""}`.trim()}>
+              <AdminIcon name={mismatch ? "alert" : "check"} />
+            </div>
+            <h2>정합 상태</h2>
+            {totals && (
+              <StatusBadge tone={warnCount > 0 ? "mismatch" : "ok"} label={warnCount > 0 ? `안 맞음 ${warnCount}건` : "일치"} />
+            )}
+          </div>
+          {totals ? (
+            <>
+              <div className="ad-stack" style={{ gap: 10 }}>
+                <div className="ad-row">
+                  <span className="ad-muted">좌변 Σ잔액 + Σ잠김</span>
+                  <b className="ad-num">{fmtP(totals.left.sum)}</b>
+                </div>
+                <div className="ad-row">
+                  <span className="ad-muted">우변 원장 항목 합</span>
+                  <b className="ad-num">{fmtP(totals.right.sum)}</b>
+                </div>
+                <div className={`ad-row ${mismatch ? "err" : ""}`.trim()}>
+                  <span>차이</span>
+                  <b className="ad-num">{fmtSigned(totals.diff)} P</b>
+                </div>
+              </div>
+              <div className="ad-muted" style={{ margin: "16px 0 6px", fontSize: "var(--ad-font-sm)" }}>
+                차이 / 좌변 = {(diffRatio * 100).toFixed(2)}%
+              </div>
+              <div className="ad-bar-track">
+                <div className={`ad-bar-fill ${mismatch ? "error" : "success"}`} style={{ width: `${mismatch ? Math.max(8, Math.min(100, diffRatio * 1000)) : 100}%` }} />
+              </div>
+              {totals.betaAdjustment !== 0 && (
+                <div className="ad-callout">
+                  <AdminIcon name="alert" />
+                  <div>
+                    베타 조정 <b>{fmtSigned(totals.betaAdjustment)} P</b> (구 inviteRedemptions · 무에서 생성). 정식 항목으로 설명되지 않는 잔액 → 소급 차감 없이 분리 표기 (§8-6).
+                  </div>
+                </div>
+              )}
+              <Link href="/admin/ledger" className="ad-btn ad-btn-primary" style={{ width: "100%", marginTop: 16 }}>
+                총량 검산에서 원인 보기
+              </Link>
+            </>
+          ) : (
+            <div className="ad-stack" style={{ gap: 10 }}>
+              <span className="ad-skeleton" />
+              <span className="ad-skeleton" style={{ width: "80%" }} />
+              <span className="ad-skeleton" style={{ width: "60%" }} />
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="flex gap-1 border-b px-3 pt-2" style={{ borderColor: "var(--card-border)" }}>
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className="flex items-center gap-1 rounded-t-lg px-3 py-2 text-xs font-bold transition-all"
-            style={{
-              background: tab === t.key ? "var(--card-bg)" : "transparent",
-              color: tab === t.key ? "#a855f7" : "var(--text-muted)",
-              borderBottom: tab === t.key ? "2px solid #a855f7" : "2px solid transparent",
-            }}
-          >
-            <span>{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
+      <div className="ad-card" style={{ marginBottom: "var(--ad-sp-lg)" }}>
+        <div className="ad-card-head">
+          <div className="ad-tile">
+            <AdminIcon name="chart" />
+          </div>
+          <h2>
+            채널별 송출·가입 전환 <span className="ad-muted" style={{ fontWeight: 400 }}>(최근 30일)</span>
+          </h2>
+        </div>
+        <div className="ad-placeholder" style={{ minHeight: 160 }}>
+          <div>P1 성과 수집(도달 = 공유 링크 클릭 · 가입 전환) 후 표시됩니다.</div>
+        </div>
       </div>
 
-      <div className="mx-auto max-w-lg px-5 py-5">
-        {error && (
-          <div className="mb-4 rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/5 px-4 py-3 text-xs text-[#EF4444]">
-            오류: {error}
+      <div className="ad-card">
+        <div className="ad-card-head">
+          <div className="ad-tile">
+            <AdminIcon name="activity" />
           </div>
-        )}
-
-        {tab === "overview" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-[#6B7394]">총 회원</div>
-                <div className="mt-1 text-xl font-black text-[#3B4CCA]">{users.length}명</div>
-              </div>
-              <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-[#6B7394]">총 적립 포인트</div>
-                <div className="mt-1 text-xl font-black text-[#10B981]">
-                  {totalPointsAcrossUsers.toLocaleString()}P
-                </div>
-              </div>
-              <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-[#6B7394]">대기 중인 출금</div>
-                <div className="mt-1 text-xl font-black text-amber-500">{pendingCount}건</div>
-              </div>
-              <div className="dark-card rounded-xl border p-4" style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}>
-                <div className="text-xs dark-text-muted text-[#6B7394]">대기 출금 합계</div>
-                <div className="mt-1 text-xl font-black text-amber-500">{pendingAmount.toLocaleString()}P</div>
-              </div>
-            </div>
-
-            {/* 분할모드 (의뢰자 확정): 10억P까지 자동, 관리자가 수동 전환 가능 */}
-            <div
-              className="dark-card rounded-xl border p-4"
-              style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-            >
-              <div className="mb-1 text-sm font-bold text-[#3B4CCA]">⚙️ 분할모드</div>
-              <p className="mb-3 text-xs" style={{ color: "var(--text-muted)" }}>
-                소비자단계 <strong>10억P까지 자동</strong> 분할 처리 · 초과 대량 거래는 수동 모드에서 관리자가 직접 관리
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleSplitMode("auto")}
-                  disabled={splitBusy}
-                  className="rounded-lg border py-2.5 text-sm font-bold transition-all disabled:opacity-50"
-                  style={{
-                    borderColor: splitMode === "auto" ? "rgba(16, 185, 129, 0.5)" : "var(--card-border)",
-                    background: splitMode === "auto" ? "rgba(16, 185, 129, 0.1)" : "transparent",
-                    color: splitMode === "auto" ? "#10B981" : "var(--text-muted)",
-                  }}
-                >
-                  🤖 자동 모드{splitMode === "auto" ? " (활성)" : ""}
-                </button>
-                <button
-                  onClick={() => handleSplitMode("manual")}
-                  disabled={splitBusy}
-                  className="rounded-lg border py-2.5 text-sm font-bold transition-all disabled:opacity-50"
-                  style={{
-                    borderColor: splitMode === "manual" ? "rgba(245, 158, 11, 0.5)" : "var(--card-border)",
-                    background: splitMode === "manual" ? "rgba(245, 158, 11, 0.1)" : "transparent",
-                    color: splitMode === "manual" ? "#f59e0b" : "var(--text-muted)",
-                  }}
-                >
-                  ✋ 수동 모드{splitMode === "manual" ? " (활성)" : ""}
-                </button>
-              </div>
-            </div>
-
-            <div
-              className="dark-card rounded-xl border p-4"
-              style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-            >
-              <div className="mb-3 text-sm font-bold text-[#3B4CCA]">시스템 상태</div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span style={{ color: "var(--text-muted)" }}>Firebase 연동</span>
-                  <span className="flex items-center gap-1.5 font-bold text-[#10B981]">
-                    <span className="inline-block h-2 w-2 rounded-full bg-[#10B981]" /> 연결됨
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span style={{ color: "var(--text-muted)" }}>비선형공식 엔진</span>
-                  <span className="flex items-center gap-1.5 font-bold text-[#10B981]">
-                    <span className="inline-block h-2 w-2 rounded-full bg-[#10B981]" /> 정상
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span style={{ color: "var(--text-muted)" }}>출금 승인 플로우</span>
-                  <span className="flex items-center gap-1.5 font-bold text-[#10B981]">
-                    <span className="inline-block h-2 w-2 rounded-full bg-[#10B981]" /> 활성
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === "users" && (
-          <div className="space-y-4">
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#6B7394]">🔍</span>
-              <input
-                type="text"
-                placeholder="이름, 이메일, 역할 검색"
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                className="dark-input w-full rounded-xl border py-2.5 pl-9 pr-3 text-sm placeholder-zinc-600 outline-none"
-                style={{ borderColor: "var(--card-border)", background: "var(--input-bg)" }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              {filteredUsers.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-[#E8EAF0] p-6 text-center text-xs text-[#6B7394]">
-                  {users.length === 0 ? "회원 데이터가 없습니다." : "검색 결과가 없습니다."}
-                </div>
-              ) : (
-                filteredUsers.map((u) => (
-                  <div
-                    key={u.id}
-                    className="dark-card rounded-xl border p-4"
-                    style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3B4CCA]/15 text-sm font-bold text-[#3B4CCA]">
-                          {(u.name || u.email)[0]?.toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold">{u.name || "(이름 없음)"}</span>
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "#a855f722", color: "#a855f7" }}>
-                              {u.role}
-                            </span>
-                          </div>
-                          <div className="text-xs" style={{ color: "var(--text-muted)" }}>{u.email}</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-[#3B4CCA]">{u.totalPoints.toLocaleString()}P</div>
-                        <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>Lv.{u.membershipLevel}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {tab === "withdrawals" && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              {(["all", "pending", "completed", "rejected"] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => {
-                    setWithdrawalStatus(s);
-                    refreshWithdrawals(s);
-                  }}
-                  className="flex-1 rounded-lg py-2 text-xs font-bold transition-all"
-                  style={{
-                    background: withdrawalStatus === s ? "rgba(168, 85, 247, 0.15)" : "var(--card-bg)",
-                    color: withdrawalStatus === s ? "#a855f7" : "var(--text-muted)",
-                    border: "1px solid var(--card-border)",
-                  }}
-                >
-                  {s === "pending" ? "대기" : s === "completed" ? "완료" : s === "rejected" ? "반려" : "전체"}
-                </button>
-              ))}
-            </div>
-
-            <div className="space-y-2">
-              {withdrawals.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-[#E8EAF0] p-6 text-center text-xs text-[#6B7394]">
-                  요청이 없습니다.
-                </div>
-              ) : (
-                withdrawals.map((w) => (
-                  <div
-                    key={w.id}
-                    className="dark-card rounded-xl border p-4"
-                    style={{ borderColor: "var(--card-border)", background: "var(--card-bg)" }}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="text-sm font-bold">{w.amount.toLocaleString()}P</div>
-                        <div className="text-xs text-[#6B7394]">
-                          {BANK_NAMES[w.bankInfo?.bank] || w.bankInfo?.bank} ·{" "}
-                          {w.bankInfo?.accountNumber} · 예금주 {w.bankInfo?.holder}
-                        </div>
-                        <div className="text-xs text-[#6B7394]">
-                          사용자: {w.userName || "(이름 없음)"}
-                          {w.userEmail ? ` · ${w.userEmail}` : ""}
-                        </div>
-                        <div className="text-xs text-[#6B7394]">
-                          {w.requestedAt ? new Date(w.requestedAt).toLocaleString("ko-KR") : ""}
-                        </div>
-                      </div>
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                        style={{
-                          background:
-                            w.status === "pending" ? "#f59e0b22" : w.status === "completed" ? "#10b98122" : "#EF444422",
-                          color:
-                            w.status === "pending" ? "#f59e0b" : w.status === "completed" ? "#10b981" : "#EF4444",
-                        }}
-                      >
-                        {w.status === "pending" ? "대기" : w.status === "completed" ? "완료" : "반려"}
-                      </span>
-                    </div>
-                    {w.rejectReason && (
-                      <div className="mt-2 text-[11px] text-[#EF4444]">사유: {w.rejectReason}</div>
-                    )}
-                    {w.status === "pending" && (
-                      <div className="mt-3 flex gap-2">
-                        <button
-                          onClick={() => handleApprove(w.id)}
-                          disabled={busy}
-                          className="flex-1 rounded-lg bg-[#10B981]/15 py-1.5 text-xs font-bold text-[#10B981] disabled:opacity-50"
-                        >
-                          승인
-                        </button>
-                        <button
-                          onClick={() => handleReject(w.id)}
-                          disabled={busy}
-                          className="flex-1 rounded-lg bg-[#EF4444]/15 py-1.5 text-xs font-bold text-[#EF4444] disabled:opacity-50"
-                        >
-                          반려
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+          <h2>최근 활동</h2>
+        </div>
+        <DataTable
+          columns={columns}
+          rows={dash?.recent || []}
+          rowKey={(r) => r.id}
+          loading={!dash}
+          emptyText="아직 거래가 없습니다."
+          minWidth={760}
+        />
       </div>
+    </>
+  );
+}
 
-      <Navbar />
+function Stat({ label, value, note, primary = false }: { label: string; value: string | null; note: string; primary?: boolean }) {
+  return (
+    <div className="ad-stat">
+      <div className="ad-label">{label}</div>
+      <div className={`ad-value ad-num ${primary ? "primary" : ""}`.trim()}>
+        {value === null ? <span className="ad-skeleton" style={{ width: "70%" }} /> : value}
+      </div>
+      <div className="ad-note">{note}</div>
     </div>
   );
 }
