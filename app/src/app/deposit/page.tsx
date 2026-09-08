@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import { apiPost, ApiClientError } from "@/lib/api-client";
-import { getBalance as getDemoBalance } from "@/lib/demo-store";
+import { getBalance as getDemoBalance, saveDeposit as saveDemoDeposit } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -60,6 +60,19 @@ export default function DepositPage() {
     }
     setProcessing(true);
     setError(null);
+    // 데모 모드: 서버 없이 localStorage 잔액·입금 누적에 반영 (리워드광고 자격 게이트가 같은 값을 본다)
+    if (!isConfigured || !db) {
+      const r = user ? saveDemoDeposit(user, amt) : null;
+      if (!r) {
+        setError("데모 저장에 실패했습니다. 브라우저 저장소를 확인해 주세요.");
+      } else {
+        setBalance(r.newBalance);
+        setSuccess({ amount: amt, newBalance: r.newBalance });
+        setAmount("");
+      }
+      setProcessing(false);
+      return;
+    }
     try {
       const r = await apiPost<{ amount: number; newBalance: number }>("/api/deposit", {
         amount: amt,

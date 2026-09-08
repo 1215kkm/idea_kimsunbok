@@ -1,19 +1,48 @@
 import type { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/server/auth";
+import { adminDb } from "@/lib/server/firebase-admin";
 import { jsonError, jsonOk } from "@/lib/server/api-error";
-import { createCampaign, listCampaignsForOwner, validateCreateInput } from "@/lib/server/reward-service";
-import { REWARD_CHANNELS, REWARD_KINDS, REWARD_UNIT_AMOUNTS, MAX_HEADCOUNT } from "@/lib/reward-ledger";
+import {
+  createCampaign,
+  getConfirmedDepositTotal,
+  listCampaignsForOwner,
+  validateCreateInput,
+} from "@/lib/server/reward-service";
+import {
+  ADVERTISER_MIN_DEPOSIT,
+  REWARD_CHANNELS,
+  REWARD_KINDS,
+  REWARD_UNIT_AMOUNTS,
+  MAX_HEADCOUNT,
+} from "@/lib/reward-ledger";
 
 export const runtime = "nodejs";
 
-/** 내 캠페인 목록 + 선택지 메타 */
+function num(v: unknown): number {
+  return typeof v === "number" && Number.isFinite(v) ? v : 0;
+}
+
+/** 내 캠페인 목록 + 선택지 메타 + 광고주 자격·잔액 (사용자 화면 상단) */
 export async function GET(req: NextRequest) {
   try {
     const user = await requireAuth(req);
-    const items = await listCampaignsForOwner(user.uid);
+    const [items, depositTotal, userSnap] = await Promise.all([
+      listCampaignsForOwner(user.uid),
+      getConfirmedDepositTotal(user.uid),
+      adminDb().collection("users").doc(user.uid).get(),
+    ]);
+    const u = userSnap.exists ? userSnap.data()! : {};
     return jsonOk({
       ok: true,
       items,
+      advertiser: {
+        depositTotal,
+        required: ADVERTISER_MIN_DEPOSIT,
+        qualified: depositTotal >= ADVERTISER_MIN_DEPOSIT,
+        totalPoints: num(u.totalPoints),
+        lockedPoints: num(u.lockedPoints),
+        pendingRewardCode: typeof u.pendingRewardCode === "string" ? u.pendingRewardCode : null,
+      },
       options: {
         unitAmounts: REWARD_UNIT_AMOUNTS,
         channels: REWARD_CHANNELS,

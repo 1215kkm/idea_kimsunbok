@@ -18,7 +18,8 @@ function LoginPageInner() {
   const { user, loading, signIn, signUp, demoSignIn, isDemo } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const inviteCode = (searchParams.get("invite") || "").toUpperCase() || null;
+  // 공유 링크는 /?code=XXXX (리워드광고 공유 팩). 구 /?invite=XXXX 도 그대로 읽는다.
+  const inviteCode = (searchParams.get("code") || searchParams.get("invite") || "").trim().toUpperCase() || null;
   const [isSignUp, setIsSignUp] = useState(!!inviteCode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,6 +29,8 @@ function LoginPageInner() {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeMarketing, setAgreeMarketing] = useState(false);
   const [error, setError] = useState("");
+  // 가입은 성공했지만 리워드 지급이 보류된 경우 — 에러(빨강)가 아니라 안내(info)
+  const [notice, setNotice] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null);
   const [inviteInfoError, setInviteInfoError] = useState<string | null>(null);
@@ -74,6 +77,7 @@ function LoginPageInner() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setNotice("");
     if (!email.includes("@")) {
       setError("올바른 이메일 형식을 입력해주세요.");
       return;
@@ -103,6 +107,14 @@ function LoginPageInner() {
             setError("유효하지 않은 초대 코드입니다.");
           else if (result.inviteError === "INACTIVE")
             setError("만료된 초대 코드입니다.");
+          else if (result.inviteError === "EMAIL_NOT_VERIFIED")
+            setNotice("가입 완료. 이메일 인증을 마치면 홈 화면의 [리워드 받기]로 지급받을 수 있습니다.");
+          else if (result.inviteError === "DAILY_CAP_REACHED")
+            setNotice("가입 완료. 오늘 이 캠페인의 지급 한도에 도달해 내일 홈 화면에서 다시 받을 수 있습니다.");
+          else if (result.inviteError === "CAMPAIGN_NOT_ACTIVE" || result.inviteError === "BUDGET_EXHAUSTED")
+            setError("이 캠페인은 현재 지급이 중단되었습니다.");
+          else if (result.inviteError === "INVITE_DEPRECATED")
+            setError("구 초대 코드는 더 이상 지급되지 않습니다.");
           // 가입 자체는 성공이므로 라우팅은 useEffect에서 진행
         }
       } else {
@@ -140,26 +152,26 @@ function LoginPageInner() {
       {/* 초대 코드 배너 */}
       {inviteCode && !inviteInfoError && (
         <div className="mb-4 w-full max-w-sm rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 px-4 py-3 text-xs leading-relaxed text-[#6B7394]">
-          <div className="mb-1 font-bold text-[#10B981]">🎁 초대 코드 적용됨</div>
+          <div className="mb-1 font-bold text-[#10B981]">🎁 가입 코드 적용됨 · {inviteCode}</div>
           {inviteInfo ? (
             <p>
-              회원가입을 완료하면{" "}
+              가입 후 이메일 인증을 마치면 광고주 예산에서{" "}
               <strong className="text-[#1A1F36]">{inviteInfo.amount.toLocaleString()}P</strong>가
-              자동으로 지급됩니다!
+              지급됩니다.
             </p>
           ) : (
-            <p>회원가입을 완료하면 보상이 자동으로 지급됩니다.</p>
+            <p>가입 후 이메일 인증을 마치면 광고주 예산에서 리워드가 지급됩니다.</p>
           )}
         </div>
       )}
 
       {inviteCode && inviteInfoError && (
         <div className="mb-4 w-full max-w-sm rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/5 px-4 py-3 text-xs leading-relaxed text-[#EF4444]">
-          {inviteInfoError === "NOT_FOUND" && "유효하지 않은 초대 코드입니다."}
-          {inviteInfoError === "INACTIVE" && "만료된 초대 코드입니다."}
+          {inviteInfoError === "NOT_FOUND" && "유효하지 않은 가입 코드입니다."}
+          {inviteInfoError === "INACTIVE" && "이 코드는 현재 지급이 중단되었습니다."}
           {(inviteInfoError === "INVALID_INPUT" || inviteInfoError === "INVALID_FORMAT") &&
-            "초대 코드 형식이 올바르지 않습니다."}
-          {inviteInfoError === "INTERNAL" && "초대 코드 정보를 불러오지 못했습니다."}
+            "가입 코드 형식이 올바르지 않습니다."}
+          {inviteInfoError === "INTERNAL" && "가입 코드 정보를 불러오지 못했습니다."}
         </div>
       )}
 
@@ -259,6 +271,11 @@ function LoginPageInner() {
         )}
 
         {error && <p className="text-center text-sm text-[#EF4444]">{error}</p>}
+        {notice && (
+          <p className="rounded-xl border border-[#3B4CCA]/20 bg-[#3B4CCA]/5 px-4 py-3 text-center text-xs leading-relaxed text-[#3B4CCA]">
+            {notice}
+          </p>
+        )}
 
         <button
           type="submit"

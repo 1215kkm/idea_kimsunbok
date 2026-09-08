@@ -7,12 +7,15 @@ import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "
 import { db, isConfigured } from "@/lib/firebase";
 import { getTransactions as getDemoTxs, getBalance as getDemoBalance, getStats as getDemoStats } from "@/lib/demo-store";
 import Navbar from "@/components/Navbar";
+import PendingRewardBanner from "@/components/reward/PendingRewardBanner";
 import Link from "next/link";
 
 interface UserData {
   name: string;
   totalPoints: number;
   membershipLevel: number;
+  /** 가입 시 이메일 미인증으로 보류된 가입 리워드 코드 (post-signup 이 저장, redeem 성공 시 서버가 삭제) */
+  pendingRewardCode?: string | null;
 }
 
 type FirestoreTimestamp = { toDate: () => Date };
@@ -143,6 +146,21 @@ export default function DashboardPage() {
         <div className="mx-5 mt-3 rounded-xl border border-amber-500/30 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-[#6B7394]">
           <span className="font-bold text-amber-700">🧪 폐쇄 베타 시연 중</span> — 표시된 포인트/잔액은 가상 테스트 자금입니다. 출금 신청 시 실제 송금되지 않습니다.
         </div>
+      )}
+
+      {/* 지급 대기 — 가입 리워드 (이메일 인증 → 청구). 데모 모드엔 보류 코드가 없다 */}
+      {isConfigured && userData?.pendingRewardCode && (
+        <PendingRewardBanner
+          code={userData.pendingRewardCode}
+          onPaid={(amount, newBalance) => {
+            setUserData((prev) => (prev ? { ...prev, totalPoints: newBalance, pendingRewardCode: null } : prev));
+            setRecentTxs((prev) => [
+              { id: `reward-in-${Date.now()}`, type: "reward_in", amount, totalAccumulation: amount, createdAt: Date.now() },
+              ...prev,
+            ].slice(0, 5));
+          }}
+          onCleared={() => setUserData((prev) => (prev ? { ...prev, pendingRewardCode: null } : prev))}
+        />
       )}
 
       {/* 다랜드 내 계좌 카드 */}

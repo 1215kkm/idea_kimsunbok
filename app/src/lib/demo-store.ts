@@ -8,6 +8,7 @@
  */
 
 import {
+  ADVERTISER_MIN_DEPOSIT,
   canRedeem,
   lockAmount,
   nextStatus,
@@ -226,7 +227,10 @@ export interface DemoCampaign {
   paidCount: number;
   channels: RewardChannel[];
   copy: string;
+  templateId?: string | null;
+  ownerName?: string;
   status: CampaignStatus;
+  rejectReason?: string;
   createdAt: number;
   dailyCap?: number;
   rejectReason?: string;
@@ -237,6 +241,7 @@ export interface DemoCampaign {
 
 const CAMPAIGNS_KEY = "daland-demo-reward-campaigns";
 const PAYOUTS_KEY = "daland-demo-reward-payouts"; // { [inviteeEmail]: campaignId | DemoPayout }
+const DEPOSIT_KEY = (email: string) => `daland-demo-deposit-total-${email}`;
 
 export interface DemoPayout {
   campaignId: string;
@@ -327,6 +332,48 @@ function readPayouts(): Record<string, DemoPayout> {
   }
 }
 
+/**
+ * 캠페인별 지급내역 (광고주 화면). 관리자용 getDemoPayoutsForCampaign 과 같은 원본을 쓰되,
+ * 광고주에게는 받은 회원 이메일을 마스킹해서 준다 (실서버 listPayoutsForOwner 와 동일 규칙).
+ */
+export function getCampaignPayouts(
+  campaignId: string,
+): { id: string; inviteeMasked: string; amount: number; paidAt: number | null }[] {
+  return getDemoPayoutsForCampaign(campaignId).map((p) => ({
+    id: p.email,
+    inviteeMasked: `${p.email.slice(0, 3)}****`,
+    amount: p.amount,
+    paidAt: p.paidAt || null,
+  }));
+}
+
+// --- 데모 입금 (광고주 자격 게이트 미러링: 입금 누적 ≥ ADVERTISER_MIN_DEPOSIT) ---
+
+/** 데모 입금: 잔액 + 입금 누적 반영. 실서버 /api/deposit 과 같은 규칙(100%, 즉시). */
+export function saveDeposit(user: { email?: string | null }, amount: number): { newBalance: number; depositTotal: number } | null {
+  if (!isBrowser()) return null;
+  const key = emailKey(user);
+  if (!key) return null;
+  const newBalance = getBalance(user) + amount;
+  const depositTotal = getDepositTotal(user) + amount;
+  try {
+    localStorage.setItem(BAL_KEY(key), String(newBalance));
+    localStorage.setItem(DEPOSIT_KEY(key), String(depositTotal));
+  } catch {
+    // quota 초과 등 무시
+  }
+  return { newBalance, depositTotal };
+}
+
+/** 데모 입금 누적 (베타 초기 지급금은 입금이 아니므로 포함하지 않는다 — 실서버 getConfirmedDepositTotal 과 동일) */
+export function getDepositTotal(user: { email?: string | null } | null | undefined): number {
+  if (!isBrowser()) return 0;
+  const key = emailKey(user);
+  if (!key) return 0;
+  const n = parseInt(localStorage.getItem(DEPOSIT_KEY(key)) || "0", 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
 /** 잠금(에스크로) 잔액 */
 export function getLockedBalance(user: { email?: string | null } | null | undefined): number {
   if (!isBrowser()) return 0;
@@ -357,6 +404,8 @@ function makeDemoCode(): string {
 
 export type DemoRewardError =
   | "INSUFFICIENT_BALANCE"
+  | "INSUFFICIENT_QUALIFICATION"
+  | "FORBIDDEN"
   | "NOT_FOUND"
   | "ALREADY_REDEEMED"
   | "SELF_INVITE"
@@ -367,11 +416,20 @@ export type DemoRewardError =
 /** 캠페인 제출 = 예산 잠금 (잔액 → 잠금). 실서버 createCampaign 과 동일 규칙. */
 export function createCampaign(
   user: { email?: string | null },
-  input: { kind: RewardKind; unitAmount: number; headcount: number; channels: RewardChannel[]; copy: string },
+  input: {
+    kind: RewardKind;
+    unitAmount: number;
+    headcount: number;
+    channels: RewardChannel[];
+    copy: string;
+    templateId?: string | null;
+    ownerName?: string;
+  },
 ): { ok: true; campaign: DemoCampaign } | { ok: false; error: DemoRewardError } {
   if (!isBrowser()) return { ok: false, error: "INVALID_STATE" };
   const key = emailKey(user);
   if (!key) return { ok: false, error: "INVALID_STATE" };
+  if (getDepositTotal(user) < ADVERTISER_MIN_DEPOSIT) return { ok: false, error: "INSUFFICIENT_QUALIFICATION" };
   const budget = lockAmount(input.unitAmount, input.headcount);
   const balance = getBalance(user);
   if (balance < budget) return { ok: false, error: "INSUFFICIENT_BALANCE" };
@@ -392,6 +450,8 @@ export function createCampaign(
     paidCount: 0,
     channels: input.channels,
     copy: input.copy,
+    templateId: input.templateId ?? null,
+    ownerName: input.ownerName ?? "",
     status: "pending_review",
     createdAt: Date.now(),
   };
@@ -432,6 +492,33 @@ export function redeemCampaign(
   payouts[key] = { campaignId: c.id, amount: c.unitAmount, paidAt: Date.now() };
   localStorage.setItem(PAYOUTS_KEY, JSON.stringify(payouts));
   return { ok: true, amount: c.unitAmount, newBalance };
+}
+
+/** 광고주 본인 취소 — 승인 전(pending_review)만, 전액 반환. 실서버 cancelCampaign 과 동일 규칙. */
+export function cancelCampaign(
+  user: { email?: string | null },
+  campaignId: string,
+): { ok: true; refunded: number; newBalance: number } | { ok: false; error: DemoRewardError } {
+  if (!isBrowser()) return { ok: false, error: "INVALID_STATE" };
+  const key = emailKey(user);
+  if (!key) return { ok: false, error: "INVALID_STATE" };
+  const list = readCampaigns();
+  const c = list.find((x) => x.id === campaignId);
+  if (!c) return { ok: false, error: "NOT_FOUND" };
+  if (c.ownerEmail !== key) return { ok: false, error: "FORBIDDEN" };
+  if (c.status !== "pending_review" && c.status !== "draft") return { ok: false, error: "INVALID_STATE" };
+  const refund = remainingBudget(c);
+  if (refund !== c.budgetLocked) return { ok: false, error: "INVALID_STATE" };
+  const ownerLocked = getLockedBalance(user);
+  if (ownerLocked < refund) return { ok: false, error: "INVALID_STATE" };
+  setLocked(key, ownerLocked - refund);
+  const newBalance = getBalance(user) + refund;
+  localStorage.setItem(BAL_KEY(key), String(newBalance));
+  c.status = "rejected";
+  c.rejectReason = "owner_cancelled";
+  c.budgetRefunded += refund;
+  writeCampaigns(list);
+  return { ok: true, refunded: refund, newBalance };
 }
 
 /** 종료·거절 = 잔여 예산을 광고주 잔액으로 반환. 승인·정지·재개는 상태만. */

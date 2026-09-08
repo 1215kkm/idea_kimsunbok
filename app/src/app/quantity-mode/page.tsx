@@ -225,10 +225,10 @@ export default function QuantityModePage() {
             🏦 출금하기
           </Link>
           <Link
-            href="/advertiser/invite"
+            href="/advertiser"
             className="rounded-xl border border-[#10B981]/20 bg-[#10B981]/5 p-3 text-center text-xs font-bold text-[#10B981]"
           >
-            🎁 리워드 초대
+            🎁 리워드광고
           </Link>
         </div>
       </div>
