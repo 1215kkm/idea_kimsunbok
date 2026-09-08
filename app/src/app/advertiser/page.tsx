@@ -378,9 +378,25 @@ export default function AdvertiserPage() {
                     ))}
                   </div>
                 ) : list.length === 0 ? (
+                  // 못 불러온 것과 진짜 없는 것을 가른다 — 실패한 사람에게 "없습니다 + 첫 캠페인 권장"은 거짓 상태다
                   <div className="rounded-2xl border border-[#E8EAF0] bg-white p-8 text-center text-sm text-[#6B7394] dark-card">
-                    아직 캠페인이 없습니다.
-                    <div className="mt-1 text-xs text-[#6B7394]">첫 캠페인 권장: 1만P × 10명 = 10만P (최대 손실 10만원, 안 오면 그만큼 반환)</div>
+                    {loadError ? (
+                      <>
+                        목록을 불러오지 못했습니다.
+                        <div className="mt-1 text-xs text-[#6B7394]">
+                          잠시 후{" "}
+                          <button type="button" onClick={load} className="text-[#3B4CCA] underline">
+                            새로고침
+                          </button>
+                          해 주세요.
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        아직 캠페인이 없습니다.
+                        <div className="mt-1 text-xs text-[#6B7394]">첫 캠페인 권장: 1만P × 10명 = 10만P (최대 손실 10만원, 안 오면 그만큼 반환)</div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-2">
