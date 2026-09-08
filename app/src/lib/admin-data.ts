@@ -44,9 +44,28 @@ export class AdminDataError extends Error {
   }
 }
 
+/** 서버 에러 코드 → 관리자용 한국어 (강체크 N-4). 없는 코드는 서버 메시지 그대로. */
+const ERROR_KO: Record<string, string> = {
+  INVALID_STATE: "지금 상태에서는 할 수 없는 동작입니다. 목록을 새로고침해 주세요.",
+  DAILY_CAP_REACHED: "오늘 이 캠페인의 지급 한도에 도달했습니다.",
+  BUDGET_EXHAUSTED: "캠페인 예산이 소진되었습니다.",
+  NOT_FOUND: "대상을 찾을 수 없습니다. 이미 삭제됐거나 ID 가 다릅니다.",
+  FORBIDDEN: "관리자 권한이 없습니다.",
+  INVALID_INPUT: "입력값이 올바르지 않습니다.",
+  UNAUTHENTICATED: "로그인이 만료됐습니다. 다시 로그인해 주세요.",
+  CONFLICT: "이미 처리된 요청입니다.",
+  INSUFFICIENT_BALANCE: "잔액이 부족합니다.",
+  INTERNAL: "서버 오류입니다. 잠시 후 다시 시도해 주세요.",
+  DEMO: "데모 모드에서는 지원하지 않습니다.",
+};
+
 export function errorMessage(err: unknown, fallback: string): string {
-  if (err instanceof ApiClientError) return `${fallback} [${err.code}] ${err.message}`;
-  if (err instanceof AdminDataError) return `${fallback} [${err.code}]`;
+  if (err instanceof ApiClientError) {
+    const ko = ERROR_KO[err.code];
+    const detail = ko ? (err.code === "INVALID_INPUT" && err.details?.field ? `${ko} (${String(err.details.field)})` : ko) : err.message;
+    return `${fallback} — ${detail} [${err.code}]`;
+  }
+  if (err instanceof AdminDataError) return `${fallback} — ${ERROR_KO[err.code] || err.message} [${err.code}]`;
   if (err instanceof Error && err.message) return `${fallback}: ${err.message}`;
   return fallback;
 }
@@ -173,12 +192,20 @@ export async function setDailyCap(id: string, dailyCap: number): Promise<void> {
   if (!setDemoDailyCap(id, dailyCap)) throw new AdminDataError("NOT_FOUND", "campaign not found");
 }
 
-export async function listPayouts(campaignId: string): Promise<PayoutItem[]> {
+export interface PayoutList {
+  items: PayoutItem[];
+  truncated: boolean;
+  limit: number;
+}
+
+export async function listPayouts(campaignId: string): Promise<PayoutList> {
   if (ADMIN_MODE === "live") {
-    const r = await apiGet<{ items: PayoutItem[] }>(`/api/admin/reward/campaigns/${campaignId}/payouts`);
-    return r.items || [];
+    const r = await apiGet<{ items: PayoutItem[]; truncated?: boolean; limit?: number }>(
+      `/api/admin/reward/campaigns/${campaignId}/payouts`,
+    );
+    return { items: r.items || [], truncated: r.truncated === true, limit: r.limit || 500 };
   }
-  return getDemoPayoutsForCampaign(campaignId).map((p) => ({
+  const items = getDemoPayoutsForCampaign(campaignId).map((p) => ({
     id: p.email,
     inviteeUid: p.email,
     inviteeEmail: p.email,
@@ -187,6 +214,7 @@ export async function listPayouts(campaignId: string): Promise<PayoutItem[]> {
     status: "paid",
     paidAt: p.paidAt || null,
   }));
+  return { items, truncated: false, limit: 500 };
 }
 
 // ---------------------------------------------------------------------------
@@ -248,6 +276,9 @@ export async function getTotals(): Promise<LedgerTotals> {
       ...(left !== right ? [`좌변·우변 불일치 ${left - right}`] : []),
       ...(rewardNet !== 0 ? [`리워드 원장 순변화 ${rewardNet} (0 이어야 함)`] : []),
       ...(activeLocked !== lockedPoints ? [`Σ lockedPoints(${lockedPoints}) ≠ 진행 캠페인 잔여(${activeLocked})`] : []),
+      ...(left !== right
+        ? ["데모 한정 — 이 버전 이전의 데모 출금·지급은 집계에 없습니다 (이전 데모 출금 미집계). 차이가 나면 설정 → 데모 데이터 초기화."]
+        : []),
       "데모 모드 — localStorage 집계 (회원 탈퇴 시 좌·우변이 함께 줄어듭니다)",
     ],
     transactionCount: txs.length,

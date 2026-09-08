@@ -15,27 +15,29 @@ function num(v: unknown): number {
  * GET /api/admin/users — 회원 200명 (최신 가입순)
  *  - lockedPoints 포함 (강체크 지적: 에스크로 잠김이 회원 화면에 없었음)
  *  - depositTotal / isAdvertiser: 광고주 자격 = 확인된 입금 누적 ≥ 100,000P (reward-service 와 같은 기준).
- *    입금 거래를 한 번에 읽어 uid 별로 합산한다 (회원마다 쿼리하지 않음).
+ *    users.depositTotal (비정규화 필드, /api/deposit 이 갱신) 을 우선 쓰고, 필드가 없는 구 회원이 하나라도 있을 때만
+ *    입금 거래를 스캔해 폴백한다 (강체크 PR #38 N-1). 전원 필드가 있으면 스캔 0회.
  */
 export async function GET(req: NextRequest) {
   try {
     await requireAdmin(req);
     const db = adminDb();
-    const [usersSnap, depositSnap] = await Promise.all([
-      db.collection("users").orderBy("createdAt", "desc").limit(200).get(),
-      db.collection("transactions").where("type", "==", "deposit").select("consumerId", "amount").get(),
-    ]);
+    const usersSnap = await db.collection("users").orderBy("createdAt", "desc").limit(200).get();
 
+    const missing = usersSnap.docs.filter((d) => typeof d.data().depositTotal !== "number");
     const depositByUid = new Map<string, number>();
-    depositSnap.forEach((d) => {
-      const uid = d.data().consumerId as string | undefined;
-      if (!uid) return;
-      depositByUid.set(uid, (depositByUid.get(uid) || 0) + num(d.data().amount));
-    });
+    if (missing.length > 0) {
+      const depositSnap = await db.collection("transactions").where("type", "==", "deposit").select("consumerId", "amount").get();
+      depositSnap.forEach((d) => {
+        const uid = d.data().consumerId as string | undefined;
+        if (!uid) return;
+        depositByUid.set(uid, (depositByUid.get(uid) || 0) + num(d.data().amount));
+      });
+    }
 
     const items: AdminUser[] = usersSnap.docs.map((d) => {
       const data = d.data();
-      const depositTotal = depositByUid.get(d.id) || 0;
+      const depositTotal = typeof data.depositTotal === "number" ? data.depositTotal : depositByUid.get(d.id) || 0;
       return {
         id: d.id,
         name: data.name || "",
@@ -50,7 +52,7 @@ export async function GET(req: NextRequest) {
         createdAt: data.createdAt?.toMillis?.() ?? null,
       };
     });
-    return jsonOk({ ok: true, items, advertiserMinDeposit: ADVERTISER_MIN_DEPOSIT });
+    return jsonOk({ ok: true, items, advertiserMinDeposit: ADVERTISER_MIN_DEPOSIT, depositScanFallback: missing.length });
   } catch (err) {
     return jsonError(err);
   }

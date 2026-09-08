@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAdmin } from "@/components/admin/AdminContext";
 import { errorMessage, getSettings, setSplitMode, type SplitMode } from "@/lib/admin-data";
+import { resetDemoData } from "@/lib/demo-store";
+import { ConfirmModal } from "@/components/admin/Modal";
 import { fmt, fmtDateTime } from "@/lib/admin-format";
 import { ADVERTISER_MIN_DEPOSIT, DEFAULT_DAILY_CAP, MAX_HEADCOUNT, REWARD_UNIT_AMOUNTS } from "@/lib/reward-ledger";
 import PageHeader from "@/components/admin/PageHeader";
@@ -18,6 +20,7 @@ export default function AdminSettingsPage() {
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetOpen, setResetOpen] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -99,8 +102,36 @@ export default function AdminSettingsPage() {
           <div className="ad-kv"><span className="k">비선형공식 엔진</span><span className="v" style={{ color: "var(--success)" }}>정상</span></div>
           <div className="ad-kv"><span className="k">출금 승인 플로우</span><span className="v" style={{ color: "var(--success)" }}>활성</span></div>
           <div className="ad-kv"><span className="k">리워드 원장 (에스크로)</span><span className="v" style={{ color: "var(--success)" }}>제로섬 · 감사 로그 기록</span></div>
+          {mode === "demo" && (
+            <>
+              <div className="ad-callout" style={{ marginTop: "var(--ad-sp-md)" }}>
+                <AdminIcon name="alert" />
+                <div>
+                  데모 데이터는 이 브라우저 localStorage 에만 있습니다. 이 버전 이전의 데모 출금·지급은 총량 검산에 집계되지 않아 차이가 날 수 있습니다 — 그럴 땐 초기화하세요.
+                </div>
+              </div>
+              <button type="button" className="ad-btn ad-btn-danger" style={{ width: "100%", marginTop: "var(--ad-sp-sm)" }} onClick={() => setResetOpen(true)}>
+                데모 데이터 초기화
+              </button>
+            </>
+          )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={resetOpen}
+        title="데모 데이터 초기화"
+        message={"이 브라우저의 데모 잔액·거래·캠페인·지급내역을 모두 지우고 시드(캠페인 2건 · 지출 2건)로 되돌립니다.\n로그인 상태는 유지됩니다."}
+        confirmLabel="초기화"
+        danger
+        onConfirm={() => {
+          const n = resetDemoData();
+          setResetOpen(false);
+          toast(`데모 데이터 ${n}개 키 삭제 — 새로고침합니다`);
+          setTimeout(() => window.location.reload(), 600);
+        }}
+        onCancel={() => setResetOpen(false)}
+      />
 
       <div className="ad-card">
         <div className="ad-card-head">

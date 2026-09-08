@@ -618,6 +618,22 @@ export function adminCampaignAction(
   return { ok: true, from, to, refunded: r.refunded };
 }
 
+/**
+ * 데모 데이터 초기화 — 로그인(daland-demo-user)·글꼴 설정만 남기고 daland-demo-* 전부 삭제.
+ * 다음 접근 때 시드(캠페인 2건 + 광고주 지출 2건)가 다시 만들어진다.
+ */
+export function resetDemoData(): number {
+  if (!isBrowser()) return 0;
+  const keep = new Set(["daland-demo-user"]);
+  const doomed: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith("daland-demo-") && !keep.has(k)) doomed.push(k);
+  }
+  for (const k of doomed) localStorage.removeItem(k);
+  return doomed.length;
+}
+
 /** 캠페인 일일 지급 상한 (데모는 저장만, 리딤 게이트는 실서버에만 있음) */
 export function setDemoDailyCap(campaignId: string, dailyCap: number): boolean {
   const list = readCampaigns();

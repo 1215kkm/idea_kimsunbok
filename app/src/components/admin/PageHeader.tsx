@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import AdminIcon from "./AdminIcon";
+import { useAdmin } from "./AdminContext";
 
 interface PageHeaderProps {
   title: ReactNode;
@@ -13,11 +14,18 @@ interface PageHeaderProps {
 }
 
 export default function PageHeader({ title, sub, search, onRefresh, refreshing = false, children }: PageHeaderProps) {
+  const { openSidebar } = useAdmin();
   return (
     <header className="ad-topbar">
-      <div>
-        <h1>{title}</h1>
-        {sub && <div className="ad-sub">{sub}</div>}
+      <div className="ad-title">
+        {/* ≤1024px 에서만 보임 (.ad-hamburger) — 목업처럼 h1 왼쪽 인라인 */}
+        <button type="button" className="ad-btn-icon ad-hamburger" onClick={openSidebar} aria-label="메뉴 열기">
+          <AdminIcon name="menu" />
+        </button>
+        <div>
+          <h1>{title}</h1>
+          {sub && <div className="ad-sub">{sub}</div>}
+        </div>
       </div>
       <div className="ad-tools">
         {search && (

@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAdmin } from "@/components/admin/AdminContext";
-import { campaignAction, errorMessage, getDashboard, listCampaigns, listPayouts, setDailyCap } from "@/lib/admin-data";
+import { campaignAction, errorMessage, getDashboard, listCampaigns, listPayouts, setDailyCap, type PayoutList } from "@/lib/admin-data";
 import type { CampaignView, PayoutItem } from "@/lib/admin-types";
 import { fmt, fmtDateTime, fmtP, fmtShort, maskEmail } from "@/lib/admin-format";
 import { DEFAULT_DAILY_CAP, MAX_DAILY_CAP, isTerminal, type AdminAction, type RewardChannel } from "@/lib/reward-ledger";
@@ -288,7 +288,7 @@ function CampaignDrawer({
 }) {
   const toast = useToast();
   const [tab, setTab] = useState<"payouts" | "stats">("payouts");
-  const [payouts, setPayouts] = useState<PayoutItem[] | null>(null);
+  const [payouts, setPayouts] = useState<PayoutList | null>(null);
   const [cap, setCap] = useState<string>("");
   const [capBusy, setCapBusy] = useState(false);
   const id = campaign?.id ?? null;
@@ -299,13 +299,13 @@ function CampaignDrawer({
     setPayouts(null);
     setTab("payouts");
     listPayouts(id)
-      .then((items) => {
-        if (!cancelled) setPayouts(items);
+      .then((list) => {
+        if (!cancelled) setPayouts(list);
       })
       .catch((err) => {
         console.error("[admin/reward] payouts failed", id, err);
         if (!cancelled) {
-          setPayouts([]);
+          setPayouts({ items: [], truncated: false, limit: 500 });
           toast(errorMessage(err, "지급내역 조회 실패"), true);
         }
       });
@@ -380,7 +380,9 @@ function CampaignDrawer({
           {c.status === "paused" && <div className="ad-reason info">일시정지 — 지급이 멈춰 있습니다. 예산은 잠긴 채 유지.</div>}
 
           <div className="ad-tabs">
-            <button type="button" className={tab === "payouts" ? "active" : undefined} onClick={() => setTab("payouts")}>지급내역{payouts ? ` (${payouts.length})` : ""}</button>
+            <button type="button" className={tab === "payouts" ? "active" : undefined} onClick={() => setTab("payouts")}>
+              지급내역<span className="ad-n ad-num">{payouts ? `${payouts.items.length}${payouts.truncated ? "+" : ""}` : "…"}</span>
+            </button>
             <button type="button" className={tab === "stats" ? "active" : undefined} onClick={() => setTab("stats")}>성과</button>
           </div>
 
@@ -392,14 +394,21 @@ function CampaignDrawer({
                 { key: "amt", header: "금액", align: "right", render: (p: PayoutItem) => <span className="ad-num">+{fmtP(p.amount)}</span> },
                 { key: "at", header: "시각", render: (p: PayoutItem) => <span className="ad-num">{fmtShort(p.paidAt)}</span> },
               ]}
-              rows={payouts || []}
+              rows={payouts?.items || []}
               rowKey={(p) => p.id}
               loading={!payouts}
               emptyText="아직 지급된 건이 없습니다."
               minWidth={0}
               skeletonRows={2}
             />
-          ) : (
+          ) : null}
+          {tab === "payouts" && payouts?.truncated && (
+            <div className="ad-callout" style={{ marginTop: "var(--ad-sp-sm)" }}>
+              <AdminIcon name="alert" />
+              <div>최근 {fmt(payouts.limit)}건만 표시합니다. 전체 지급 인원은 위 &quot;모집 인원&quot; 의 지급 수({fmt(c.paidCount)}명)를 보세요. 전체 목록·CSV 는 P1.</div>
+            </div>
+          )}
+          {tab === "stats" && (
             <>
               <div className="ad-mini-stats">
                 <div className="ad-stat"><div className="ad-label">도달</div><div className="ad-value ad-num ad-muted">—</div></div>

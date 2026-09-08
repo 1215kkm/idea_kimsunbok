@@ -12,6 +12,8 @@ export interface AdminContextValue {
   adminName: string;
   badges: AdminBadges;
   refreshBadges: () => void;
+  /** ≤1024px 사이드바 드로어 열기 — PageHeader 햄버거가 호출 */
+  openSidebar: () => void;
 }
 
 /** app/admin/layout.tsx 가 채우고, 하위 페이지가 useAdmin() 으로 읽는다. */
@@ -20,6 +22,7 @@ export const AdminContext = createContext<AdminContextValue>({
   adminName: "",
   badges: { pendingCampaigns: 0, pendingWithdrawals: 0 },
   refreshBadges: () => {},
+  openSidebar: () => {},
 });
 
 export const useAdmin = () => useContext(AdminContext);

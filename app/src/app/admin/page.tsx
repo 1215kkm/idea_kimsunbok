@@ -187,12 +187,6 @@ export default function AdminDashboardPage() {
               <AdminIcon name="scale" />
             </div>
             <h2>총량 검산</h2>
-            <div className="ad-actions">
-              <Link href="/admin/ledger" className="ad-btn ad-btn-outline ad-btn-sm">
-                상세 보기
-                <AdminIcon name="chevron" small />
-              </Link>
-            </div>
           </div>
           <div className="ad-stat-grid">
             <Stat label="입금 총량 (Σ입금)" value={totals ? fmtP(deposit) : null} note="transactions.deposit · 100% 반영" primary />

@@ -36,7 +36,7 @@ const MENU: MenuItem[] = [
   { href: "/admin/settings", label: "설정", icon: "settings" },
 ];
 
-type CheckState = "checking" | "ok" | "denied";
+type CheckState = "checking" | "ok" | "denied" | "init_error";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, loading, signOut } = useAuth();
@@ -59,7 +59,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       return;
     }
     if (!db) {
-      setCheck("denied");
+      // Firebase env 는 있는데 초기화가 안 됨 — 권한 문제가 아니다
+      setCheck("init_error");
       return;
     }
     let cancelled = false;
@@ -88,6 +89,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     refreshBadges();
   }, [refreshBadges]);
 
+  // 관리자 화면은 라이트 고정 — --ad-hover/border/gray-bg 가 라이트 값이라 다크에서 흰 hover 줄이 뜬다.
+  // (P1 에서 --ad-* 를 테마별로 재선언하면 이 강제는 걷어낸다.)
+  useEffect(() => {
+    const root = document.documentElement;
+    const prev = root.getAttribute("data-theme");
+    root.setAttribute("data-theme", "light");
+    return () => {
+      if (prev !== null) root.setAttribute("data-theme", prev);
+    };
+  }, []);
+
   // 경로 바뀌면 모바일 드로어 닫기
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -112,7 +124,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </div>
     );
   }
-  if (check === "denied") {
+  if (check === "denied" || check === "init_error") {
     return (
       <div className="ad-root">
         <div className="ad-fullscreen" style={{ width: "100%" }}>
@@ -120,9 +132,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <div className="ad-placeholder" style={{ minHeight: 0 }}>
               <div>
                 <div className="ad-tile" style={{ background: "var(--ad-error-light)", color: "var(--danger)" }}>
-                  <AdminIcon name="shield-off" />
+                  <AdminIcon name={check === "denied" ? "shield-off" : "alert"} />
                 </div>
-                <div style={{ fontWeight: 700, color: "var(--danger)", marginBottom: 12 }}>관리자 권한이 없습니다.</div>
+                <div style={{ fontWeight: 700, color: "var(--danger)", marginBottom: 12 }}>
+                  {check === "denied" ? "관리자 권한이 없습니다." : "Firebase 연결 오류 — 새로고침해 주세요."}
+                </div>
                 <Link href="/dashboard" className="ad-btn ad-btn-primary">
                   대시보드로 이동
                 </Link>
@@ -138,7 +152,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
 
   return (
-    <AdminContext.Provider value={{ mode: ADMIN_MODE, adminName, badges, refreshBadges }}>
+    <AdminContext.Provider value={{ mode: ADMIN_MODE, adminName, badges, refreshBadges, openSidebar: () => setSideOpen(true) }}>
       <ToastProvider>
         <div className="ad-root">
           <aside className={`ad-sidebar ${sideOpen ? "open" : ""}`.trim()} aria-label="관리자 메뉴">
@@ -181,20 +195,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 </div>
               </div>
             )}
-            <AdminHamburger onOpen={() => setSideOpen(true)} />
             {children}
           </main>
         </div>
       </ToastProvider>
     </AdminContext.Provider>
-  );
-}
-
-/** 페이지 헤더가 자기 자리에 넣는 햄버거 (1024px 이하만 보임). 헤더가 없는 페이지를 위해 레이아웃에도 하나 둔다. */
-function AdminHamburger({ onOpen }: { onOpen: () => void }) {
-  return (
-    <button type="button" className="ad-btn-icon ad-hamburger" style={{ marginBottom: "var(--ad-sp-md)" }} onClick={onOpen} aria-label="메뉴 열기">
-      <AdminIcon name="menu" />
-    </button>
   );
 }

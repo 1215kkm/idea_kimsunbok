@@ -340,6 +340,22 @@ describe("reward-service — 강체크 감사 게이트", () => {
     expect(fake.read("users/newbie")).toMatchObject({ totalPoints: 990_000, lockedPoints: 10_000 });
   });
 
+  it("#5-b users.depositTotal 비정규화 필드가 있으면 거래 스캔 없이 그 값으로 자격 판정 (PR #38 N-1)", async () => {
+    // 거래는 없고 필드만 있는 회원 → 필드 우선
+    fake.seed("users/adv_field", { totalPoints: 1_000_000, lockedPoints: 0, depositTotal: 150_000 });
+    const created = await createCampaign("adv_field", BASE);
+    expect(created.budgetLocked).toBe(300_000);
+    // 필드가 100,000 미만이면 거래가 있어도 필드가 이긴다 (필드 = 진실, 거래는 폴백)
+    fake.seed("users/adv_low", { totalPoints: 1_000_000, lockedPoints: 0, depositTotal: 50_000 });
+    seedDeposit("adv_low", 1_000_000);
+    const e = await expectApiError(createCampaign("adv_low", BASE), "INSUFFICIENT_QUALIFICATION", 403);
+    expect(e.details).toMatchObject({ depositTotal: 50_000 });
+    // 필드 없는 구 회원은 스캔 폴백 (기존 테스트 #5 경로)
+    fake.seed("users/adv_legacy", { totalPoints: 1_000_000, lockedPoints: 0 });
+    seedDeposit("adv_legacy", 100_000);
+    await expect(createCampaign("adv_legacy", BASE)).resolves.toMatchObject({ budgetLocked: 300_000 });
+  });
+
   it("#6 광고주 본인 취소 — 승인 전만, 전액 반환, 남의 것·승인 후는 거부", async () => {
     const before = fake.ledgerTotal();
     const created = await createCampaign(ADV, BASE);

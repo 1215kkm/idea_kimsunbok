@@ -7,6 +7,7 @@ import type { PayoutItem } from "@/lib/admin-types";
 export const runtime = "nodejs";
 
 const CODE_RE = /^[A-Z0-9]{8}$/;
+const PAYOUT_LIMIT = 500;
 
 /**
  * GET /api/admin/reward/campaigns/{id}/payouts — 캠페인 지급내역 (rewardPayouts where campaignId)
@@ -21,7 +22,9 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       throw new ApiError("INVALID_INPUT", "Invalid campaignId", 400, { field: "campaignId" });
     }
     const db = adminDb();
-    const snap = await db.collection("rewardPayouts").where("campaignId", "==", campaignId).limit(500).get();
+    const snap = await db.collection("rewardPayouts").where("campaignId", "==", campaignId).limit(PAYOUT_LIMIT).get();
+    // headcount 최대 10,000 — 상한에 걸리면 잘렸다고 알린다 (커서 페이지네이션은 P1)
+    const truncated = snap.size >= PAYOUT_LIMIT;
 
     const uids = snap.docs.map((d) => (d.data().inviteeUid as string) || d.id);
     const emailMap = new Map<string, string>();
@@ -49,7 +52,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       })
       .sort((a, b) => (b.paidAt ?? 0) - (a.paidAt ?? 0));
 
-    return jsonOk({ ok: true, campaignId, items });
+    return jsonOk({ ok: true, campaignId, items, truncated, limit: PAYOUT_LIMIT });
   } catch (err) {
     return jsonError(err);
   }

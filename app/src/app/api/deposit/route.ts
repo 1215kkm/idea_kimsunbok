@@ -42,8 +42,14 @@ export async function POST(req: NextRequest) {
       const snap = await tx.get(userRef);
       const current = (snap.exists ? snap.data()?.totalPoints || 0 : 0) as number;
       const next = current + amount;
+      // 광고주 자격(입금 누적) 을 O(1) 로 읽기 위한 비정규화 — 강체크 PR #38 N-1.
+      // 필드가 없는 기존 회원은 첫 입금 때 이 트랜잭션 안에서 거래 합산으로 채운다 (백필 스크립트 없이 자연 수렴).
+      const prevDepositTotal = snap.exists ? snap.data()?.depositTotal : undefined;
+      const baseDepositTotal =
+        typeof prevDepositTotal === "number" && Number.isFinite(prevDepositTotal) ? prevDepositTotal : await sumDepositsInTx(tx, db, user.uid);
+      const depositTotal = baseDepositTotal + amount;
       if (snap.exists) {
-        tx.update(userRef, { totalPoints: next });
+        tx.update(userRef, { totalPoints: next, depositTotal });
       } else {
         tx.set(userRef, {
           name: user.email?.split("@")[0] || "회원",
@@ -51,6 +57,7 @@ export async function POST(req: NextRequest) {
           role: "consumer",
           membershipLevel: 1,
           totalPoints: next,
+          depositTotal,
           createdAt: FieldValue.serverTimestamp(),
         });
       }
@@ -70,4 +77,16 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return jsonError(err);
   }
+}
+
+/** depositTotal 필드가 없는 구 회원: 트랜잭션 읽기 단계에서 기존 입금 거래를 합산 (읽기 전부 → 쓰기 전부 순서 유지) */
+async function sumDepositsInTx(tx: Transaction, db: FirebaseFirestore.Firestore, uid: string): Promise<number> {
+  const q = db.collection("transactions").where("consumerId", "==", uid).where("type", "==", "deposit").select("amount");
+  const snap = await tx.get(q);
+  let sum = 0;
+  snap.forEach((d) => {
+    const a = d.data().amount;
+    if (typeof a === "number" && Number.isFinite(a)) sum += a;
+  });
+  return sum;
 }

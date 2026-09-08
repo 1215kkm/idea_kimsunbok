@@ -89,8 +89,9 @@ describe("demo admin: actions keep the ledger balanced", () => {
     const red = demo.redeemCampaign({ email: "demo@dataland.kr" }, "DEMO2026");
     expect(red.ok).toBe(true);
     const payouts = await data.listPayouts("DEMO2026");
-    expect(payouts).toHaveLength(1);
-    expect(payouts[0]).toMatchObject({ inviteeEmail: "demo@dataland.kr", amount: 10_000 });
+    expect(payouts.items).toHaveLength(1);
+    expect(payouts.truncated).toBe(false);
+    expect(payouts.items[0]).toMatchObject({ inviteeEmail: "demo@dataland.kr", amount: 10_000 });
     const r = await data.campaignAction("DEMO2026", "end", "광고주 요청");
     expect(r).toMatchObject({ to: "ended", refunded: 90_000 });
     expect(demo.getLockedBalance(ADV)).toBe(200_000); // DEMOWAIT 잠금만 남음

@@ -140,7 +140,7 @@ export default function AdminLedgerPage() {
                   {i > 0 && <div className="ad-op">{t.op}</div>}
                   <div className={`ad-term ${t.tone || ""}`.trim()}>
                     <div className="ad-label">{t.label}</div>
-                    <div className="ad-value ad-num">{fmtP(t.op === "−" ? t.value : t.value)}</div>
+                    <div className="ad-value ad-num">{fmtP(t.value)}</div>
                     <div className="ad-src">{t.src}</div>
                   </div>
                 </div>
@@ -156,7 +156,7 @@ export default function AdminLedgerPage() {
               <div className={`ad-diff ${mismatch ? "" : "ok"}`.trim()}>
                 <div className="ad-muted">차이 (좌변 − 우변)</div>
                 <div className="ad-value ad-num">{fmtSigned(totals.diff)} P</div>
-                <div style={{ fontWeight: 600 }}>{mismatch ? (totals.diff === beta ? "= 베타 조정 전액" : "원인 미확인") : "무에서 생성 없음"}</div>
+                <div style={{ fontWeight: 600 }}>{mismatch ? "원인 미확인 — 아래 경고 목록 확인" : "무에서 생성 없음"}</div>
               </div>
               <div className="ad-side">
                 <div className="ad-muted">우변 · 원장 항목 합</div>
