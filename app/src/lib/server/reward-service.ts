@@ -200,9 +200,12 @@ function budgetOf(c: Partial<CampaignDoc>) {
 // 현재 /api/deposit 은 transactions {type:"deposit", amount} 를 남기고 즉시 잔액 반영(beta_virtual)한다.
 // "확인됨" 상태 필드가 아직 없으므로 deposit 거래 전부를 확인된 입금으로 본다 (P1 입금확인 도입 시 status 필터 추가).
 // 베타 초기 지급금(users.betaTestFunds)은 입금이 아니므로 자격에 포함하지 않는다.
+//
+// users.depositTotal (비정규화, /api/deposit 이 입금마다 갱신 — 강체크 PR #38 N-1) 이 있으면 그 값을 쓰고,
+// 없는 구 회원만 거래 스캔으로 폴백한다 (docs/migrations/2026-09-users-deposit-total.md).
 // ---------------------------------------------------------------------------
 
-export async function getConfirmedDepositTotal(uid: string): Promise<number> {
+export async function sumDepositTransactions(uid: string): Promise<number> {
   const snap = await adminDb()
     .collection("transactions")
     .where("consumerId", "==", uid)
@@ -214,6 +217,13 @@ export async function getConfirmedDepositTotal(uid: string): Promise<number> {
     sum += num(d.data().amount);
   });
   return sum;
+}
+
+export async function getConfirmedDepositTotal(uid: string): Promise<number> {
+  const userSnap = await adminDb().collection("users").doc(uid).get();
+  const field = userSnap.exists ? userSnap.data()?.depositTotal : undefined;
+  if (typeof field === "number" && Number.isFinite(field)) return field;
+  return sumDepositTransactions(uid);
 }
 
 // ---------------------------------------------------------------------------
