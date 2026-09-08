@@ -230,7 +230,6 @@ export interface DemoCampaign {
   templateId?: string | null;
   ownerName?: string;
   status: CampaignStatus;
-  rejectReason?: string;
   createdAt: number;
   dailyCap?: number;
   rejectReason?: string;

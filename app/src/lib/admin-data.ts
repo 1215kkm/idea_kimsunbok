@@ -3,6 +3,7 @@
  * 화면 코드는 이 파일만 부르고 모드 분기를 모른다. 응답 형태는 실서버 API 와 동일하게 맞춘다.
  */
 import { isConfigured } from "@/lib/firebase";
+import { isCopyTemplateId } from "@/lib/reward-copy-templates";
 import { apiGet, apiPost, ApiClientError } from "@/lib/api-client";
 import {
   DEFAULT_DAILY_CAP,
@@ -87,6 +88,8 @@ function demoCampaignToView(c: DemoCampaign): CampaignView {
     dailyCap: c.dailyCap || DEFAULT_DAILY_CAP,
     channels: c.channels,
     copy: c.copy,
+    templateId: isCopyTemplateId(c.templateId) ? c.templateId : null,
+    ownerName: c.ownerName ?? "",
     status: c.status,
     rejectReason: c.rejectReason ?? null,
     endReason: c.endReason ?? null,
