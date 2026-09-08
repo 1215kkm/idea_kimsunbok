@@ -95,31 +95,36 @@ export default function CampaignDetail({ campaign: c, payouts, payoutsLoading, o
               {formatDate(c.createdAt)} 제출 · {c.channels.map((ch) => CHANNEL_LABEL[ch]).join(" · ")}
             </div>
           </div>
-          <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-bold ${badge.className}`}>{badge.label}</span>
+          <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-bold ${badge.className}`}>{badge.label}</span>
         </div>
+        {c.status === "rejected" && c.rejectReason === "owner_cancelled" && (
+          <div className="mt-2 rounded-lg border border-[#E8EAF0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#6B7394]">
+            내가 취소함 · {formatDate(c.createdAt)} 제출분 — 잠겼던 예산은 전액 반환되었습니다.
+          </div>
+        )}
         {c.status === "rejected" && c.rejectReason && c.rejectReason !== "owner_cancelled" && (
           <div className="mt-2 rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/5 px-3 py-2 text-xs text-[#B91C1C]">거절 사유: {c.rejectReason}</div>
         )}
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
           <div className="rounded-xl bg-[#F7F8FC] p-2">
-            <div className="text-[10px] text-[#6B7394]">1인당</div>
+            <div className="text-xs text-[#6B7394]">1인당</div>
             <div className="text-sm font-bold text-[#1A1F36]">{formatP(c.unitAmount)}</div>
           </div>
           <div className="rounded-xl bg-[#F7F8FC] p-2">
-            <div className="text-[10px] text-[#6B7394]">가입 회원</div>
+            <div className="text-xs text-[#6B7394]">가입 회원</div>
             <div className="text-sm font-bold text-[#3B4CCA]">
               {c.paidCount}/{c.headcount}명
             </div>
           </div>
           <div className="rounded-xl bg-[#F7F8FC] p-2">
-            <div className="text-[10px] text-[#6B7394]">{c.status === "ended" || c.status === "rejected" ? "반환됨" : "잔여 예산"}</div>
+            <div className="text-xs text-[#6B7394]">{c.status === "ended" || c.status === "rejected" ? "반환됨" : "잔여 예산"}</div>
             <div className="text-sm font-bold text-[#1A1F36]">
               {formatP(c.status === "ended" || c.status === "rejected" ? c.budgetRefunded : c.budgetRemaining)}
             </div>
           </div>
         </div>
         <div className="mt-3">
-          <div className="flex justify-between text-[10px] text-[#6B7394]">
+          <div className="flex justify-between text-xs text-[#6B7394]">
             <span>지급 {formatP(c.budgetPaid)}</span>
             <span>잠금 {formatP(c.budgetLocked)}</span>
           </div>
@@ -141,11 +146,11 @@ export default function CampaignDetail({ campaign: c, payouts, payoutsLoading, o
       <section className="rounded-2xl border border-[#E8EAF0] bg-white p-4 dark-card">
         <div className="text-sm font-bold text-[#1A1F36]">가입 코드 · 공유 팩</div>
         <div className="mt-2 rounded-xl border border-[#E8EAF0] bg-[#F7F8FC] px-4 py-3 text-center">
-          <div className="text-[10px] text-[#6B7394]">가입 코드</div>
+          <div className="text-xs text-[#6B7394]">가입 코드</div>
           <div className="text-2xl font-black tracking-[0.3em] text-[#3B4CCA]">{c.code}</div>
         </div>
         {!shareable && (
-          <div className="mt-2 rounded-lg border border-[#E8EAF0] bg-[#F7F8FC] px-3 py-2 text-[11px] text-[#6B7394]">
+          <div className="mt-2 rounded-lg border border-[#E8EAF0] bg-[#F7F8FC] px-3 py-2 text-xs text-[#6B7394]">
             {c.status === "pending_review"
               ? "승인 전입니다. 지금 공유하면 받는 사람이 가입해도 승인 전까지 지급되지 않습니다."
               : "이 캠페인은 지급이 끝났거나 중단된 상태입니다. 공유해도 지급되지 않습니다."}
@@ -157,7 +162,7 @@ export default function CampaignDetail({ campaign: c, payouts, payoutsLoading, o
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs font-bold text-[#1A1F36]">{row.label}</div>
-                  <div className="text-[10px] text-[#9CA3C1]">{row.hint}</div>
+                  <div className="text-xs text-[#9CA3C1]">{row.hint}</div>
                 </div>
                 <button
                   type="button"
@@ -169,7 +174,7 @@ export default function CampaignDetail({ campaign: c, payouts, payoutsLoading, o
                   {copied === row.key ? "복사됨" : "복사"}
                 </button>
               </div>
-              <pre className="mt-2 whitespace-pre-wrap break-all font-sans text-[11px] leading-relaxed text-[#6B7394]">{pack[row.key]}</pre>
+              <pre className="mt-2 whitespace-pre-wrap break-all font-sans text-xs leading-relaxed text-[#6B7394]">{pack[row.key]}</pre>
             </div>
           ))}
         </div>
@@ -194,9 +199,9 @@ export default function CampaignDetail({ campaign: c, payouts, payoutsLoading, o
         </div>
         <div className="mt-3 flex items-center justify-between rounded-xl border border-dashed border-[#E8EAF0] px-3 py-2 text-xs text-[#6B7394]">
           <span>이미지 팩 (스토리·피드 이미지)</span>
-          <span className="rounded-full bg-[#E8EAF0] px-2 py-0.5 text-[10px] font-bold">준비 중 · P1</span>
+          <span className="rounded-full bg-[#E8EAF0] px-2.5 py-0.5 text-xs font-bold">준비 중 · P1</span>
         </div>
-        <p className="mt-2 text-[10px] leading-relaxed text-[#9CA3C1]">
+        <p className="mt-2 text-xs leading-relaxed text-[#9CA3C1]">
           전화번호를 모아 문자·카톡을 보내는 기능은 제공하지 않습니다 (수신동의 없는 광고성 정보 전송은 정보통신망법 위반). 링크·문구는 광고주 본인 채널에 직접 올려 주세요.
         </p>
       </section>
@@ -206,7 +211,7 @@ export default function CampaignDetail({ campaign: c, payouts, payoutsLoading, o
         <div className="text-sm font-bold text-[#1A1F36]">등록한 문구</div>
         <div className="mt-2 text-base font-black text-[#1A1F36]">{headline}</div>
         <div className="mt-1 whitespace-pre-line text-xs leading-relaxed text-[#6B7394]">{body}</div>
-        <div className="mt-2 border-t border-[#E8EAF0] pt-2 text-[10px] text-[#9CA3C1]">{pack.honest}</div>
+        <div className="mt-2 border-t border-[#E8EAF0] pt-2 text-xs text-[#6B7394]">{pack.honest}</div>
       </section>
 
       {/* 지급내역 */}
@@ -225,7 +230,7 @@ export default function CampaignDetail({ campaign: c, payouts, payoutsLoading, o
               <div key={p.id} className="flex items-center justify-between py-2 text-xs">
                 <div>
                   <div className="font-bold text-[#1A1F36]">회원 {p.inviteeMasked}</div>
-                  <div className="text-[10px] text-[#9CA3C1]">{formatDate(p.paidAt)} · 가입 + 이메일 인증</div>
+                  <div className="text-xs text-[#9CA3C1]">{formatDate(p.paidAt)} · 가입 + 이메일 인증</div>
                 </div>
                 <div className="font-bold text-[#B91C1C]">-{formatP(p.amount)}</div>
               </div>
@@ -238,9 +243,9 @@ export default function CampaignDetail({ campaign: c, payouts, payoutsLoading, o
       <section className="rounded-2xl border border-dashed border-[#E8EAF0] bg-[#F7F8FC] p-4">
         <div className="flex items-center justify-between">
           <div className="text-sm font-bold text-[#6B7394]">성과 (링크 클릭 → 가입 전환율)</div>
-          <span className="rounded-full bg-[#E8EAF0] px-2 py-0.5 text-[10px] font-bold text-[#6B7394]">준비 중 · P1</span>
+          <span className="rounded-full bg-[#E8EAF0] px-2.5 py-0.5 text-xs font-bold text-[#6B7394]">준비 중 · P1</span>
         </div>
-        <p className="mt-1 text-[11px] text-[#9CA3C1]">지금은 지급내역만 집계됩니다. 채널별 도달·전환은 P1-5 에서 붙습니다.</p>
+        <p className="mt-1 text-xs text-[#9CA3C1]">지금은 지급내역만 집계됩니다. 채널별 도달·전환은 P1-5 에서 붙습니다.</p>
       </section>
 
       {cancelOpen && (

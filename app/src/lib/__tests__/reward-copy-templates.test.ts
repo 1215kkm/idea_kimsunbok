@@ -82,11 +82,11 @@ describe("reward-copy-templates (아뱅 확정본 2026-09-06 §1)", () => {
 
   it("금칙어 12종: 시안 위반 문구는 걸리고, 어떤 단어인지 돌려준다", () => {
     expect(findForbiddenTerms("광고주가 10만P 지급하면 Model A로 120%(12만P) 광고주에게 지급")).toEqual([
-      "120%",
+      "120% (120퍼·1.2배·백이십 포함)",
       "12만 / 120만 / 1,200만",
     ]);
     expect(findForbiddenTerms("신규 회원이 지출할 때마다 5%를 평생 광고주에게")).toEqual(["평생", "5%"]);
-    expect(findForbiddenTerms("입금하면 120% 증액 적립")).toEqual(["120%", "입금하면 + 120"]);
+    expect(findForbiddenTerms("입금하면 120% 증액 적립")).toEqual(["120% (120퍼·1.2배·백이십 포함)", "입금하면 + 120"]);
     expect(findForbiddenTerms("투자하면 수익 보장")).toEqual(["수익", "투자", "보장"]);
     expect(findForbiddenTerms("이것을 데이터 노동이라고 합니다. 기본소득!")).toEqual(["데이터 노동 / 기본소득"]);
     expect(findForbiddenTerms("하루에도 횟수 제한 없이 무제한 증액")).toEqual(["무한 / 무제한 / 횟수 제한 없이"]);
@@ -94,8 +94,27 @@ describe("reward-copy-templates (아뱅 확정본 2026-09-06 §1)", () => {
     expect(findForbiddenTerms("1,200만P 드립니다")).toEqual(["12만 / 120만 / 1,200만"]);
   });
 
+  it("금칙어 우회 차단: 공백·전각·제로폭·한글 변형도 같은 문자열로 본다 (강체크 N-1)", () => {
+    const NUM = "120% (120퍼·1.2배·백이십 포함)";
+    // 공백 끼워넣기
+    expect(findForbiddenTerms("1 2 0 % 적립")).toEqual([NUM]);
+    expect(findForbiddenTerms("수 익 이 납니다")).toEqual(["수익"]);
+    // 전각 (NFKC)
+    expect(findForbiddenTerms("１２０％ 지급")).toEqual([NUM]);
+    expect(findForbiddenTerms("１２만P 드립니다")).toEqual(["12만 / 120만 / 1,200만"]);
+    // 제로폭 문자
+    expect(findForbiddenTerms("120​% 수﻿익")).toEqual([NUM, "수익"]);
+    // 한글·배수 변형
+    expect(findForbiddenTerms("백이십 퍼센트 돌려드립니다")).toEqual([NUM]);
+    expect(findForbiddenTerms("120퍼 적립")).toEqual([NUM]);
+    expect(findForbiddenTerms("1.2배로 돌아옵니다")).toEqual([NUM]);
+    // 상호 경고도 같은 정규화를 쓴다
+    expect(findBrandWarnings("신 한 은행 제휴")).toEqual(["신한"]);
+  });
+
   it("금칙어 예외·오탐 방지: 카드+OCR 문맥의 120%, 112만, 10.5%, 10만 은 통과", () => {
     expect(findForbiddenTerms("카드 결제 후 영수증 OCR 검증 시 120% 적립")).toEqual([]);
+    expect(findForbiddenTerms("선착순 120명 모집")).toEqual([]);
     expect(findForbiddenTerms("가입 시 10만P 지급")).toEqual([]);
     expect(findForbiddenTerms("112만P")).toEqual([]);
     expect(findForbiddenTerms("10.5% 할인")).toEqual([]);

@@ -8,9 +8,20 @@ export const runtime = "nodejs";
 /**
  * 가입 시 보관된 코드(users.pendingRewardCode)가 더 이상 청구될 수 없는 결과.
  * 이때도 코드를 지워야 대시보드 "지급 대기" 배너가 영원히 남지 않는다.
- * CAMPAIGN_NOT_ACTIVE(일시정지 → 재개 가능)·DAILY_CAP_REACHED(내일 재시도)·EMAIL_NOT_VERIFIED 는 남긴다.
+ * DAILY_CAP_REACHED(내일 재시도)·EMAIL_NOT_VERIFIED 는 남긴다.
  */
 const TERMINAL_CODES = new Set(["ALREADY_REDEEMED", "NOT_FOUND", "SELF_INVITE", "BUDGET_EXHAUSTED"]);
+
+/** 캠페인이 다시 살아날 수 없는 상태 — paused·pending_review 는 재개·승인 가능하므로 코드를 남긴다 (강체크 N-2) */
+const TERMINAL_CAMPAIGN_STATUSES = new Set(["ended", "rejected"]);
+
+function isPermanentFailure(err: ApiError): boolean {
+  if (TERMINAL_CODES.has(err.code)) return true;
+  if (err.code !== "CAMPAIGN_NOT_ACTIVE") return false;
+  // 같은 에러 코드가 일시정지(재개 가능)와 종료·거절(영구) 양쪽에서 나온다 → 서버가 준 status 로 가른다
+  const status = (err.details as { status?: unknown } | undefined)?.status;
+  return typeof status === "string" && TERMINAL_CAMPAIGN_STATUSES.has(status);
+}
 
 /**
  * 캠페인 코드 리딤 — 광고주 에스크로 → 내 잔액 (제로섬, 1인 1회).
@@ -33,7 +44,7 @@ export async function POST(req: NextRequest) {
     await clearPendingRewardCode(user.uid);
     return jsonOk({ ok: true, ...result });
   } catch (err) {
-    if (uid && err instanceof ApiError && TERMINAL_CODES.has(err.code)) {
+    if (uid && err instanceof ApiError && isPermanentFailure(err)) {
       try {
         await clearPendingRewardCode(uid);
       } catch (cleanupErr) {

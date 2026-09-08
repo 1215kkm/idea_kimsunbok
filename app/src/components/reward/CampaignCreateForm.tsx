@@ -41,14 +41,15 @@ interface Props {
 
 const sectionCls = "rounded-2xl border border-[#E8EAF0] bg-white p-4 dark-card";
 const stepCls = "mb-3 flex items-center gap-2 text-sm font-bold text-[#1A1F36]";
-const stepNoCls = "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3B4CCA] text-[11px] font-black text-white";
+const stepNoCls = "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3B4CCA] text-xs font-black text-white";
 
+/** 타일 — 터치 타겟 44px 확보(py-3 + 12px 글자), 누르는 맛 active:scale */
 function tileCls(active: boolean, disabled = false): string {
-  const base = "rounded-xl border py-2.5 text-xs font-bold transition-all";
+  const base = "rounded-xl border py-3 text-xs font-bold transition-all";
   if (disabled) return `${base} cursor-not-allowed border-dashed border-[#E8EAF0] bg-[#F7F8FC] text-[#9CA3C1]`;
   return active
-    ? `${base} border-[#3B4CCA] bg-[#3B4CCA]/8 text-[#3B4CCA]`
-    : `${base} border-[#E8EAF0] bg-white text-[#6B7394] hover:border-[#3B4CCA]/40`;
+    ? `${base} border-[#3B4CCA] bg-[#3B4CCA]/8 text-[#3B4CCA] active:scale-[0.98]`
+    : `${base} border-[#E8EAF0] bg-white text-[#6B7394] hover:border-[#3B4CCA]/40 active:scale-[0.98]`;
 }
 
 export default function CampaignCreateForm({ balance, qualified, defaultOwnerName, onSubmit, onCancel }: Props) {
@@ -61,6 +62,7 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
   const [templateId, setTemplateId] = useState<CopyTemplateId>("plain");
   // 광고주가 손대기 전(null)까지는 템플릿·변수를 따라가고, 손대면 그 값을 유지한다 (effect 로 state 동기화하지 않음)
   const [customCopy, setCustomCopy] = useState<string | null>(null);
+  const [kindOpen, setKindOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -82,13 +84,14 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
   const brandWarnings = useMemo(() => findBrandWarnings(`${copy}\n${owner}`), [copy, owner]);
   const preview = splitCopy(copy);
 
+  // 제출을 막는 이유 — 고정 바에 첫 줄 하나만 보여준다 (같은 말을 세 곳에 쓰지 않는다)
   const blockers: string[] = [];
   if (!qualified) blockers.push("광고주 자격(입금 누적 10만P)이 아직 없습니다.");
   if (!headcountValid) blockers.push(`모집 인원은 ${MIN_HEADCOUNT}~${MAX_HEADCOUNT.toLocaleString()}명 사이여야 합니다.`);
   if (shortfall > 0) blockers.push(`잔액이 ${formatP(shortfall)} 부족합니다.`);
   if (channels.length === 0) blockers.push("채널을 하나 이상 고르세요.");
   if (copy.trim().length === 0) blockers.push("광고 문구가 비어 있습니다.");
-  if (forbidden.length > 0) blockers.push(`이 표현은 쓸 수 없습니다: ${forbidden.join(", ")}`);
+  if (forbidden.length > 0) blockers.push(`쓸 수 없는 표현이 있습니다: ${forbidden.join(", ")}`);
   const canSubmit = blockers.length === 0 && !submitting;
 
   const toggleChannel = (ch: RewardChannel) => {
@@ -121,42 +124,37 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
   };
 
   return (
-    <div className="space-y-4">
-      {/* ① 종류 */}
-      <section className={sectionCls}>
-        <div className={stepCls}>
-          <span className={stepNoCls}>1</span> 광고 종류
+    <div className="space-y-4 pb-24">
+      {/* 광고 종류 — 지금은 선택지가 하나뿐이라 결정 단계가 아니다. 한 줄 칩 + 펼치면 설명 */}
+      <button
+        type="button"
+        onClick={() => setKindOpen((v) => !v)}
+        className="flex w-full items-center gap-2 rounded-xl border border-[#3B4CCA]/30 bg-[#3B4CCA]/5 px-3 py-2.5 text-left active:scale-[0.98]"
+      >
+        <span className="text-base">👤</span>
+        <span className="flex-1 text-xs font-bold text-[#3B4CCA]">신규 회원 가입 리워드</span>
+        <span className="text-xs text-[#6B7394]">기존 DB 연동은 P2</span>
+        <span className="material-symbols-outlined text-[#6B7394]" style={{ fontSize: "18px" }}>
+          {kindOpen ? "expand_less" : "expand_more"}
+        </span>
+      </button>
+      {kindOpen && (
+        <div className="-mt-2 rounded-xl border border-[#E8EAF0] bg-white p-3 text-xs leading-relaxed text-[#6B7394] dark-card">
+          <p>SNS·카톡 등으로 내 가입 코드를 공유하고, 새로 가입한 회원에게 1인당 정액을 내 예산에서 지급합니다.</p>
+          <p className="mt-2 text-[#9CA3C1]">
+            기존사이트 회원에게 지급하려면 개인정보 제3자 제공 계약이 먼저 필요합니다. 계약 체결 후 제공 예정 (P2).
+          </p>
         </div>
-        <div className="space-y-2">
-          <div className="flex items-start gap-3 rounded-xl border border-[#3B4CCA] bg-[#3B4CCA]/5 p-3">
-            <span className="text-xl">👤</span>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-[#1A1F36]">신규 회원 가입 리워드</div>
-              <div className="mt-0.5 text-xs leading-relaxed text-[#6B7394]">
-                SNS·카톡 등으로 내 가입 코드를 공유하고, 새로 가입한 회원에게 1인당 정액을 내 예산에서 지급합니다.
-              </div>
-            </div>
-            <span className="text-[#3B4CCA]">✓</span>
-          </div>
-          <div className="flex items-start gap-3 rounded-xl border border-dashed border-[#E8EAF0] bg-[#F7F8FC] p-3 opacity-70">
-            <span className="text-xl">🔗</span>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-[#6B7394]">기존사이트 회원 리워드</div>
-              <div className="mt-0.5 text-xs leading-relaxed text-[#9CA3C1]">
-                다른 사이트 회원에게 지급하려면 개인정보 제3자 제공 계약이 먼저 필요합니다. 계약 체결 후 제공 예정 (P2).
-              </div>
-            </div>
-            <span className="rounded-full bg-[#E8EAF0] px-2 py-0.5 text-[10px] font-bold text-[#6B7394]">준비 중</span>
-          </div>
-        </div>
-      </section>
+      )}
 
-      {/* ② 1인당 금액 */}
+      {/* ① 예산 = 1인당 금액 × 모집 인원 (의뢰자 시안도 금액 선택과 합계가 한 카드) */}
       <section className={sectionCls}>
         <div className={stepCls}>
-          <span className={stepNoCls}>2</span> 1인당 지급 금액 <span className="text-xs font-normal text-[#6B7394]">(1P = 1원)</span>
+          <span className={stepNoCls}>1</span> 예산 <span className="text-xs font-normal text-[#6B7394]">(1P = 1원)</span>
         </div>
-        <div className="grid grid-cols-5 gap-2">
+
+        <label className="block text-xs text-[#6B7394]">1인당 지급 금액</label>
+        <div className="mt-1 grid grid-cols-5 gap-2">
           {REWARD_UNIT_AMOUNTS.map((p) => (
             <button key={p} type="button" onClick={() => setUnitAmount(p)} className={tileCls(unitAmount === p)}>
               {unitLabel(p)}
@@ -166,15 +164,10 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
             직접 입력
           </button>
         </div>
-        <p className="mt-2 text-[11px] text-[#9CA3C1]">직접 입력은 P1에서 열립니다. 지금은 4종 프리셋만 제출할 수 있습니다.</p>
-      </section>
+        <p className="mt-1 text-xs text-[#9CA3C1]">직접 입력은 P1에서 열립니다.</p>
 
-      {/* ③ 모집 인원 → 예산 */}
-      <section className={sectionCls}>
-        <div className={stepCls}>
-          <span className={stepNoCls}>3</span> 모집 인원
-        </div>
-        <div className="grid grid-cols-4 gap-2">
+        <label className="mt-4 block text-xs text-[#6B7394]">모집 인원</label>
+        <div className="mt-1 grid grid-cols-4 gap-2">
           {HEADCOUNT_PRESETS.map((n) => (
             <button key={n} type="button" onClick={() => applyHeadcount(String(n))} className={tileCls(headcount === n)}>
               {n}명
@@ -186,12 +179,14 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
             value={headcountText}
             onChange={(e) => applyHeadcount(e.target.value)}
             placeholder="직접"
-            className={`dark-input rounded-xl border px-2 text-center text-xs font-bold outline-none ${
+            aria-label="모집 인원 직접 입력"
+            className={`dark-input rounded-xl border px-2 py-3 text-center text-xs font-bold outline-none ${
               HEADCOUNT_PRESETS.includes(headcount) ? "border-[#E8EAF0] text-[#6B7394]" : "border-[#3B4CCA] text-[#3B4CCA]"
             }`}
           />
         </div>
-        <div className="mt-3 rounded-xl bg-[#F7F8FC] p-3">
+
+        <div className="mt-4 rounded-xl bg-[#F7F8FC] p-3">
           <div className="flex items-center justify-between text-xs text-[#6B7394]">
             <span>
               {formatP(unitAmount)} × {headcountValid ? headcount : 0}명
@@ -214,28 +209,34 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
         </div>
       </section>
 
-      {/* ④ 채널 */}
+      {/* ② 채널 */}
       <section className={sectionCls}>
         <div className={stepCls}>
-          <span className={stepNoCls}>4</span> 공유할 채널 <span className="text-xs font-normal text-[#6B7394]">(복수 선택)</span>
+          <span className={stepNoCls}>2</span> 공유할 채널 <span className="text-xs font-normal text-[#6B7394]">(복수 선택)</span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           {REWARD_CHANNELS.map((ch) => (
             <button key={ch} type="button" onClick={() => toggleChannel(ch)} className={tileCls(channels.includes(ch))}>
-              {channels.includes(ch) ? "✓ " : ""}
-              {CHANNEL_LABEL[ch]}
+              <span className="inline-flex items-center justify-center gap-1">
+                {channels.includes(ch) && (
+                  <span className="material-symbols-outlined" style={{ fontSize: "16px" }} aria-hidden="true">
+                    check
+                  </span>
+                )}
+                {CHANNEL_LABEL[ch]}
+              </span>
             </button>
           ))}
         </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-[#9CA3C1]">
+        <p className="mt-2 text-xs leading-relaxed text-[#6B7394]">
           다랜드가 대신 게시하거나 발송하지 않습니다. 제출 후 받는 공유 팩(링크·문구)을 광고주가 직접 올립니다.
         </p>
       </section>
 
-      {/* ⑤ 문구 */}
+      {/* ③ 문구 + 미리보기 */}
       <section className={sectionCls}>
         <div className={stepCls}>
-          <span className={stepNoCls}>5</span> 광고 문구
+          <span className={stepNoCls}>3</span> 광고 문구
         </div>
         <label className="block text-xs text-[#6B7394]">광고주 표시명 (가게·회사·닉네임)</label>
         <input
@@ -246,7 +247,7 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
           placeholder="예: 김밥천국"
           className="dark-input mt-1 mb-3 w-full rounded-xl border border-[#E8EAF0] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#3B4CCA]"
         />
-        <div className="mb-3 grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {COPY_TEMPLATES.map((t) => (
             <button
               key={t.id}
@@ -255,19 +256,22 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
                 setTemplateId(t.id);
                 setCustomCopy(null);
               }}
-              className={`rounded-xl border p-2.5 text-left transition-all ${
-                templateId === t.id ? "border-[#3B4CCA] bg-[#3B4CCA]/5" : "border-[#E8EAF0] bg-white hover:border-[#3B4CCA]/40"
+              className={`rounded-xl border py-3 text-xs font-bold transition-all active:scale-[0.98] ${
+                templateId === t.id
+                  ? "border-[#3B4CCA] bg-[#3B4CCA]/8 text-[#3B4CCA]"
+                  : "border-[#E8EAF0] bg-white text-[#6B7394] hover:border-[#3B4CCA]/40"
               }`}
             >
-              <div className={`text-xs font-bold ${templateId === t.id ? "text-[#3B4CCA]" : "text-[#1A1F36]"}`}>{t.name}</div>
-              <div className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-[#6B7394]">{t.tone}</div>
+              {t.name}
             </button>
           ))}
         </div>
-        <div className="flex items-center justify-between">
+        <p className="mt-1 text-xs text-[#6B7394]">{template.tone}</p>
+
+        <div className="mt-3 flex items-center justify-between">
           <label className="text-xs text-[#6B7394]">첫 줄 = 헤드라인(20자 권장), 둘째 줄부터 본문</label>
           {copyDirty && (
-            <button type="button" onClick={() => setCustomCopy(null)} className="text-[11px] text-[#3B4CCA] underline">
+            <button type="button" onClick={() => setCustomCopy(null)} className="text-xs text-[#3B4CCA] underline">
               템플릿 문구로 되돌리기
             </button>
           )}
@@ -281,16 +285,16 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
             forbidden.length > 0 ? "border-[#EF4444]" : "border-[#E8EAF0] focus:border-[#3B4CCA]"
           }`}
         />
-        <div className="mt-1 flex items-center justify-between text-[11px]">
-          <span className={preview.headline.length > 20 ? "text-amber-700" : "text-[#9CA3C1]"}>
+        <div className="mt-1 flex items-center justify-between text-xs">
+          <span className={preview.headline.length > 20 ? "text-amber-700" : "text-[#6B7394]"}>
             헤드라인 {preview.headline.length}자{preview.headline.length > 20 ? " (20자 초과)" : ""}
           </span>
-          <span className="text-[#9CA3C1]">{copy.length}/500</span>
+          <span className="text-[#6B7394]">{copy.length}/500</span>
         </div>
         {forbidden.length > 0 && (
           <div className="mt-2 rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/5 px-3 py-2 text-xs text-[#B91C1C]">
             이 표현은 쓸 수 없습니다: <strong>{forbidden.join(", ")}</strong>
-            <div className="mt-0.5 text-[11px] text-[#6B7394]">리워드는 광고주 예산에서 100% 이전됩니다. 수익·증액을 약속하는 표현은 승인되지 않습니다.</div>
+            <div className="mt-0.5 text-xs text-[#6B7394]">리워드는 광고주 예산에서 100% 이전됩니다. 수익·증액을 약속하는 표현은 승인되지 않습니다.</div>
           </div>
         )}
         {brandWarnings.length > 0 && (
@@ -302,43 +306,45 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
         {/* 미리보기 */}
         <div className="mt-4 text-xs font-bold text-[#6B7394]">미리보기 (받는 사람이 보는 카드)</div>
         <div className="mt-1 rounded-2xl border border-[#E8EAF0] bg-[#F7F8FC] p-4">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[#3B4CCA]">다랜드 가입 리워드</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-[#3B4CCA]">다랜드 가입 리워드</div>
           <div className="mt-1 text-lg font-black leading-snug text-[#1A1F36]">{preview.headline || "헤드라인"}</div>
           <div className="mt-1 whitespace-pre-line text-xs leading-relaxed text-[#6B7394]">{preview.body}</div>
-          <div className="mt-3 rounded-xl bg-[#FFB800] py-2.5 text-center text-sm font-bold text-[#1A1F36]">{rendered.cta}</div>
-          <div className="mt-2 border-t border-[#E8EAF0] pt-2 text-[10px] text-[#9CA3C1]">{honestLine("")}</div>
+          {/* 샘플 표시 — 진짜 버튼이 아니다 */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none mt-3 scale-95 rounded-xl bg-[#FFB800] py-2.5 text-center text-sm font-bold text-[#1A1F36] opacity-90"
+          >
+            {rendered.cta}
+          </div>
+          <div className="mt-2 border-t border-[#E8EAF0] pt-2 text-xs text-[#6B7394]">{honestLine("")}</div>
         </div>
       </section>
 
-      {/* ⑥ 제출 */}
-      <section className={sectionCls}>
-        <div className={stepCls}>
-          <span className={stepNoCls}>6</span> 제출
-        </div>
-        {blockers.length > 0 && (
-          <ul className="mb-3 space-y-1 text-xs text-[#6B7394]">
-            {blockers.map((b) => (
-              <li key={b}>• {b}</li>
-            ))}
-          </ul>
-        )}
-        {submitError && (
-          <div className="mb-3 rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/5 px-3 py-2 text-xs text-[#B91C1C]">{submitError}</div>
-        )}
+      {submitError && (
+        <div className="rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/5 px-3 py-2 text-xs text-[#B91C1C]">{submitError}</div>
+      )}
+
+      {/* 고정 제출바 — 위에서 뭘 고치는 중에도 "얼마가 잠기는지 / 왜 못 내는지"가 보인다 */}
+      <div className="sticky bottom-16 z-40 -mx-5 border-t border-[#E8EAF0] bg-white/95 px-5 py-3 backdrop-blur-md lg:bottom-0 lg:-mx-4 lg:rounded-b-2xl lg:px-4">
+        {blockers.length > 0 && <div className="mb-2 text-xs text-[#B91C1C]">{blockers[0]}</div>}
         <div className="grid grid-cols-[1fr_2fr] gap-2">
-          <button type="button" onClick={onCancel} className="rounded-xl border border-[#E8EAF0] bg-white py-3 text-sm font-bold text-[#6B7394]">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-xl border border-[#E8EAF0] bg-white py-3 text-sm font-bold text-[#6B7394] active:scale-[0.98]"
+          >
             돌아가기
           </button>
           <button
             type="button"
             disabled={!canSubmit}
             onClick={() => setConfirmOpen(true)}
-            className="rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] shadow-lg shadow-[#FFB800]/30 transition-transform hover:scale-[1.01] hover:bg-[#E5A600] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+            className="rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] shadow-lg shadow-[#FFB800]/30 transition-transform hover:bg-[#E5A600] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
           >
             {formatP(headcountValid ? budget : 0)} 잠그고 제출
           </button>
         </div>
-      </section>
+      </div>
 
       {/* 확인 모달 — 모바일 바닥 시트, PC 중앙 */}
       {confirmOpen && (
@@ -376,7 +382,7 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
                 type="button"
                 disabled={submitting}
                 onClick={() => setConfirmOpen(false)}
-                className="rounded-xl border border-[#E8EAF0] bg-white py-3 text-sm font-bold text-[#6B7394] disabled:opacity-50"
+                className="rounded-xl border border-[#E8EAF0] bg-white py-3 text-sm font-bold text-[#6B7394] active:scale-[0.98] disabled:opacity-50"
               >
                 다시 볼게요
               </button>
@@ -384,7 +390,7 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
                 type="button"
                 disabled={submitting}
                 onClick={handleConfirm}
-                className="rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] hover:bg-[#E5A600] disabled:opacity-50"
+                className="rounded-xl bg-[#FFB800] py-3 text-sm font-bold text-[#1A1F36] hover:bg-[#E5A600] active:scale-[0.98] disabled:opacity-50"
               >
                 {submitting ? "제출 중..." : "잠그고 제출"}
               </button>

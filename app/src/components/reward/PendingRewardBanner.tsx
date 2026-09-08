@@ -99,7 +99,14 @@ export default function PendingRewardBanner({ code, onPaid, onCleared }: Props) 
         } else if (err.code === "DAILY_CAP_REACHED") {
           setMessage({ kind: "info", text: "오늘 이 캠페인의 지급 한도에 도달했습니다. 내일 다시 받을 수 있습니다." });
         } else if (err.code === "CAMPAIGN_NOT_ACTIVE") {
-          setMessage({ kind: "info", text: "캠페인이 잠시 중단된 상태입니다. 재개되면 다시 받을 수 있습니다." });
+          // 종료·거절은 되살아나지 않는다 — 서버도 이때 코드를 지웠으므로 배너를 내린다 (강체크 N-2)
+          const status = (err.details as { status?: unknown } | undefined)?.status;
+          if (status === "ended" || status === "rejected") {
+            setInactive(true);
+            setMessage({ kind: "info", text: "이 캠페인은 종료되었습니다. 지급 대기는 여기서 정리됩니다." });
+          } else {
+            setMessage({ kind: "info", text: "캠페인이 잠시 중단된 상태입니다. 재개되면 다시 받을 수 있습니다." });
+          }
         } else {
           setMessage({ kind: "error", text: err.message || "지급 요청에 실패했습니다." });
         }
@@ -118,7 +125,7 @@ export default function PendingRewardBanner({ code, onPaid, onCleared }: Props) 
     <div className="mx-5 mt-3 rounded-2xl border border-[#3B4CCA]/25 bg-[#3B4CCA]/5 p-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[#3B4CCA]">지급 대기</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-[#3B4CCA]">지급 대기</div>
           <div className="mt-0.5 text-sm font-bold text-[#1A1F36]">
             {inactive
               ? "이 가입 코드는 현재 지급이 중단되었습니다"
@@ -126,12 +133,20 @@ export default function PendingRewardBanner({ code, onPaid, onCleared }: Props) 
                 ? `${amountText}를 받을 수 있습니다`
                 : `이메일 인증을 마치면 ${amountText}가 지급됩니다`}
           </div>
-          <div className="mt-0.5 text-[11px] text-[#6B7394]">
+          <div className="mt-0.5 text-xs text-[#6B7394]">
             광고주 예산에서 지급 · 1P = 1원 · 1인 1회 · 코드 {code}
           </div>
         </div>
       </div>
-      {!inactive && (
+      {inactive ? (
+        <button
+          type="button"
+          onClick={onCleared}
+          className="mt-3 w-full rounded-xl border border-[#E8EAF0] bg-white py-2.5 text-xs font-bold text-[#6B7394] active:scale-[0.98]"
+        >
+          확인
+        </button>
+      ) : (
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -153,7 +168,7 @@ export default function PendingRewardBanner({ code, onPaid, onCleared }: Props) 
       )}
       {message && (
         <div
-          className={`mt-2 rounded-lg px-3 py-2 text-[11px] leading-relaxed ${
+          className={`mt-2 rounded-lg px-3 py-2 text-xs leading-relaxed ${
             message.kind === "error" ? "border border-[#EF4444]/30 bg-[#EF4444]/5 text-[#B91C1C]" : "border border-[#3B4CCA]/20 bg-white text-[#3B4CCA]"
           }`}
         >

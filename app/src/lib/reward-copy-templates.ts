@@ -204,11 +204,25 @@ function includesAny(text: string, words: string[]): boolean {
   return words.some((w) => text.includes(w));
 }
 
+/** 제로폭·공백류 (BOM, ZWSP, ZWNJ, ZWJ, word joiner, 각종 스페이스) — 사이에 끼워 넣는 우회를 막는다 */
+const INVISIBLE_RE = /[\s\u00ad\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060\ufeff]/g;
+
+/**
+ * 금칙어 매칭용 정규화 — 사람 눈에 같아 보이는 것을 같은 문자열로.
+ *  - NFKC: 전각 `１２０％` → `120%`, `㈜`·합자 등 호환 문자 분해
+ *  - 대문자 통일 (OCR 예외 규칙은 별도 대소문자 무시 정규식)
+ *  - 공백·제로폭 제거: `1 2 0 %`, `수 익`, `12 만` 우회 차단
+ * 사용자에게 보여주는 문구는 원문 그대로 두고, 검사만 이 사본으로 한다.
+ */
+export function normalizeForMatch(raw: string): string {
+  return (raw || "").normalize("NFKC").replace(INVISIBLE_RE, "");
+}
+
 export const FORBIDDEN_RULES: readonly ForbiddenRule[] = [
   {
-    label: "120%",
+    label: "120% (120퍼·1.2배·백이십 포함)",
     // 문구 안에 "카드" + ("OCR" | "영수증") 이 함께 있으면 실지출 120% 문맥이라 허용
-    test: (t) => t.includes("120%") && !(CARD_OCR_RE.test(t) && OCR_OR_RECEIPT_RE.test(t)),
+    test: (t) => /120%|120퍼|1\.2배|백이십/.test(t) && !(CARD_OCR_RE.test(t) && OCR_OR_RECEIPT_RE.test(t)),
     reason: "리워드 문맥의 120%는 무에서 생성 약속",
   },
   {
@@ -243,9 +257,12 @@ export const FORBIDDEN_RULES: readonly ForbiddenRule[] = [
   },
 ];
 
-/** 걸린 금칙어 라벨 목록 (빈 배열 = 통과) */
+/**
+ * 걸린 금칙어 라벨 목록 (빈 배열 = 통과).
+ * 검사는 NFKC + 공백·제로폭 제거 사본으로 한다 — `1 2 0 %`, `１２０％`, `수 익` 같은 우회를 같은 문자열로 본다.
+ */
 export function findForbiddenTerms(text: string): string[] {
-  const t = (text || "").normalize("NFC");
+  const t = normalizeForMatch(text);
   return FORBIDDEN_RULES.filter((r) => r.test(t)).map((r) => r.label);
 }
 
@@ -260,6 +277,6 @@ export function forbiddenMessage(labels: string[]): string {
 export const BRAND_WARN_WORDS = ["신한", "삼성", "CJ", "스타벅스", "국민은행", "카카오뱅크", "토스", "쿠팡", "네이버페이"] as const;
 
 export function findBrandWarnings(text: string): string[] {
-  const t = (text || "").normalize("NFC");
+  const t = normalizeForMatch(text);
   return BRAND_WARN_WORDS.filter((w) => t.includes(w));
 }

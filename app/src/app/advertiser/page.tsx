@@ -92,7 +92,8 @@ export default function AdvertiserPage() {
   const router = useRouter();
   const demo = !isConfigured;
   const [view, setView] = useState<View>({ name: "home" });
-  const [items, setItems] = useState<CampaignItem[]>([]);
+  // null = 아직 안 불러옴 (스켈레톤). [] = 불러왔는데 없음 (빈 상태 문구)
+  const [items, setItems] = useState<CampaignItem[] | null>(null);
   const [info, setInfo] = useState<AdvertiserInfo | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [payouts, setPayouts] = useState<PayoutItem[]>([]);
@@ -124,6 +125,8 @@ export default function AdvertiserPage() {
       setInfo(r.advertiser);
     } catch (err) {
       console.error("[advertiser] list failed", err);
+      // 스켈레톤이 영원히 돌지 않도록 "불러왔지만 없음"으로 내리고, 실패는 위 배너가 말한다
+      setItems((prev) => prev ?? []);
       setLoadError(apiMessage(err, "캠페인 목록을 불러오지 못했습니다."));
     }
   }, [user, demo]);
@@ -208,8 +211,9 @@ export default function AdvertiserPage() {
   const balance = info?.totalPoints ?? 0;
   const locked = info?.lockedPoints ?? 0;
   const qualified = info?.qualified ?? false;
-  const activeCount = items.filter((c) => c.status === "live" || c.status === "approved").length;
-  const detail = view.name === "detail" ? items.find((c) => c.id === view.id) ?? null : null;
+  const list = items ?? [];
+  const activeCount = list.filter((c) => c.status === "live" || c.status === "approved").length;
+  const detail = view.name === "detail" ? list.find((c) => c.id === view.id) ?? null : null;
 
   const qualificationCard = (
     <div
@@ -217,7 +221,7 @@ export default function AdvertiserPage() {
     >
       <div className="flex items-center justify-between">
         <div className="text-xs font-bold text-[#1A1F36]">광고주 자격</div>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${qualified ? "bg-[#10B981] text-white" : "bg-amber-500 text-white"}`}>
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${qualified ? "bg-[#10B981] text-white" : "bg-amber-500 text-white"}`}>
           {qualified ? "자격 있음" : "미달"}
         </span>
       </div>
@@ -234,13 +238,13 @@ export default function AdvertiserPage() {
 
   const balanceCard = (
     <div className="rounded-2xl border border-[#E8EAF0] bg-white p-4 dark-card">
-      <div className="text-[10px] text-[#6B7394]">사용 가능 잔액</div>
+      <div className="text-xs text-[#6B7394]">사용 가능 잔액</div>
       <div className="text-2xl font-black text-[#3B4CCA]">{formatP(balance)}</div>
       <div className="mt-2 flex items-center justify-between border-t border-[#E8EAF0] pt-2 text-xs">
         <span className="text-[#6B7394]">캠페인에 잠긴 예산</span>
         <strong className="text-[#1A1F36]">{formatP(locked)}</strong>
       </div>
-      <div className="mt-1 text-[10px] leading-relaxed text-[#9CA3C1]">잠긴 예산은 출금·지출에 쓸 수 없고, 거절·종료 시 남은 만큼 잔액으로 돌아옵니다.</div>
+      <div className="mt-1 text-xs leading-relaxed text-[#9CA3C1]">잠긴 예산은 출금·지출에 쓸 수 없고, 거절·종료 시 남은 만큼 잔액으로 돌아옵니다.</div>
     </div>
   );
 
@@ -263,8 +267,14 @@ export default function AdvertiserPage() {
     <div className="min-h-screen pb-20">
       <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
         <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="text-[#6B7394] hover:text-[#1A1F36]">
-            &larr;
+          <Link
+            href="/dashboard"
+            aria-label="홈으로"
+            className="-m-2 flex h-11 w-11 items-center justify-center text-[#6B7394] hover:text-[#1A1F36]"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: "22px" }} aria-hidden="true">
+              arrow_back
+            </span>
           </Link>
           <div>
             <h1 className="text-lg font-bold">리워드광고</h1>
@@ -292,8 +302,10 @@ export default function AdvertiserPage() {
           {flash && (
             <div className="flex items-start justify-between gap-2 rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 px-4 py-3 text-xs text-[#047857]">
               <span>{flash}</span>
-              <button type="button" onClick={() => setFlash(null)} className="shrink-0 text-[#6B7394]">
-                ✕
+              <button type="button" onClick={() => setFlash(null)} aria-label="닫기" className="-m-2 shrink-0 p-2 text-[#6B7394]">
+                <span className="material-symbols-outlined" style={{ fontSize: "18px" }} aria-hidden="true">
+                  close
+                </span>
               </button>
             </div>
           )}
@@ -331,29 +343,48 @@ export default function AdvertiserPage() {
               <button
                 type="button"
                 onClick={() => setView({ name: "create" })}
-                className="w-full rounded-2xl bg-[#FFB800] py-4 text-base font-bold text-[#1A1F36] shadow-lg shadow-[#FFB800]/30 transition-transform hover:scale-[1.01] hover:bg-[#E5A600]"
+                className={
+                  qualified
+                    ? "w-full rounded-2xl bg-[#FFB800] py-4 text-base font-bold text-[#1A1F36] shadow-lg shadow-[#FFB800]/30 transition-transform hover:bg-[#E5A600] active:scale-[0.99]"
+                    : "w-full rounded-2xl border border-[#3B4CCA]/40 bg-white py-4 text-base font-bold text-[#3B4CCA] transition-colors hover:bg-[#3B4CCA]/5 active:scale-[0.99]"
+                }
               >
                 캠페인 만들기
               </button>
               {!qualified && (
-                <p className="-mt-2 text-center text-[11px] text-[#6B7394]">자격이 생기기 전에도 문구·예산을 미리 구성해 볼 수 있습니다 (제출은 자격 후).</p>
+                <p className="-mt-2 text-center text-xs text-[#6B7394]">자격이 생기기 전에도 문구·예산을 미리 구성해 볼 수 있습니다 (제출은 자격 후).</p>
               )}
 
               <section>
                 <div className="mb-2 flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[#3B4CCA]">내 캠페인</h3>
-                  <span className="text-[11px] text-[#6B7394]">
-                    진행 중 {activeCount} · 전체 {items.length}
+                  <span className="text-xs text-[#6B7394]">
+                    {items === null ? "불러오는 중" : `진행 중 ${activeCount} · 전체 ${list.length}`}
                   </span>
                 </div>
-                {items.length === 0 ? (
+                {items === null ? (
+                  <div className="space-y-2" aria-busy="true" aria-label="캠페인 목록 불러오는 중">
+                    {[0, 1].map((i) => (
+                      <div key={i} className="h-[88px] animate-pulse rounded-xl border border-[#E8EAF0] bg-white p-4 dark-card">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="w-2/3 space-y-2">
+                            <div className="h-4 rounded bg-[#E8EAF0]" />
+                            <div className="h-3 w-4/5 rounded bg-[#F0F2F8]" />
+                          </div>
+                          <div className="h-5 w-16 rounded-full bg-[#F0F2F8]" />
+                        </div>
+                        <div className="mt-3 h-3 rounded bg-[#F0F2F8]" />
+                      </div>
+                    ))}
+                  </div>
+                ) : list.length === 0 ? (
                   <div className="rounded-2xl border border-[#E8EAF0] bg-white p-8 text-center text-sm text-[#6B7394] dark-card">
                     아직 캠페인이 없습니다.
-                    <div className="mt-1 text-xs text-[#9CA3C1]">첫 캠페인 권장: 1만P × 10명 = 10만P (최대 손실 10만원, 안 오면 그만큼 반환)</div>
+                    <div className="mt-1 text-xs text-[#6B7394]">첫 캠페인 권장: 1만P × 10명 = 10만P (최대 손실 10만원, 안 오면 그만큼 반환)</div>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {items.map((c) => {
+                    {list.map((c) => {
                       const badge = statusBadge(c);
                       const headline = c.copy.split("\n")[0];
                       return (
@@ -366,11 +397,11 @@ export default function AdvertiserPage() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <div className="truncate text-sm font-bold text-[#1A1F36]">{headline}</div>
-                              <div className="mt-0.5 text-[11px] text-[#6B7394]">
+                              <div className="mt-0.5 text-xs text-[#6B7394]">
                                 {c.code} · {formatDate(c.createdAt)} · {c.channels.map((ch) => CHANNEL_LABEL[ch]).join("·")}
                               </div>
                             </div>
-                            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${badge.className}`}>{badge.label}</span>
+                            <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-bold ${badge.className}`}>{badge.label}</span>
                           </div>
                           <div className="mt-2 flex items-center justify-between text-xs">
                             <span className="text-[#6B7394]">
@@ -384,7 +415,7 @@ export default function AdvertiserPage() {
                             </span>
                           </div>
                           {c.status === "pending_review" && (
-                            <div className="mt-2 text-[11px] text-amber-700">승인 대기 — 상세에서 취소할 수 있습니다</div>
+                            <div className="mt-2 text-xs text-amber-700">승인 대기 — 상세에서 취소할 수 있습니다</div>
                           )}
                         </button>
                       );
