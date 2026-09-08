@@ -43,6 +43,13 @@ import {
   type RewardChannel,
   type RewardKind,
 } from "@/lib/reward-ledger";
+import {
+  MAX_OWNER_NAME_LENGTH,
+  findForbiddenTerms,
+  forbiddenMessage,
+  isCopyTemplateId,
+  type CopyTemplateId,
+} from "@/lib/reward-copy-templates";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // I, O, 0, 1 제외
 const CODE_LENGTH = 8;
@@ -67,6 +74,10 @@ export interface CreateCampaignInput {
   headcount: number;
   channels: RewardChannel[];
   copy: string;
+  /** 문구 템플릿 (공유 팩 재생성용). 광고주가 템플릿 없이 직접 썼으면 null */
+  templateId?: CopyTemplateId | null;
+  /** 광고주 표시명 — 공유 문구의 {owner}. 비우면 서버가 빈 문자열로 저장하고 화면은 "광고주" 로 폴백 */
+  ownerName?: string;
 }
 
 /** 리딤 요청자 — requireAuth 결과를 그대로 넘긴다 (email_verified 는 ID 토큰 클레임) */
@@ -89,6 +100,8 @@ export interface CampaignDoc {
   dailyPaid: { date: string; count: number };
   channels: RewardChannel[];
   copy: string;
+  templateId?: CopyTemplateId | null;
+  ownerName?: string;
   status: CampaignStatus;
   code: string;
   rejectReason?: string;
@@ -115,6 +128,8 @@ export interface CampaignView {
   dailyCap: number;
   channels: RewardChannel[];
   copy: string;
+  templateId: CopyTemplateId | null;
+  ownerName: string;
   status: CampaignStatus;
   rejectReason: string | null;
   endReason: string | null;
@@ -154,6 +169,8 @@ export function toCampaignView(id: string, d: Partial<CampaignDoc>): CampaignVie
     dailyCap: num(d.dailyCap) || DEFAULT_DAILY_CAP,
     channels: d.channels || [],
     copy: d.copy || "",
+    templateId: isCopyTemplateId(d.templateId) ? d.templateId : null,
+    ownerName: typeof d.ownerName === "string" ? d.ownerName : "",
     status: d.status || "draft",
     rejectReason: d.rejectReason ?? null,
     endReason: d.endReason ?? null,
@@ -188,7 +205,32 @@ export function validateCreateInput(raw: Record<string, unknown>): CreateCampaig
   if (copy.length === 0) {
     throw new ApiError("INVALID_INPUT", "copy is required", 400, { field: "copy" });
   }
-  return { kind: raw.kind, unitAmount: raw.unitAmount, headcount: raw.headcount, channels: raw.channels, copy };
+  // 금칙어 (아뱅 문구 확정본 §1.5) — 클라이언트가 막아도 서버가 최종 관문
+  const forbidden = findForbiddenTerms(copy);
+  if (forbidden.length > 0) {
+    throw new ApiError("INVALID_INPUT", forbiddenMessage(forbidden), 400, { field: "copy", terms: forbidden });
+  }
+  const ownerName =
+    typeof raw.ownerName === "string"
+      ? raw.ownerName.replace(CONTROL_CHARS_RE, "").replace(/\s+/g, " ").trim().slice(0, MAX_OWNER_NAME_LENGTH)
+      : "";
+  const forbiddenOwner = findForbiddenTerms(ownerName);
+  if (forbiddenOwner.length > 0) {
+    throw new ApiError("INVALID_INPUT", forbiddenMessage(forbiddenOwner), 400, { field: "ownerName", terms: forbiddenOwner });
+  }
+  if (raw.templateId !== undefined && raw.templateId !== null && !isCopyTemplateId(raw.templateId)) {
+    throw new ApiError("INVALID_INPUT", "templateId must be plain | first_come | local_owner", 400, { field: "templateId" });
+  }
+  const templateId = isCopyTemplateId(raw.templateId) ? raw.templateId : null;
+  return {
+    kind: raw.kind,
+    unitAmount: raw.unitAmount,
+    headcount: raw.headcount,
+    channels: raw.channels,
+    copy,
+    templateId,
+    ownerName,
+  };
 }
 
 function budgetOf(c: Partial<CampaignDoc>) {
@@ -284,6 +326,8 @@ export async function createCampaign(
           dailyPaid: { date: "", count: 0 },
           channels: input.channels,
           copy: input.copy,
+          templateId: input.templateId ?? null,
+          ownerName: input.ownerName ?? "",
           status: "pending_review",
           code,
           createdAt: FieldValue.serverTimestamp(),
@@ -704,6 +748,50 @@ export async function listCampaignsForAdmin(status: string | null): Promise<Camp
   }
   const snap = await q.orderBy("createdAt", "desc").limit(200).get();
   return snap.docs.map((d) => toCampaignView(d.id, d.data() as Partial<CampaignDoc>));
+}
+
+export interface PayoutView {
+  id: string;
+  /** 받은 회원 uid 는 광고주에게 그대로 보여주지 않는다 — 앞 4자 + 마스킹 */
+  inviteeMasked: string;
+  amount: number;
+  status: string;
+  condition: string;
+  paidAt: number | null;
+}
+
+/** 캠페인 지급내역 — 본인 소유 캠페인만 (P0-4 사용자 화면). 정렬은 메모리에서 (복합 인덱스 불필요). */
+export async function listPayoutsForOwner(ownerUid: string, campaignId: string): Promise<PayoutView[]> {
+  assertCampaignId(campaignId);
+  const db = adminDb();
+  const campaignSnap = await db.collection("rewardCampaigns").doc(campaignId).get();
+  if (!campaignSnap.exists) throw new ApiError("NOT_FOUND", "Campaign not found", 404);
+  if ((campaignSnap.data() as CampaignDoc).ownerUid !== ownerUid) {
+    throw new ApiError("FORBIDDEN", "Not your campaign", 403);
+  }
+  const snap = await db.collection("rewardPayouts").where("campaignId", "==", campaignId).limit(500).get();
+  const items: PayoutView[] = snap.docs.map((d) => {
+    const p = d.data();
+    const uid = typeof p.inviteeUid === "string" ? p.inviteeUid : d.id;
+    return {
+      id: d.id,
+      inviteeMasked: `${uid.slice(0, 4)}****`,
+      amount: num(p.amount),
+      status: typeof p.status === "string" ? p.status : "paid",
+      condition: typeof p.condition === "string" ? p.condition : "",
+      paidAt: millis(p.paidAt),
+    };
+  });
+  items.sort((a, b) => (b.paidAt ?? 0) - (a.paidAt ?? 0));
+  return items;
+}
+
+/**
+ * 가입 시 이메일 미인증으로 보관해 둔 코드(users.pendingRewardCode) 정리.
+ * 원장 트랜잭션 밖에서, 리딤 결과가 확정된 뒤 호출한다 (강체크 재검토 메모: P0-4 에서 FieldValue.delete()).
+ */
+export async function clearPendingRewardCode(uid: string): Promise<void> {
+  await adminDb().collection("users").doc(uid).set({ pendingRewardCode: FieldValue.delete() }, { merge: true });
 }
 
 /** 가입 화면 배너용 — 코드가 지급 가능한지, 얼마인지 (금액은 서버가 말한다) */
