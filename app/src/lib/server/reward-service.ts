@@ -20,6 +20,7 @@ import { createHash, randomBytes } from "crypto";
 import { FieldValue, type Transaction, type DocumentReference } from "firebase-admin/firestore";
 import { adminDb } from "./firebase-admin";
 import { ApiError } from "./api-error";
+import { getOrdered } from "./firestore-query";
 import {
   ADMIN_TRANSITIONS,
   ADVERTISER_MIN_DEPOSIT,
@@ -727,14 +728,19 @@ export async function cancelCampaign(
 // 조회
 // ---------------------------------------------------------------------------
 
+/** 최신순. 정렬은 메모리에서도 한 번 더 — getOrdered 가 인덱스 부재 시 정렬 없이 폴백한다. */
+function byCreatedAtDesc(a: CampaignView, b: CampaignView): number {
+  return (b.createdAt ?? 0) - (a.createdAt ?? 0);
+}
+
 export async function listCampaignsForOwner(ownerUid: string): Promise<CampaignView[]> {
-  const snap = await adminDb()
-    .collection("rewardCampaigns")
-    .where("ownerUid", "==", ownerUid)
-    .orderBy("createdAt", "desc")
-    .limit(100)
-    .get();
-  return snap.docs.map((d) => toCampaignView(d.id, d.data() as Partial<CampaignDoc>));
+  const snap = await getOrdered(
+    adminDb().collection("rewardCampaigns").where("ownerUid", "==", ownerUid),
+    "createdAt",
+    "desc",
+    100,
+  );
+  return snap.docs.map((d) => toCampaignView(d.id, d.data() as Partial<CampaignDoc>)).sort(byCreatedAtDesc);
 }
 
 const ALL_STATUSES: CampaignStatus[] = ["draft", "pending_review", "approved", "live", "paused", "ended", "rejected"];
@@ -746,8 +752,8 @@ export async function listCampaignsForAdmin(status: string | null): Promise<Camp
     if (!(ALL_STATUSES as string[]).includes(status)) return [];
     q = q.where("status", "==", status);
   }
-  const snap = await q.orderBy("createdAt", "desc").limit(200).get();
-  return snap.docs.map((d) => toCampaignView(d.id, d.data() as Partial<CampaignDoc>));
+  const snap = await getOrdered(q, "createdAt", "desc", 200);
+  return snap.docs.map((d) => toCampaignView(d.id, d.data() as Partial<CampaignDoc>)).sort(byCreatedAtDesc);
 }
 
 export interface PayoutView {

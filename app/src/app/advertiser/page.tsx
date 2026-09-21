@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import Icon from "@/components/Icon";
 import { isConfigured } from "@/lib/firebase";
 import { ApiClientError, apiGet, apiPost } from "@/lib/api-client";
 import { ADVERTISER_MIN_DEPOSIT, remainingBudget } from "@/lib/reward-ledger";
@@ -265,22 +266,11 @@ export default function AdvertiserPage() {
 
   return (
     <div className="min-h-screen pb-20">
+      {/* 뒤로가기는 ClientLayout 의 공용 BackButton(모바일 전용)이 담당한다.
+          페이지 자체 버튼을 두면 모바일에서 중복되고 PC에서 제목과 겹친다. */}
       <div className="dark-header border-b border-[#E8EAF0] bg-white/95 px-5 py-4 pl-16 pr-16 lg:px-6">
-        <div className="flex items-center gap-2">
-          <Link
-            href="/dashboard"
-            aria-label="홈으로"
-            className="-m-2 flex h-11 w-11 items-center justify-center text-[#6B7394] hover:text-[#1A1F36]"
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: "22px" }} aria-hidden="true">
-              arrow_back
-            </span>
-          </Link>
-          <div>
-            <h1 className="text-lg font-bold">리워드광고</h1>
-            <p className="text-xs dark-text-muted text-[#6B7394]">내 예산으로 가입 회원에게 1인당 정액 지급</p>
-          </div>
-        </div>
+        <h1 className="text-lg font-bold">리워드광고</h1>
+        <p className="text-xs dark-text-muted text-[#6B7394]">내 예산으로 가입 회원에게 1인당 정액 지급</p>
       </div>
 
       <div className="mx-auto max-w-lg px-5 py-5 lg:max-w-5xl lg:grid lg:grid-cols-[1fr_320px] lg:gap-6 lg:items-start">
@@ -303,9 +293,7 @@ export default function AdvertiserPage() {
             <div className="flex items-start justify-between gap-2 rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 px-4 py-3 text-xs text-[#047857]">
               <span>{flash}</span>
               <button type="button" onClick={() => setFlash(null)} aria-label="닫기" className="-m-2 shrink-0 p-2 text-[#6B7394]">
-                <span className="material-symbols-outlined" style={{ fontSize: "18px" }} aria-hidden="true">
-                  close
-                </span>
+                <Icon name="close" size={18} />
               </button>
             </div>
           )}
