@@ -31,7 +31,7 @@ body{margin:0;color:var(--ink);font-family:var(--sans);font-size:17px;line-heigh
 button,select,input,textarea{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--brand-l);outline-offset:2px}
 .app{max-width:1560px;margin:0 auto;padding-inline:16px;padding-block:16px 40px;display:grid;grid-template-columns:350px minmax(0,1fr);gap:20px;align-items:start}
-@media (max-width:1000px){.app{grid-template-columns:minmax(0,1fr)}.rail{order:2;position:static!important;max-height:none!important}.main{order:1}}
+
 
 /* ── 레일 ── */
 .rail{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column;gap:14px;padding-right:2px;scrollbar-width:thin}
@@ -165,11 +165,40 @@ select{flex:1;min-width:0;height:42px;padding:0 10px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 body.solo .app{grid-template-columns:minmax(0,1fr);max-width:1280px}
 body.solo .rail{display:none}
-@media (prefers-reduced-motion:reduce){.settings summary::after{transition:none}}
+/* 휴대폰·태블릿: 목차는 햄버거 메뉴(왼쪽 서랍), 휴대폰은 쇼츠 화면 고정 */
+.mtop,.scrim,.rail-close{display:none}
+@media (max-width:1000px){
+  .app{grid-template-columns:minmax(0,1fr);padding-block:0 32px}
+  .mtop{display:flex;align-items:center;gap:10px;position:sticky;top:env(safe-area-inset-top,0px);z-index:30;margin-inline:-16px;padding:10px 16px;background:rgba(242,244,250,.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .mbrand{display:flex;align-items:center;gap:9px;flex:1;min-width:0;font-weight:700;font-size:17px}
+  .mbrand svg{width:32px;height:32px;flex:none}
+  .mbrand span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .burger{flex:none;display:flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;border-radius:12px;border:1px solid var(--line-2);background:#fff;font-weight:700;font-size:17px;cursor:pointer}
+  .burger svg{width:22px;height:22px}
+  .rail{position:fixed!important;top:0;bottom:0;left:0;width:min(88vw,380px);max-height:none!important;z-index:50;background:var(--bg);padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-105%);transition:transform .25s ease;box-shadow:8px 0 30px rgba(26,31,54,.2);visibility:hidden}
+  .rail.open{transform:none;visibility:visible}
+  .rail-close{display:flex;align-self:flex-end;align-items:center;gap:6px;min-height:46px;padding:0 16px;border-radius:12px;border:1px solid var(--line-2);background:#fff;font-weight:700;font-size:17px;cursor:pointer}
+  .scrim.open{display:block;position:fixed;inset:0;z-index:40;background:rgba(26,31,54,.45)}
+  body.drawer-open{overflow:hidden}
+  .main{padding-top:12px}
+}
+@media (max-width:760px){
+  .fmt{display:none}
+  .head h1{font-size:23px}
+  .stagebox{padding:0;border:0;background:none}
+  .stage.short{height:auto;aspect-ratio:9/16;width:min(100%,max(260px,calc((100vh - 200px)*9/16)));width:min(100%,max(260px,calc((100svh - 200px)*9/16)))}
+}
+@media (prefers-reduced-motion:reduce){.settings summary::after,.rail{transition:none}}
 </style>
 
 <div class="app" id="app">
-  <aside class="rail" id="rail">
+  <div class="mtop">
+    <div class="mbrand"><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="#3B4CCA"/><path d="M13 11h7.5c6 0 9.5 3.6 9.5 9s-3.5 9-9.5 9H13z" fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/></svg><span>다랜드 설명영상</span></div>
+    <button type="button" class="burger" id="burger" aria-controls="rail" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>목차</button>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <aside class="rail" id="rail" aria-label="목차와 설정">
+    <button type="button" class="rail-close" id="railClose">닫기 ✕</button>
     <div class="brand">
       <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="rgba(255,255,255,.2)"/><path d="M13 11h7.5c6 0 9.5 3.6 9.5 9s-3.5 9-9.5 9H13z" fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/></svg>
       <div><b>다랜드 설명영상</b><span>회원 · 광고주 · 원리</span></div>
@@ -785,7 +814,7 @@ function outroDraw(c,L,v,s,ts){
   dlogo(c,cxm-(pc?40:56),pc?200:520,pc?80:112,seg(ts,.1,.6));
 }
 function render(t){
-  const L=LAYOUT[VIEW.fmt],c=cx,v=V();
+  const L=LAYOUT[FMT_NOW],c=cx,v=V();
   const i=sceneAt(t),s=v.scenes[i],ts=t-s._t0,p=clamp(ts/s._dur);
   c.setTransform(1,0,0,1,0,0);drawBg(c,L,t);
   const fadeIn=seg(ts,0,.35);
@@ -854,14 +883,18 @@ function buildToc(){
         v.scenes.forEach((s,i)=>{const sl=document.createElement('li');const sb=document.createElement('button');sb.type='button';sb.innerHTML=`<b>${String(i+1).padStart(2,'0')}</b>`;sb.append(s.name);
           sb.onclick=()=>{if(EXP.on)return;seek(s._t0+.01);if(!PL.playing)play();};sl.appendChild(sb);ol.appendChild(sl);});li.appendChild(ol);}
       ul.appendChild(li);});
-    if(cat.soon){const so=document.createElement('li');so.className='vsoon';so.innerHTML='<span class="n">+</span>';const sp=document.createElement('span');sp.textContent=cat.soon;so.appendChild(sp);ul.appendChild(so);}
+    if(cat.soon&&OWN.can){const so=document.createElement('li');so.className='vsoon';so.innerHTML='<span class="n">+</span>';const sp=document.createElement('span');sp.textContent=cat.soon;so.appendChild(sp);ul.appendChild(so);}
     g.appendChild(ul);host.appendChild(g);});
   lastSc=-1;
 }
 function buildHead(){const v=V(),cat=catOf(v);const eb=$('eyebrow');eb.style.setProperty('--c',cat.c);eb.querySelector('span').textContent=cat.name+' · '+(VIDEOS.filter(x=>x.cat===v.cat).indexOf(v)+1)+'번째 영상';
   $('vTitle').textContent=v.title;$('vMeta').textContent=v.sub+' · 장면 '+v.scenes.length+'개 · '+fmtT(TOTAL);}
-function fmtSet(f){VIEW.fmt=f;saveView();const L=LAYOUT[f];cv.width=L.W;cv.height=L.H;$('stage').className='stage '+f;$('stage').style.setProperty('--ar',L.W+'/'+L.H);
-  document.querySelectorAll('[data-fmt]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fmt===f)));$('mp4Sub').textContent=(f==='pc'?'1920×1080 가로':'1080×1920 세로')+' · '+MIME.label;draw();}
+const MQS=matchMedia('(max-width:760px)'),MQD=matchMedia('(max-width:1000px)');
+let FMT_NOW='pc';
+function applyFmt(){if(EXP.on)return;FMT_NOW=MQS.matches?'short':VIEW.fmt;const L=LAYOUT[FMT_NOW];cv.width=L.W;cv.height=L.H;$('stage').className='stage '+FMT_NOW;$('stage').style.setProperty('--ar',L.W+'/'+L.H);
+  document.querySelectorAll('[data-fmt]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fmt===FMT_NOW)));$('mp4Sub').textContent=(FMT_NOW==='pc'?'1920×1080 가로':'1080×1920 세로')+' · '+MIME.label;draw();}
+function fmtSet(f){VIEW.fmt=f;saveView();applyFmt();}
+(MQS.addEventListener?MQS.addEventListener('change',applyFmt):MQS.addListener(applyFmt));
 
 /* 나레이션 장면 목록 (편집 권한이 있을 때만 보인다) */
 function buildNarr(){
@@ -989,7 +1022,7 @@ function outMsg(html,kind){$('outMsg').innerHTML=html?`<div class="notice ${kind
 function ttsScenes(){const v=V();return v.scenes.filter(s=>!recOf(v,s)).length;}
 function askExport(){
   if(EXP.on)return;if(MIME.type===null){outMsg('이 브라우저는 영상 파일 만들기를 지원하지 않아요. 크롬이나 엣지 최신판에서 열어 주세요.','bad');return;}
-  const n=ttsScenes();const L=LAYOUT[VIEW.fmt];
+  const n=ttsScenes();const L=LAYOUT[FMT_NOW];
   outMsg(`<b>${L.W}×${L.H} ${MIME.ext.toUpperCase()}</b> 파일을 만들어요. 영상 길이만큼(<b>${fmtT(TOTAL)}</b>) 실제로 재생하면서 녹화하니, 끝날 때까지 이 탭을 앞에 띄워 두세요.`+
     (n?`<br>⚠ 장면 ${n}개가 <b>임시 목소리</b>예요. 브라우저 읽어주기는 영상 파일에 녹음되지 않아서 그 장면은 <b>자막·배경음·효과음만</b> 들어가요. 내 녹음을 넣으면 목소리까지 들어갑니다.`:'<br>모든 장면에 내 녹음이 들어 있어요. 목소리까지 함께 저장됩니다.')+
     (MIME.ext==='mp4'&&!/avc1/.test(MIME.type)?'<br>이 브라우저의 MP4는 인스타그램이 받지 않을 수 있어요. 인스타용은 윈도우·맥의 크롬 최신판에서 만들어 주세요.':'')+
@@ -1000,11 +1033,11 @@ async function exportStart(){
   outMsg('');const ac=wake();if(ac&&ac.state!=='running'){try{await ac.resume();}catch(e){}}
   pause();PL.t=0;$('busy').hidden=false;$('busyT').textContent='화면 불러오는 중';await preloadShots(V());await loadFonts();draw();
   try{const vs=cv.captureStream(30);const tracks=[...vs.getVideoTracks()];if(AU.dest)tracks.push(...AU.dest.stream.getAudioTracks());
-    const opt={videoBitsPerSecond:VIEW.fmt==='pc'?10e6:8e6,audioBitsPerSecond:192000};if(MIME.type)opt.mimeType=MIME.type;
+    const opt={videoBitsPerSecond:FMT_NOW==='pc'?10e6:8e6,audioBitsPerSecond:192000};if(MIME.type)opt.mimeType=MIME.type;
     const rec=new MediaRecorder(new MediaStream(tracks),opt);EXP.chunks=[];EXP.rec=rec;EXP.on=true;EXP.cancel=false;
     rec.ondataavailable=e=>{if(e.data&&e.data.size)EXP.chunks.push(e.data);};
     rec.onstop=async()=>{EXP.on=false;$('busy').hidden=true;if(EXP.cancel){outMsg('영상 만들기를 멈췄어요.');return;}
-      const blob=new Blob(EXP.chunks,{type:(MIME.type||'video/webm').split(';')[0]});const v=V();const name=`다랜드-${catOf(v).name}-${v.title}-${VIEW.fmt==='pc'?'가로':'쇼츠'}.${MIME.ext}`.replace(/\s+/g,'_');
+      const blob=new Blob(EXP.chunks,{type:(MIME.type||'video/webm').split(';')[0]});const v=V();const name=`다랜드-${catOf(v).name}-${v.title}-${FMT_NOW==='pc'?'가로':'쇼츠'}.${MIME.ext}`.replace(/\s+/g,'_');
       EXP.last={name,blob};
       const r=await saveFile(name,blob);outMsg(r==='saved'?`<b>${name}</b> 저장했어요 (${(blob.size/1048576).toFixed(1)}MB). 유튜브·인스타에 바로 올릴 수 있어요.`:
         r==='declined'?'저장을 취소했어요. <div class="acts"><button type="button" class="sbtn primary" id="reSave">다시 저장하기</button></div>':'저장하지 못했어요. 크롬 최신판에서 다시 해 보세요.',r==='saved'?'ok':'bad');
@@ -1056,6 +1089,16 @@ function unlockEdit(){
   if(!OWN.art){$('dirtyMsg').textContent='이 화면에서는 저장할 수 없어요';}
   buildSettings();buildNarr();
 }
+/* 햄버거 메뉴 (좁은 화면에서 목차를 왼쪽 서랍으로) */
+let drawerOpen=false;
+function syncDrawer(){const r=$('rail'),mob=MQD.matches,on=mob&&drawerOpen;r.classList.toggle('open',on);$('scrim').classList.toggle('open',on);document.body.classList.toggle('drawer-open',on);
+  $('burger').setAttribute('aria-expanded',String(on));if('inert' in r)r.inert=mob&&!drawerOpen;}
+function openDrawer(){drawerOpen=true;syncDrawer();const f=$('rail').querySelector('.slist [aria-current="true"]')||$('rail').querySelector('.vbtn[aria-current="true"]')||$('railClose');setTimeout(()=>f.focus(),60);}
+function closeDrawer(back){if(!drawerOpen)return;drawerOpen=false;syncDrawer();if(back)$('burger').focus();}
+$('burger').onclick=openDrawer;$('railClose').onclick=()=>closeDrawer(true);$('scrim').onclick=()=>closeDrawer(true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&drawerOpen)closeDrawer(true);});
+$('toc').addEventListener('click',e=>{if(MQD.matches&&e.target.closest('button'))closeDrawer(false);});
+(MQD.addEventListener?MQD.addEventListener('change',syncDrawer):MQD.addListener(syncDrawer));
 $('saveBtn').onclick=saveShared;
 $('bigPlay').onclick=e=>{e.stopPropagation();play();};
 $('stage').addEventListener('click',e=>{if(EXP.on||e.target.closest('button'))return;PL.playing?pause():play();});
@@ -1076,7 +1119,7 @@ document.addEventListener('keydown',e=>{if(/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.te
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}else fillVoiceSelect();
 
 (async function boot(){
-  rebuild();buildAll();fmtSet(VIEW.fmt);
+  rebuild();buildAll();applyFmt();syncDrawer();
   loadFonts();draw();preloadShots(V()).then(()=>{if(!PL.playing)draw();});
   if(SOLO){
     const d2b=u=>{const [h,b]=u.split(',');const m=h.match(/data:([^;]+)/);const bin=atob(b);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:m?m[1]:'audio/webm'});};
@@ -1094,7 +1137,7 @@ if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loa
   if(cfg.bgm==='custom'&&!MUS.custom)cfg.bgm='piano';
   rebuild();buildAll();if(OWN.can)buildSettings();draw();
 })();
-window.__dlv={render:t=>{render(t);},total:()=>TOTAL,fmt:fmtSet,video:id=>{VIEW.video=id;rebuild();buildAll();draw();return preloadShots(V());},scenes:()=>V().scenes.map(s=>[s._t0,s._dur,s.name])};
+window.__dlv={render:t=>{render(t);},total:()=>TOTAL,fmt:fmtSet,fmtNow:()=>FMT_NOW,video:id=>{VIEW.video=id;rebuild();buildAll();draw();return preloadShots(V());},scenes:()=>V().scenes.map(s=>[s._t0,s._dur,s.name])};
 })();
 </script>
 
