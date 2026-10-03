@@ -559,6 +559,10 @@ const VIDEOS=[
   {id:'a-reward',cat:'ad',title:'리워드광고 시작하기',sub:'내 예산으로 새 회원 모으기',scenes:ADV},
   {id:'w-120',cat:'why',title:'120%의 원리',sub:'쓴 돈이 다시 돌아오는 이유',scenes:WHY},
 ];
+/* 3편을 차례대로 이어 붙인 한 편 — 영상 파일로 내보낼 때만 쓴다.
+   장면 객체는 원래 장면을 원형으로 삼은 얇은 사본이라 시간표(_t0 등)만 따로 갖고, 대사·음성은 원래 영상 것을 그대로 쓴다. */
+const ALL={id:'all',cat:'member',title:'다랜드 사용법',sub:'회원편 · 광고주편 · 원리편',scenes:[]};
+VIDEOS.forEach(v=>v.scenes.forEach((s,i)=>{const w=Object.create(s);w._vid=v.id;w._v=v;w._i=i;ALL.scenes.push(w);}));
 
 /* ───────────────────────── 설정 ─────────────────────────
    공유 설정(cfg)은 주인이 「저장하기」를 누르면 data/video.json 으로 페이지에 저장되어 모든 사람에게 같다.
@@ -646,9 +650,10 @@ function musicStop(){if(MUS.timer){clearInterval(MUS.timer);MUS.timer=null;}if(M
 /* ───────────────────────── 나레이션 ───────────────────────── */
 const REC={};      // key -> {buf, dur, blob, name, path, saved}
 const recKey=(vid,sid)=>vid+'/'+sid;
-const V=()=>VIDEOS.find(v=>v.id===VIEW.video)||VIDEOS[0];
-const narrText=(v,s)=>(cfg.texts[v.id]&&cfg.texts[v.id][s.id]!=null)?cfg.texts[v.id][s.id]:s.narr;
-const recOf=(v,s)=>cfg.nm==='rec'?REC[recKey(v.id,s.id)]:null;
+const V=()=>VIEW.video==='all'?ALL:(VIDEOS.find(v=>v.id===VIEW.video)||VIDEOS[0]);
+const vidOf=(v,s)=>s._vid||v.id;
+const narrText=(v,s)=>{const id=vidOf(v,s);return(cfg.texts[id]&&cfg.texts[id][s.id]!=null)?cfg.texts[id][s.id]:s.narr;};
+const recOf=(v,s)=>cfg.nm==='rec'?REC[recKey(vidOf(v,s),s.id)]:null;
 const estTTS=txt=>{const n=txt.replace(/\s/g,'').length;return n*.168/cfg.rate+.4;};
 function capChunks(text){
   const sents=(text.match(/[^.?!]+[.?!]?/g)||[]).map(s=>s.trim()).filter(Boolean),out=[];
@@ -818,16 +823,17 @@ function render(t){
   const i=sceneAt(t),s=v.scenes[i],ts=t-s._t0,p=clamp(ts/s._dur);
   c.setTransform(1,0,0,1,0,0);drawBg(c,L,t);
   const fadeIn=seg(ts,0,.35);
-  if(s.kind==='intro'){introDraw(c,L,v,s,ts);if(L===LAYOUT.short)progDraw(c,L,v,t);}
-  else if(s.kind==='outro'){c.save();c.globalAlpha=fadeIn;outroDraw(c,L,v,s,ts);c.restore();progDraw(c,L,v,t);}
+  const sv=s._v||v,si=s._i!=null?s._i:i;
+  if(s.kind==='intro'){introDraw(c,L,sv,s,ts);if(L===LAYOUT.short)progDraw(c,L,v,t);}
+  else if(s.kind==='outro'){c.save();c.globalAlpha=fadeIn;outroDraw(c,L,sv,s,ts);c.restore();progDraw(c,L,v,t);}
   else{
     const vw=s.view(p);const cam=kf(s.cam,p);
     if(L===LAYOUT.short&&vw.spot&&vw.spot.a>0){const r=vw.spot.r,a=eIO(clamp(vw.spot.a));cam[0]=lerp(cam[0],r.x+r.w/2,.75*a);cam[1]=lerp(cam[1],r.y+r.h/2,.5*a);}
     const M=appLayer(c,L,s.app,vw.st,cam,0);
     if(L===LAYOUT.short){c.save();c.strokeStyle='rgba(26,31,54,.12)';c.lineWidth=2;RR(c,L.box.x,L.box.y,L.box.w,L.box.h,L.box.r);c.stroke();c.restore();}
-    if(i===1&&ts<.6){c.save();c.globalAlpha=1-seg(ts,0,.6);drawBg(c,L,t);introDraw(c,L,v,v.scenes[0],v.scenes[0]._dur);c.restore();}
+    const pv=v.scenes[i-1];if(pv&&pv.kind==='intro'&&ts<.6){c.save();c.globalAlpha=1-seg(ts,0,.6);drawBg(c,L,t);introDraw(c,L,sv,pv,pv._dur);c.restore();}
     spotDraw(c,L,M,vw.spot,t);calcDraw(c,L,vw.calc);cursorDraw(c,L,M,s,p,ts);
-    headDraw(c,L,v,s,i,ts);progDraw(c,L,v,t);
+    headDraw(c,L,sv,s,si,ts);progDraw(c,L,v,t);
   }
   capDraw(c,L,s,ts);
   if(t>TOTAL-.6){c.fillStyle=`rgba(255,255,255,${seg(t,TOTAL-.6,TOTAL)})`;c.fillRect(0,0,L.W,L.H);}
@@ -1020,24 +1026,34 @@ async function saveFile(name,blob){
 }
 function outMsg(html,kind){$('outMsg').innerHTML=html?`<div class="notice ${kind||''}">${html}</div>`:'';}
 function ttsScenes(){const v=V();return v.scenes.filter(s=>!recOf(v,s)).length;}
+function totalOf(id){const keep=VIEW.video;VIEW.video=id;rebuild();const tt=TOTAL,n=ttsScenes();VIEW.video=keep;rebuild();return{t:tt,n};}
 function askExport(){
   if(EXP.on)return;if(MIME.type===null){outMsg('이 브라우저는 영상 파일 만들기를 지원하지 않아요. 크롬이나 엣지 최신판에서 열어 주세요.','bad');return;}
-  const n=ttsScenes();const L=LAYOUT[FMT_NOW];
-  outMsg(`<b>${L.W}×${L.H} ${MIME.ext.toUpperCase()}</b> 파일을 만들어요. 영상 길이만큼(<b>${fmtT(TOTAL)}</b>) 실제로 재생하면서 녹화하니, 끝날 때까지 이 탭을 앞에 띄워 두세요.`+
-    (n?`<br>⚠ 장면 ${n}개가 <b>임시 목소리</b>예요. 브라우저 읽어주기는 영상 파일에 녹음되지 않아서 그 장면은 <b>자막·배경음·효과음만</b> 들어가요. 내 녹음을 넣으면 목소리까지 들어갑니다.`:'<br>모든 장면에 내 녹음이 들어 있어요. 목소리까지 함께 저장됩니다.')+
-    (MIME.ext==='mp4'&&!/avc1/.test(MIME.type)?'<br>이 브라우저의 MP4는 인스타그램이 받지 않을 수 있어요. 인스타용은 윈도우·맥의 크롬 최신판에서 만들어 주세요.':'')+
+  const L=LAYOUT[FMT_NOW],all=totalOf('all'),one=totalOf(VIEW.video),cur=V();
+  outMsg(`<b>${L.W}×${L.H} ${MIME.ext.toUpperCase()}</b> 파일을 만들어요. 메뉴 없이 영상만 담기고, 영상 길이만큼 실제로 재생하면서 녹화하니 끝날 때까지 이 탭을 앞에 띄워 두세요.`+
+    `<div class="acts" role="radiogroup" aria-label="무엇을 담을까요">
+      <label class="tog" style="flex:1 1 100%;justify-content:flex-start;gap:10px"><input type="radio" name="expWhat" value="all" checked> <span><b>3편 모두 한 영상으로</b> · 회원편 → 광고주편 → 원리편 · ${fmtT(all.t)}</span></label>
+      <label class="tog" style="flex:1 1 100%;justify-content:flex-start;gap:10px"><input type="radio" name="expWhat" value="one"> <span>지금 영상만 · ${cur.title} · ${fmtT(one.t)}</span></label></div>`+
+    `<p id="expWarn" style="margin:8px 0 0"></p>`+
+    (MIME.ext==='mp4'&&!/avc1/.test(MIME.type)?'이 브라우저의 MP4는 인스타그램이 받지 않을 수 있어요. 인스타용은 윈도우·맥의 크롬 최신판에서 만들어 주세요.':'')+
     `<div class="acts"><button type="button" class="sbtn primary" id="expGo">녹화 시작</button><button type="button" class="sbtn" id="expNo">취소</button></div>`);
-  $('expGo').onclick=exportStart;$('expNo').onclick=()=>outMsg('');
+  const warn=()=>{const pick=document.querySelector('input[name="expWhat"]:checked').value,n=pick==='all'?all.n:one.n;
+    $('expWarn').innerHTML=n?`⚠ 장면 ${n}개에 음성 파일이 없어요. 브라우저 읽어주기 소리는 영상 파일에 녹음되지 않아서 그 장면은 <b>자막·배경음·효과음만</b> 들어가요.`:'모든 장면에 음성 파일이 들어 있어요. 목소리까지 함께 저장됩니다.';};
+  document.querySelectorAll('input[name="expWhat"]').forEach(r=>r.onchange=warn);warn();
+  $('expGo').onclick=()=>exportStart(document.querySelector('input[name="expWhat"]:checked').value);$('expNo').onclick=()=>outMsg('');
 }
-async function exportStart(){
+async function exportStart(what){
   outMsg('');const ac=wake();if(ac&&ac.state!=='running'){try{await ac.resume();}catch(e){}}
-  pause();PL.t=0;$('busy').hidden=false;$('busyT').textContent='화면 불러오는 중';await preloadShots(V());await loadFonts();draw();
+  pause();EXP.keep=VIEW.video;if(what==='all'){VIEW.video='all';rebuild();}
+  PL.t=0;PL.started=true;$('cover').hidden=true;$('busy').hidden=false;$('busyT').textContent='화면 불러오는 중';await preloadShots(V());await loadFonts();draw();
+  const restore=()=>{if(VIEW.video!==EXP.keep){VIEW.video=EXP.keep;PL.t=0;rebuild();buildAll();draw();}};
   try{const vs=cv.captureStream(30);const tracks=[...vs.getVideoTracks()];if(AU.dest)tracks.push(...AU.dest.stream.getAudioTracks());
     const opt={videoBitsPerSecond:FMT_NOW==='pc'?10e6:8e6,audioBitsPerSecond:192000};if(MIME.type)opt.mimeType=MIME.type;
     const rec=new MediaRecorder(new MediaStream(tracks),opt);EXP.chunks=[];EXP.rec=rec;EXP.on=true;EXP.cancel=false;
     rec.ondataavailable=e=>{if(e.data&&e.data.size)EXP.chunks.push(e.data);};
-    rec.onstop=async()=>{EXP.on=false;$('busy').hidden=true;if(EXP.cancel){outMsg('영상 만들기를 멈췄어요.');return;}
-      const blob=new Blob(EXP.chunks,{type:(MIME.type||'video/webm').split(';')[0]});const v=V();const name=`다랜드-${catOf(v).name}-${v.title}-${FMT_NOW==='pc'?'가로':'쇼츠'}.${MIME.ext}`.replace(/\s+/g,'_');
+    rec.onstop=async()=>{EXP.on=false;$('busy').hidden=true;const v=V();restore();if(EXP.cancel){outMsg('영상 만들기를 멈췄어요.');return;}
+      const blob=new Blob(EXP.chunks,{type:(MIME.type||'video/webm').split(';')[0]});
+      const name=(v===ALL?`다랜드-사용법-전체-${FMT_NOW==='pc'?'가로':'쇼츠'}.${MIME.ext}`:`다랜드-${catOf(v).name}-${v.title}-${FMT_NOW==='pc'?'가로':'쇼츠'}.${MIME.ext}`).replace(/\s+/g,'_');
       EXP.last={name,blob};
       const r=await saveFile(name,blob);outMsg(r==='saved'?`<b>${name}</b> 저장했어요 (${(blob.size/1048576).toFixed(1)}MB). 유튜브·인스타에 바로 올릴 수 있어요.`:
         r==='declined'?'저장을 취소했어요. <div class="acts"><button type="button" class="sbtn primary" id="reSave">다시 저장하기</button></div>':'저장하지 못했어요. 크롬 최신판에서 다시 해 보세요.',r==='saved'?'ok':'bad');
@@ -1045,7 +1061,7 @@ async function exportStart(){
     rec.start(1000);$('busy').hidden=false;
     const tick=()=>{if(!EXP.on)return;$('busyT').textContent='영상 만드는 중 '+Math.round(now()/TOTAL*100)+'%';setTimeout(tick,300);};tick();
     setTimeout(play,250);
-  }catch(e){EXP.on=false;$('busy').hidden=true;outMsg('이 화면에서는 영상 녹화가 막혀 있어요. 크롬이나 엣지 최신판에서 열어 주세요.','bad');}
+  }catch(e){EXP.on=false;$('busy').hidden=true;restore();outMsg('이 화면에서는 영상 녹화가 막혀 있어요. 크롬이나 엣지 최신판에서 열어 주세요.','bad');}
 }
 function exportFinish(){if(EXP.rec&&EXP.rec.state!=='inactive')EXP.rec.stop();}
 $('busyX').onclick=()=>{EXP.cancel=true;pause();exportFinish();};
@@ -1110,9 +1126,11 @@ $('bFs').onclick=()=>{const st=$('stage');try{if(document.fullscreenElement)docu
 document.querySelectorAll('[data-fmt]').forEach(b=>b.onclick=()=>{if(EXP.on)return;fmtSet(b.dataset.fmt);});
 $('bMp4').onclick=askExport;
 $('bulkUp').onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='audio/*';i.multiple=true;
-  i.onchange=async()=>{const fs=[...i.files].sort((a,b)=>a.name.localeCompare(b.name,'ko',{numeric:true}));const v=V();let ok=0;$('bulkMsg').textContent='올리는 중…';
-    for(let j=0;j<fs.length&&j<v.scenes.length;j++){if(await storeNarr(recKey(v.id,v.scenes[j].id),fs[j],null))ok++;}
-    $('bulkMsg').textContent=`파일 이름 순서대로 ${ok}개 장면에 넣었어요 (01번 장면부터). 파일 이름 앞에 01, 02…를 붙여 두면 순서가 맞아요.`+(fs.length>v.scenes.length?` 장면보다 많은 ${fs.length-v.scenes.length}개는 넣지 않았어요.`:'');};i.click();};
+  i.onchange=async()=>{const fs=[...i.files].sort((a,b)=>a.name.localeCompare(b.name,'ko',{numeric:true}));const v=V();let named=0,ordered=0;const rest=[];$('bulkMsg').textContent='올리는 중…';
+    for(const f of fs){const m=/^([a-z0-9-]+)__([a-z0-9_-]+)\./i.exec(f.name);const tv=m&&VIDEOS.find(x=>x.id===m[1]);
+      if(tv&&tv.scenes.some(s=>s.id===m[2])){if(await storeNarr(recKey(tv.id,m[2]),f,null))named++;}else rest.push(f);}
+    for(let j=0;j<rest.length&&j<v.scenes.length;j++){if(await storeNarr(recKey(v.id,v.scenes[j].id),rest[j],null))ordered++;}
+    $('bulkMsg').textContent=(named?`이름으로 영상·장면을 찾아 ${named}개를 넣었어요. `:'')+(rest.length?`나머지 ${ordered}개는 파일 이름 순서대로 지금 영상의 01번 장면부터 넣었어요.`:'')+(rest.length>v.scenes.length?` 장면보다 많은 ${rest.length-v.scenes.length}개는 넣지 않았어요.`:'')+' 다 넣었으면 왼쪽 위 「저장하기」를 눌러 주세요.';};i.click();};
 $('bSolo').onclick=saveSolo;
 document.addEventListener('keydown',e=>{if(/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName)||EXP.on)return;
   if(e.key===' '){e.preventDefault();PL.playing?pause():play();}else if(e.key==='ArrowRight'){seek(now()+5);}else if(e.key==='ArrowLeft'){seek(now()-5);}});
@@ -1137,7 +1155,7 @@ if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loa
   if(cfg.bgm==='custom'&&!MUS.custom)cfg.bgm='piano';
   rebuild();buildAll();if(OWN.can)buildSettings();draw();
 })();
-window.__dlv={render:t=>{render(t);},total:()=>TOTAL,fmt:fmtSet,fmtNow:()=>FMT_NOW,video:id=>{VIEW.video=id;rebuild();buildAll();draw();return preloadShots(V());},scenes:()=>V().scenes.map(s=>[s._t0,s._dur,s.name])};
+window.__dlv={lines:()=>VIDEOS.map(v=>({id:v.id,title:v.title,scenes:v.scenes.map(s=>({id:s.id,name:s.name,text:narrText(v,s)}))})),render:t=>{render(t);},total:()=>TOTAL,fmt:fmtSet,fmtNow:()=>FMT_NOW,video:id=>{VIEW.video=id;rebuild();buildAll();draw();return preloadShots(V());},scenes:()=>V().scenes.map(s=>[s._t0,s._dur,s.name])};
 })();
 </script>
 
