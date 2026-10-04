@@ -1,7 +1,9 @@
 import type { CSSProperties } from "react";
+import type { IconName } from "@/lib/icon-names";
 
 interface IconProps {
-  name: string;
+  /** 서브셋 폰트에 들어 있는 이름만 허용 — 없는 이름은 아이콘 대신 글자로 노출된다. */
+  name: IconName;
   size?: number;
   className?: string;
   filled?: boolean;
@@ -10,9 +12,9 @@ interface IconProps {
 
 /**
  * Google Material Symbols Outlined 아이콘 래퍼.
- * 폰트 link는 layout.tsx의 <head>에 포함되어 있다.
+ * 폰트는 자체 호스팅 서브셋 (globals.css 의 @font-face).
  * 사용: <Icon name="home" size={24} />
- * 이름 목록: https://fonts.google.com/icons
+ * 쓸 수 있는 이름: src/lib/icon-names.ts 의 SUBSET_ICONS
  */
 export default function Icon({
   name,

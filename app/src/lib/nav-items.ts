@@ -2,10 +2,12 @@
  * 공용 네비게이션 항목 — 모바일 햄버거 메뉴(HamburgerMenu)와
  * PC 사이드바(DesktopSidebar)가 동일한 목록을 공유한다.
  */
+import type { IconName } from "@/lib/icon-names";
+
 export interface NavItem {
   href: string;
   label: string;
-  icon: string;
+  icon: IconName;
   desc: string;
   admin: boolean;
   badge?: string;
@@ -21,7 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/history", label: "내역", icon: "list_alt", desc: "포인트 기록", admin: false },
   { href: "/store-dashboard", label: "멤버십 분배", icon: "swap_horiz", desc: "회원간 분배 현황", admin: false },
   { href: "/engine", label: "엔진 설명", icon: "settings", desc: "비선형공식 원리", admin: false },
-  { href: "/advertiser", label: "리워드광고", icon: "card_giftcard", desc: "내 예산으로 가입 보상 캠페인", admin: false },
+  { href: "/advertiser", label: "리워드광고", icon: "redeem", desc: "내 예산으로 가입 보상 캠페인", admin: false },
   { href: "/terms", label: "이용약관", icon: "description", desc: "총량유지·적립 방식 (베타)", admin: false },
   { href: "/admin", label: "관리자", icon: "admin_panel_settings", desc: "시스템 관리 패널", admin: true },
   { href: "/account/leave", label: "회원 탈퇴", icon: "logout", desc: "탈퇴 및 환불", admin: false },

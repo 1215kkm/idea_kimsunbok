@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Icon from "@/components/Icon";
 import {
   MAX_HEADCOUNT,
   MIN_HEADCOUNT,
@@ -134,9 +135,7 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
         <span className="text-base">👤</span>
         <span className="flex-1 text-xs font-bold text-[#3B4CCA]">신규 회원 가입 리워드</span>
         <span className="text-xs text-[#6B7394]">기존 DB 연동은 P2</span>
-        <span className="material-symbols-outlined text-[#6B7394]" style={{ fontSize: "18px" }}>
-          {kindOpen ? "expand_less" : "expand_more"}
-        </span>
+        <Icon name={kindOpen ? "expand_less" : "expand_more"} size={18} className="text-[#6B7394]" />
       </button>
       {kindOpen && (
         <div className="-mt-2 rounded-xl border border-[#E8EAF0] bg-white p-3 text-xs leading-relaxed text-[#6B7394] dark-card">
@@ -218,11 +217,7 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
           {REWARD_CHANNELS.map((ch) => (
             <button key={ch} type="button" onClick={() => toggleChannel(ch)} className={tileCls(channels.includes(ch))}>
               <span className="inline-flex items-center justify-center gap-1">
-                {channels.includes(ch) && (
-                  <span className="material-symbols-outlined" style={{ fontSize: "16px" }} aria-hidden="true">
-                    check
-                  </span>
-                )}
+                {channels.includes(ch) && <Icon name="check" size={16} />}
                 {CHANNEL_LABEL[ch]}
               </span>
             </button>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePathname } from "next/navigation";
 import Icon from "@/components/Icon";
+import type { IconName } from "@/lib/icon-names";
 
 export default function Navbar() {
   const { user, signOut } = useAuth();
@@ -11,7 +12,7 @@ export default function Navbar() {
 
   if (!user) return null;
 
-  const links = [
+  const links: { href: string; label: string; icon: IconName }[] = [
     { href: "/dashboard", label: "홈", icon: "home" },
     { href: "/stores", label: "지출등록", icon: "credit_card" },
     { href: "/withdraw", label: "출금", icon: "account_balance" },

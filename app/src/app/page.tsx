@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
 import Link from "next/link";
 import { apiGet, ApiClientError } from "@/lib/api-client";
+import Icon from "@/components/Icon";
 
 interface InviteInfo {
   code: string;
@@ -286,12 +287,12 @@ function LoginPageInner() {
             "처리 중..."
           ) : isSignUp ? (
             <>
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>person_add</span>
+              <Icon name="person_add" size={18} />
               회원가입
             </>
           ) : (
             <>
-              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>login</span>
+              <Icon name="login" size={18} />
               로그인
             </>
           )}
@@ -302,9 +303,7 @@ function LoginPageInner() {
         onClick={() => { setIsSignUp(!isSignUp); setError(""); }}
         className="mt-6 flex items-center gap-1 text-sm dark-text-muted text-[#6B7394] hover:text-[#3B4CCA]"
       >
-        <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-          {isSignUp ? "login" : "person_add"}
-        </span>
+        <Icon name={isSignUp ? "login" : "person_add"} size={16} />
         {isSignUp ? "이미 계정이 있으신가요? 로그인" : "계정이 없으신가요? 회원가입"}
       </button>
 

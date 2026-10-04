@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { adminDb } from "@/lib/server/firebase-admin";
 import { requireAdmin } from "@/lib/server/auth";
 import { jsonError, jsonOk } from "@/lib/server/api-error";
+import { getOrdered } from "@/lib/server/firestore-query";
 
 export const runtime = "nodejs";
 
@@ -16,15 +17,11 @@ export async function GET(req: NextRequest) {
       return jsonOk({ ok: true, items: [] });
     }
     const db = adminDb();
-    let q: FirebaseFirestore.Query =
+    const base: FirebaseFirestore.Query =
       status === "all"
-        ? db.collection("withdrawals").orderBy("requestedAt", "desc").limit(200)
-        : db
-            .collection("withdrawals")
-            .where("status", "==", status)
-            .orderBy("requestedAt", "desc")
-            .limit(200);
-    const snap = await q.get();
+        ? db.collection("withdrawals")
+        : db.collection("withdrawals").where("status", "==", status);
+    const snap = await getOrdered(base, "requestedAt", "desc", 200);
 
     const userIds = Array.from(
       new Set(snap.docs.map((d) => d.data().userId as string).filter(Boolean)),
@@ -61,6 +58,7 @@ export async function GET(req: NextRequest) {
         rejectReason: data.rejectReason ?? null,
       };
     });
+    items.sort((a, b) => (b.requestedAt ?? 0) - (a.requestedAt ?? 0));
     return jsonOk({ ok: true, items });
   } catch (err) {
     return jsonError(err);

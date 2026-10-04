@@ -1,0 +1,119 @@
+{
+ "v": 1,
+ "cfg": {
+  "voice": "",
+  "rate": 1.05,
+  "nm": "rec",
+  "bgm": "piano",
+  "bgmVol": 0.4,
+  "duck": true,
+  "sfxVol": 0.7,
+  "sfx": {
+   "click": 1,
+   "whoosh": 1,
+   "pop": 1,
+   "ding": 1,
+   "key": 1,
+   "tick": 1
+  },
+  "cap": true,
+  "capScale": 1.2,
+  "master": 0.9,
+  "texts": {}
+ },
+ "audio": {
+  "m-money/intro": {
+   "path": "voice/m-money/intro.mp3",
+   "name": "m-money__intro.mp3"
+  },
+  "m-money/join": {
+   "path": "voice/m-money/join.mp3",
+   "name": "m-money__join.mp3"
+  },
+  "m-money/balance": {
+   "path": "voice/m-money/balance.mp3",
+   "name": "m-money__balance.mp3"
+  },
+  "m-money/pick": {
+   "path": "voice/m-money/pick.mp3",
+   "name": "m-money__pick.mp3"
+  },
+  "m-money/paid": {
+   "path": "voice/m-money/paid.mp3",
+   "name": "m-money__paid.mp3"
+  },
+  "m-money/spend": {
+   "path": "voice/m-money/spend.mp3",
+   "name": "m-money__spend.mp3"
+  },
+  "m-money/history": {
+   "path": "voice/m-money/history.mp3",
+   "name": "m-money__history.mp3"
+  },
+  "m-money/withdraw": {
+   "path": "voice/m-money/withdraw.mp3",
+   "name": "m-money__withdraw.mp3"
+  },
+  "m-money/outro": {
+   "path": "voice/m-money/outro.mp3",
+   "name": "m-money__outro.mp3"
+  },
+  "a-reward/intro": {
+   "path": "voice/a-reward/intro.mp3",
+   "name": "a-reward__intro.mp3"
+  },
+  "a-reward/qual": {
+   "path": "voice/a-reward/qual.mp3",
+   "name": "a-reward__qual.mp3"
+  },
+  "a-reward/what": {
+   "path": "voice/a-reward/what.mp3",
+   "name": "a-reward__what.mp3"
+  },
+  "a-reward/budget": {
+   "path": "voice/a-reward/budget.mp3",
+   "name": "a-reward__budget.mp3"
+  },
+  "a-reward/channel": {
+   "path": "voice/a-reward/channel.mp3",
+   "name": "a-reward__channel.mp3"
+  },
+  "a-reward/copy": {
+   "path": "voice/a-reward/copy.mp3",
+   "name": "a-reward__copy.mp3"
+  },
+  "a-reward/submit": {
+   "path": "voice/a-reward/submit.mp3",
+   "name": "a-reward__submit.mp3"
+  },
+  "a-reward/outro": {
+   "path": "voice/a-reward/outro.mp3",
+   "name": "a-reward__outro.mp3"
+  },
+  "w-120/intro": {
+   "path": "voice/w-120/intro.mp3",
+   "name": "w-120__intro.mp3"
+  },
+  "w-120/engine": {
+   "path": "voice/w-120/engine.mp3",
+   "name": "w-120__engine.mp3"
+  },
+  "w-120/run": {
+   "path": "voice/w-120/run.mp3",
+   "name": "w-120__run.mp3"
+  },
+  "w-120/quantity": {
+   "path": "voice/w-120/quantity.mp3",
+   "name": "w-120__quantity.mp3"
+  },
+  "w-120/cycle": {
+   "path": "voice/w-120/cycle.mp3",
+   "name": "w-120__cycle.mp3"
+  },
+  "w-120/outro": {
+   "path": "voice/w-120/outro.mp3",
+   "name": "w-120__outro.mp3"
+  }
+ },
+ "bgm": null
+}
