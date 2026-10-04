@@ -1153,7 +1153,10 @@ if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loa
     }
   }
   if(cfg.bgm==='custom'&&!MUS.custom)cfg.bgm='piano';
+  /* 음성 파일이 다 오기 전에 재생을 눌렀으면, 지금 장면 처음부터 올라온 음성으로 다시 이어 준다 (안 그러면 그 재생은 끝까지 목소리가 안 나온다) */
+  const was=PL.playing&&!EXP.on,ri=was?sceneAt(now()):0;if(was)pause();
   rebuild();buildAll();if(OWN.can)buildSettings();draw();
+  if(was){PL.t=V().scenes[ri]._t0;play();}
 })();
 window.__dlv={lines:()=>VIDEOS.map(v=>({id:v.id,title:v.title,scenes:v.scenes.map(s=>({id:s.id,name:s.name,text:narrText(v,s)}))})),render:t=>{render(t);},total:()=>TOTAL,fmt:fmtSet,fmtNow:()=>FMT_NOW,video:id=>{VIEW.video=id;rebuild();buildAll();draw();return preloadShots(V());},scenes:()=>V().scenes.map(s=>[s._t0,s._dur,s.name])};
 })();
