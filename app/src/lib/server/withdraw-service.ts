@@ -2,6 +2,7 @@ import { FieldValue, type Transaction } from "firebase-admin/firestore";
 import { adminDb } from "./firebase-admin";
 import { ApiError } from "./api-error";
 import { MIN_WITHDRAW } from "./spend-categories";
+import { decryptField, encryptField, maskAccount } from "./field-crypto";
 
 export interface BankInfo {
   bank: string;
@@ -19,13 +20,47 @@ const SUPPORTED_BANKS = [
   "toss",
 ];
 
+/** Firestore 에 저장하는 형태 — 계좌번호는 암호문과 뒤 4자리만 (평문 없음) */
+export interface StoredBankInfo {
+  bank: string;
+  holder: string;
+  accountEnc: string;
+  accountLast4: string;
+}
+
+export function sealBankInfo(b: BankInfo): StoredBankInfo {
+  return { bank: b.bank, holder: b.holder, accountEnc: encryptField(b.accountNumber), accountLast4: b.accountNumber.slice(-4) };
+}
+
+/** 관리자(실제 이체 담당)용: 전체 번호. 암호화 이전 평문 기록도 읽는다. */
+export function openBankInfo(stored: unknown): BankInfo | null {
+  if (!stored || typeof stored !== "object") return null;
+  const s = stored as Record<string, unknown>;
+  const raw = typeof s.accountEnc === "string" ? s.accountEnc : typeof s.accountNumber === "string" ? s.accountNumber : "";
+  let accountNumber = "";
+  try {
+    accountNumber = raw ? decryptField(raw) : "";
+  } catch {
+    accountNumber = "(복호화 실패)";
+  }
+  return { bank: String(s.bank || ""), holder: String(s.holder || ""), accountNumber };
+}
+
+/** 회원 본인 화면용: 가린 번호만 */
+export function maskedBankInfo(stored: unknown): { bank: string; accountNumber: string } | null {
+  if (!stored || typeof stored !== "object") return null;
+  const s = stored as Record<string, unknown>;
+  const last4 = typeof s.accountLast4 === "string" ? s.accountLast4 : typeof s.accountNumber === "string" ? s.accountNumber.slice(-4) : "";
+  return { bank: String(s.bank || ""), accountNumber: last4 ? maskAccount(`0000${last4}`) : "" };
+}
+
 export type WithdrawalStatus = "pending" | "completed" | "rejected";
 
 export interface WithdrawalDoc {
   userId: string;
   amount: number;
   status: WithdrawalStatus;
-  bankInfo: BankInfo;
+  bankInfo: StoredBankInfo;
   requestedAt: FirebaseFirestore.Timestamp | null;
   processedAt?: FirebaseFirestore.Timestamp | null;
   processedBy?: string;
@@ -71,6 +106,7 @@ export async function requestWithdrawal(
     });
   }
   const bankInfo = validateBankInfo(bankInput);
+  const sealedBank = sealBankInfo(bankInfo); // 키 문제면 잔액을 건드리기 전에 실패
   const db = adminDb();
   const userRef = db.collection("users").doc(userId);
   const reqRef = db.collection("withdrawals").doc();
@@ -90,7 +126,7 @@ export async function requestWithdrawal(
       userId,
       amount: amountInput,
       status: "pending",
-      bankInfo,
+      bankInfo: sealedBank,
       requestedAt: FieldValue.serverTimestamp(),
     });
     const txnRef = db.collection("transactions").doc();

@@ -3,6 +3,7 @@ import { adminDb } from "./firebase-admin";
 import { ApiError } from "./api-error";
 import { codefEncrypt, codefRequest, isCodefSuccess, type CodefResult } from "./codef";
 import { calculateNonlinear } from "@/lib/nonlinear-engine";
+import { readAdvertiserShare, writeAdvertiserShare } from "./advertiser-share";
 
 // CODEF 카드사 기관코드 (개인)
 // 출처: CODEF 개발가이드 - 카드 > 기관코드 > 개인
@@ -183,7 +184,9 @@ export async function syncCardTransactions(uid: string): Promise<{
       const nl = calculateNonlinear(amount);
       const uSnap = await tx.get(userRef);
       const cur = (uSnap.data()?.totalPoints || 0) as number;
+      const share = await readAdvertiserShare(tx, db, uid, nl.advertiser.advertiserReward);
       tx.update(userRef, { totalPoints: cur + nl.totalAccumulation });
+      if (share) writeAdvertiserShare(tx, db, share, { consumerUid: uid, spendAmount: amount, spendTxId: txRef.id });
       tx.set(txRef, {
         consumerId: uid,
         type: "spend",

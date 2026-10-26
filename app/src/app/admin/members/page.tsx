@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { formatBizNumber } from "@/lib/business";
 import { useRouter, useSearchParams } from "next/navigation";
 import { errorMessage, listUsers } from "@/lib/admin-data";
 import type { AdminUser } from "@/lib/admin-types";
@@ -94,6 +95,12 @@ function MembersScreen() {
         <>
           <strong>{u.name || "(이름 없음)"}</strong>
           <span className="ad-sub">{u.email || u.id}</span>
+          {u.business && (
+            <span className="ad-sub">
+              {u.business.companyName} · {formatBizNumber(u.business.bizNumber)} · 대표 {u.business.ceoName}
+              {u.businessVerified ? "" : " · 사업자 확인 전"}
+            </span>
+          )}
         </>
       ),
     },
@@ -134,7 +141,7 @@ function MembersScreen() {
 
       <div className="ad-kpis">
         <KpiCard icon="users" tone="primary" label="총회원" value={users ? users.length : null} unit="명" delta="최근 가입순 200명까지" onClick={() => applyFilter("all")} />
-        <KpiCard icon="receipt" tone="info" label="기업회원" value={users ? counts.business : null} unit="명" delta="기업 가입 폼은 P1-1" onClick={() => applyFilter("business")} />
+        <KpiCard icon="receipt" tone="info" label="기업회원" value={users ? counts.business : null} unit="명" delta="가입 화면에서 기업 선택" onClick={() => applyFilter("business")} />
         <KpiCard icon="megaphone" tone="success" label="광고주 (입금 ≥ 10만)" value={users ? counts.advertiser : null} unit="명" delta="캠페인 제출 가능" onClick={() => applyFilter("advertiser")} />
         <KpiCard icon="user-plus" tone="warning" label="이번 주 가입" value={users ? weekSignups : null} unit="명" delta="최근 7일" />
       </div>

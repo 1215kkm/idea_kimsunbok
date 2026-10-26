@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/server/firebase-admin";
 import { requireAuth, isAdminEmail } from "@/lib/server/auth";
 import { ApiError, jsonError, jsonOk } from "@/lib/server/api-error";
 import { redeemCampaignCode } from "@/lib/server/reward-service";
+import { parseBusinessInfo, type BusinessInfo } from "@/lib/business";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,8 @@ interface Body {
   name?: unknown;
   inviteCode?: unknown;
   betaConsent?: unknown;
+  memberType?: unknown;
+  business?: unknown;
 }
 
 // 베타 테스터에게 지급하는 가상 테스트 자금 (실 화폐 X, 시뮬레이션 전용)
@@ -30,6 +33,14 @@ export async function POST(req: NextRequest) {
         ? raw.inviteCode.trim().toUpperCase()
         : null;
 
+    // 기업회원: 상호·사업자등록번호(검증식)·대표자. 번호의 실제 등록 여부는 관리자 확인 전까지 미확인으로 둔다.
+    let business: BusinessInfo | null = null;
+    if (raw.memberType === "business") {
+      const parsed = parseBusinessInfo(raw.business);
+      if (!parsed.ok) throw new ApiError("INVALID_INPUT", parsed.message, 400, { field: parsed.field });
+      business = parsed.value;
+    }
+
     const db = adminDb();
     const userRef = db.collection("users").doc(user.uid);
     const snap = await userRef.get();
@@ -45,6 +56,8 @@ export async function POST(req: NextRequest) {
         name,
         email: user.email,
         role,
+        memberType: business ? "business" : "personal",
+        ...(business ? { business, businessVerified: false } : {}),
         membershipLevel: 1,
         totalPoints: BETA_INITIAL_FUNDS,
         isBetaTester: true,

@@ -75,6 +75,7 @@ export default function AdminLedgerPage() {
     { key: "bonus", label: "Σ120% 적립 (포인트 결제)", value: spendBonus, src: "spend.totalAccumulation", op: "+" },
     { key: "principal", label: "Σ포인트 결제 차감", value: spendPrincipal, src: "spend.amount (포인트 결제분)", op: "−" },
     ...(spendCard !== 0 ? [{ key: "card", label: "카드 실지출 발행", value: spendCard, src: "spend.source=card_codef · 무차감", op: "+", tone: "warn" } as Term] : []),
+    ...(g("advertiser_share").count > 0 ? [{ key: "advShare", label: "Σ광고주 5% 적립", value: g("advertiser_share").totalDelta, src: `advertiser_share · 유치회원 지출의 5% · ${g("advertiser_share").count}건`, op: "+" } as Term] : []),
     { key: "reward", label: "리워드 이전 (제로섬)", value: rewardNet, src: `lock ${fmt(g("reward_lock").amount)} / out ${fmt(g("reward_out").amount)} / in ${fmt(g("reward_in").amount)} / refund ${fmt(g("reward_refund").amount)}`, op: "+", tone: "zero" },
     { key: "beta", label: "베타 조정", value: beta, src: `구 invite_* ${g("beta_adjust_invitee").count + g("beta_adjust_advertiser").count}건 · 무에서 생성`, op: "+", tone: "beta" },
     { key: "betaFunds", label: "베타 초기 지급금", value: betaFunds, src: "users.betaTestFunds (가입 시 지급)", op: "+" },

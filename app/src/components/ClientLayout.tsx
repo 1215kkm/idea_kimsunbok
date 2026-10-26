@@ -14,6 +14,10 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     return <>{children}</>;
   }
+  // 공식 사이트(/about)는 로그인 전 방문자용 소개 페이지 — 앱 메뉴 없이 단독으로
+  if (pathname === "/about") {
+    return <>{children}</>;
+  }
 
   return (
     <>

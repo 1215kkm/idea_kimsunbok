@@ -11,6 +11,7 @@ import {
 } from "@/lib/server/spend-categories";
 import { calculateNonlinear, determineTier, calculateSplitCount } from "@/lib/nonlinear-engine";
 import { getSplitMode, SPLIT_AUTO_LIMIT } from "@/lib/server/system-settings";
+import { readAdvertiserShare, writeAdvertiserShare } from "@/lib/server/advertiser-share";
 
 export const runtime = "nodejs";
 
@@ -67,6 +68,8 @@ export async function POST(req: NextRequest) {
           { current, spendAmount },
         );
       }
+      // 이 회원을 유치한 광고주 (읽기는 쓰기보다 먼저)
+      const share = await readAdvertiserShare(tx, db, user.uid, nl.advertiser.advertiserReward);
       const next = current - spendAmount + nl.totalAccumulation;
       if (snap.exists) {
         tx.update(userRef, { totalPoints: next });
@@ -111,8 +114,12 @@ export async function POST(req: NextRequest) {
           distributionChain: nl.distributionChain,
         },
         totalAccumulation: nl.totalAccumulation,
+        advertiserShareTo: share?.ownerUid ?? null,
         createdAt: FieldValue.serverTimestamp(),
       });
+      if (share) {
+        writeAdvertiserShare(tx, db, share, { consumerUid: user.uid, spendAmount, spendTxId: txRef.id });
+      }
       return next;
     });
 

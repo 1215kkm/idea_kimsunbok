@@ -72,6 +72,9 @@ export interface AdminUser {
   email: string;
   role: string;
   memberType: string; // personal | business
+  /** 기업회원 정보 (상호·사업자등록번호·대표자). 개인회원은 null */
+  business?: { companyName: string; bizNumber: string; ceoName: string } | null;
+  businessVerified?: boolean;
   totalPoints: number;
   lockedPoints: number;
   depositTotal: number;

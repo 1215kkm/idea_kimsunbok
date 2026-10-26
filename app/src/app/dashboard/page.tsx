@@ -40,6 +40,7 @@ const TX_LABEL: Record<string, string> = {
   reward_out: "리워드 지급",
   reward_in: "가입 리워드 수령",
   reward_refund: "리워드 예산 반환",
+  advertiser_share: "유치회원 지출 적립 (5%)",
 };
 
 export default function DashboardPage() {

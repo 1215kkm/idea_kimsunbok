@@ -40,6 +40,7 @@ const TYPE_META: Record<
   reward_out: { label: "리워드 지급 (잠금 예산에서)", icon: "📤", color: "#6B7394", sign: "minus" },
   reward_in: { label: "가입 리워드 수령", icon: "🎁", color: "#10B981", sign: "plus" },
   reward_refund: { label: "리워드 잔여 예산 반환", icon: "↩️", color: "#10B981", sign: "plus" },
+  advertiser_share: { label: "유치회원 지출 적립 (5%)", icon: "📢", color: "#10B981", sign: "plus" },
 };
 
 export default function HistoryPage() {
@@ -59,7 +60,7 @@ export default function HistoryPage() {
     if (!isConfigured || !db) {
       const list = getDemoTxs(user).map((t) => ({
         id: t.id,
-        type: "spend",
+        type: t.type || "spend",
         storeName: t.storeName || t.categoryName,
         categoryName: t.categoryName,
         amount: t.amount,
@@ -98,7 +99,8 @@ export default function HistoryPage() {
             data.type === "invite_advertiser" ||
             data.type === "withdrawal_refund" ||
             data.type === "reward_in" ||
-            data.type === "reward_refund"
+            data.type === "reward_refund" ||
+            data.type === "advertiser_share"
           ) {
             earned += data.totalAccumulation || 0;
           } else if (!data.type) {
