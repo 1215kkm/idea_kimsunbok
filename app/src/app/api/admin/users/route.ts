@@ -44,6 +44,8 @@ export async function GET(req: NextRequest) {
         email: data.email || "",
         role: data.role || "consumer",
         memberType: typeof data.memberType === "string" ? data.memberType : "personal",
+        business: data.business && typeof data.business === "object" ? data.business : null,
+        businessVerified: data.businessVerified === true,
         totalPoints: num(data.totalPoints),
         lockedPoints: num(data.lockedPoints),
         depositTotal,

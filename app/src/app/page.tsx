@@ -7,6 +7,7 @@ import { useEffect, Suspense } from "react";
 import Link from "next/link";
 import { apiGet, ApiClientError } from "@/lib/api-client";
 import Icon from "@/components/Icon";
+import { formatBizNumber, parseBusinessInfo, type BusinessInfo } from "@/lib/business";
 
 interface InviteInfo {
   code: string;
@@ -23,6 +24,10 @@ function LoginPageInner() {
   const inviteCode = (searchParams.get("code") || searchParams.get("invite") || "").trim().toUpperCase() || null;
   const [isSignUp, setIsSignUp] = useState(!!inviteCode);
   const [name, setName] = useState("");
+  const [memberType, setMemberType] = useState<"personal" | "business">("personal");
+  const [companyName, setCompanyName] = useState("");
+  const [bizNumber, setBizNumber] = useState("");
+  const [ceoName, setCeoName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [betaConsent, setBetaConsent] = useState(false);
@@ -91,6 +96,15 @@ function LoginPageInner() {
       setError("이름을 입력해주세요.");
       return;
     }
+    let business: BusinessInfo | undefined;
+    if (isSignUp && memberType === "business") {
+      const parsed = parseBusinessInfo({ companyName, bizNumber, ceoName });
+      if (!parsed.ok) {
+        setError(parsed.message);
+        return;
+      }
+      business = parsed.value;
+    }
     if (isSignUp && !(agreeTerms && agreePrivacy && betaConsent)) {
       setError("필수 약관(이용약관·개인정보·베타 시연)에 동의해 주세요.");
       return;
@@ -98,7 +112,7 @@ function LoginPageInner() {
     setSubmitting(true);
     try {
       if (isSignUp) {
-        const result = await signUp(email, password, name.trim(), inviteCode, betaConsent);
+        const result = await signUp(email, password, name.trim(), inviteCode, betaConsent, { memberType, business });
         if (result.inviteError && inviteCode) {
           if (result.inviteError === "SELF_INVITE")
             setError("본인의 초대 코드는 사용할 수 없습니다.");
@@ -197,9 +211,44 @@ function LoginPageInner() {
       {/* 폼 */}
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
         {isSignUp && (
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="가입 구분">
+            {(["personal", "business"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                role="radio"
+                aria-checked={memberType === t}
+                onClick={() => setMemberType(t)}
+                className={`rounded-xl border px-3 py-3 text-sm font-bold transition-colors ${
+                  memberType === t
+                    ? "border-[#3B4CCA] bg-[#3B4CCA]/8 text-[#3B4CCA]"
+                    : "border-[#E8EAF0] bg-white text-[#6B7394] hover:border-[#3B4CCA]/40"
+                }`}
+              >
+                {t === "personal" ? "개인 회원" : "기업 회원"}
+              </button>
+            ))}
+          </div>
+        )}
+        {isSignUp && memberType === "business" && (
+          <div className="space-y-3 rounded-xl border border-[#3B4CCA]/20 bg-[#3B4CCA]/5 p-3">
+            <input type="text" placeholder="상호 (회사 이름)" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3.5 text-sm placeholder-[#9CA3C1] outline-none focus:border-[#3B4CCA]" />
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="사업자등록번호 10자리"
+              value={bizNumber}
+              onChange={(e) => setBizNumber(formatBizNumber(e.target.value.replace(/[^0-9]/g, "").slice(0, 10)))}
+              className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3.5 text-sm placeholder-[#9CA3C1] outline-none focus:border-[#3B4CCA]"
+            />
+            <input type="text" placeholder="대표자 이름" value={ceoName} onChange={(e) => setCeoName(e.target.value)} className="dark-input w-full rounded-xl border border-[#E8EAF0] bg-white px-4 py-3.5 text-sm placeholder-[#9CA3C1] outline-none focus:border-[#3B4CCA]" />
+            <p className="text-xs leading-relaxed text-[#6B7394]">사업자등록번호는 관리자 확인 후 기업회원으로 승인됩니다.</p>
+          </div>
+        )}
+        {isSignUp && (
           <input
             type="text"
-            placeholder="이름"
+            placeholder={memberType === "business" ? "담당자 이름" : "이름"}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required

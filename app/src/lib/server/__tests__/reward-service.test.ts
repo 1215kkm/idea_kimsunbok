@@ -3,6 +3,8 @@ import { FakeFirestore } from "./fake-firestore";
 
 // --- firebase-admin 모킹: 실제 네트워크·서비스 계정 없이 in-memory 트랜잭션 ---
 const fake = new FakeFirestore();
+// 출금 계좌번호 암호화 키 (테스트 전용)
+process.env.ACCOUNT_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
 
 vi.mock("../firebase-admin", () => ({
   adminDb: () => fake,
@@ -385,6 +387,12 @@ describe("reward-service — 강체크 감사 게이트", () => {
 
     const ok = await requestWithdrawal(ADV, 700_000, BANK);
     expect(ok.newBalance).toBe(0);
+    // 계좌번호는 평문으로 남지 않는다 (암호문 + 뒤 4자리)
+    const stored = fake.read(`withdrawals/${ok.requestId}`)!.bankInfo as Record<string, string>;
+    expect(stored.accountNumber).toBeUndefined();
+    expect(stored.accountEnc.startsWith("enc:v1:")).toBe(true);
+    expect(stored.accountEnc).not.toContain("1234567");
+    expect(stored.accountLast4).toBe("4567");
     expect(fake.read(`users/${ADV}`)).toMatchObject({ totalPoints: 0, lockedPoints: 300_000 });
     // 잠금분은 그대로 남아 캠페인 지급에 쓰인다
     expect(fake.ledgerTotal()).toBe(300_000 + 50_000);

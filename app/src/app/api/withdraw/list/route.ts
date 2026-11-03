@@ -3,6 +3,7 @@ import { adminDb } from "@/lib/server/firebase-admin";
 import { requireAuth } from "@/lib/server/auth";
 import { jsonError, jsonOk } from "@/lib/server/api-error";
 import { getOrdered } from "@/lib/server/firestore-query";
+import { maskedBankInfo } from "@/lib/server/withdraw-service";
 
 export const runtime = "nodejs";
 
@@ -21,8 +22,8 @@ export async function GET(req: NextRequest) {
         id: d.id,
         amount: data.amount,
         status: data.status,
-        bank: data.bankInfo?.bank,
-        accountNumber: data.bankInfo?.accountNumber,
+        bank: maskedBankInfo(data.bankInfo)?.bank,
+        accountNumber: maskedBankInfo(data.bankInfo)?.accountNumber,
         requestedAt: data.requestedAt?.toMillis?.() ?? null,
         processedAt: data.processedAt?.toMillis?.() ?? null,
         rejectReason: data.rejectReason ?? null,

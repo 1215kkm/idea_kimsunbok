@@ -3,6 +3,7 @@ import { adminDb } from "@/lib/server/firebase-admin";
 import { requireAdmin } from "@/lib/server/auth";
 import { jsonError, jsonOk } from "@/lib/server/api-error";
 import { getOrdered } from "@/lib/server/firestore-query";
+import { openBankInfo } from "@/lib/server/withdraw-service";
 
 export const runtime = "nodejs";
 
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
         userEmail: u?.email ?? "",
         amount: data.amount,
         status: data.status,
-        bankInfo: data.bankInfo,
+        bankInfo: openBankInfo(data.bankInfo), // 관리자 이체용 전체 번호 (저장은 암호문)
         requestedAt: data.requestedAt?.toMillis?.() ?? null,
         processedAt: data.processedAt?.toMillis?.() ?? null,
         processedBy: data.processedBy ?? null,

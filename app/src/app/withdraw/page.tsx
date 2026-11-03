@@ -9,26 +9,9 @@ import { getBalance as getDemoBalance, deductBalance as deductDemoBalance } from
 import { apiGet, apiPost, ApiClientError } from "@/lib/api-client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
+import { BANKS, SELECTED_KEY, loadAccounts, saveAccounts, type Bank, type SavedAccount } from "@/lib/saved-accounts";
 
-const BANKS = [
-  { id: "shinhan", name: "신한은행", icon: "🏦", color: "#0046ff" },
-  { id: "kb", name: "국민은행", icon: "🏦", color: "#f5a623" },
-  { id: "woori", name: "우리은행", icon: "🏦", color: "#0066b3" },
-  { id: "hana", name: "하나은행", icon: "🏦", color: "#009490" },
-  { id: "nh", name: "농협은행", icon: "🏦", color: "#00703c" },
-  { id: "kakao", name: "카카오뱅크", icon: "🏦", color: "#fee500" },
-  { id: "toss", name: "토스뱅크", icon: "🏦", color: "#0064ff" },
-];
-
-type Bank = typeof BANKS[number];
 type Step = "main" | "register" | "amount" | "confirm" | "complete";
-
-interface SavedAccount {
-  id: string; // local-generated
-  bankId: string;
-  account: string;
-  holder: string;
-}
 
 interface WithdrawalItem {
   id: string;
@@ -39,45 +22,6 @@ interface WithdrawalItem {
   requestedAt: number | null;
   processedAt: number | null;
   rejectReason: string | null;
-}
-
-const BANKS_KEY = (uid: string) => `daland-banks-${uid}`;
-const SELECTED_KEY = (uid: string) => `daland-bank-selected-${uid}`;
-const LEGACY_KEY = (uid: string) => `daland-bank-${uid}`;
-
-function loadAccounts(uid: string): SavedAccount[] {
-  try {
-    const raw = localStorage.getItem(BANKS_KEY(uid));
-    if (raw) return JSON.parse(raw) as SavedAccount[];
-    // 1회성 마이그레이션: 단일 계좌 → 배열
-    const legacy = localStorage.getItem(LEGACY_KEY(uid));
-    if (legacy) {
-      const parsed = JSON.parse(legacy);
-      if (parsed?.bankId && parsed?.account) {
-        const migrated: SavedAccount[] = [
-          {
-            id: `acc-${Date.now()}`,
-            bankId: parsed.bankId,
-            account: parsed.account,
-            holder: parsed.holder || "",
-          },
-        ];
-        localStorage.setItem(BANKS_KEY(uid), JSON.stringify(migrated));
-        return migrated;
-      }
-    }
-  } catch {
-    // ignore
-  }
-  return [];
-}
-
-function saveAccounts(uid: string, list: SavedAccount[]) {
-  try {
-    localStorage.setItem(BANKS_KEY(uid), JSON.stringify(list));
-  } catch {
-    // ignore
-  }
 }
 
 export default function WithdrawPage() {

@@ -15,6 +15,13 @@
 export const REWARD_UNIT_AMOUNTS = [10_000, 100_000, 1_000_000, 10_000_000] as const;
 export type RewardUnitAmount = (typeof REWARD_UNIT_AMOUNTS)[number];
 
+/** 광고주 패키지 (통합 이용약관 제16조) — 신규회원 1인당 10만P, 인원만 다르다 */
+export const ADVERTISER_PACKAGES = [
+  { id: "basic", label: "일반형", unitAmount: 100_000, headcount: 1 },
+  { id: "premium", label: "프리미엄형", unitAmount: 100_000, headcount: 10 },
+  { id: "diamond", label: "다이아몬드형", unitAmount: 100_000, headcount: 100 },
+] as const satisfies ReadonlyArray<{ id: string; label: string; unitAmount: RewardUnitAmount; headcount: number }>;
+
 export const REWARD_CHANNELS = ["youtube", "kakao", "instagram", "naver", "facebook", "other"] as const;
 export type RewardChannel = (typeof REWARD_CHANNELS)[number];
 

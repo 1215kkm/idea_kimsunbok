@@ -35,6 +35,10 @@ export class FakeDocRef {
   async get(): Promise<FakeSnapshot> {
     return new FakeSnapshot(this.id, this.db.read(this.path));
   }
+  async set(data: Record<string, unknown>, opts?: { merge?: boolean }): Promise<void> {
+    const cur = opts?.merge ? this.db.read(this.path) : null;
+    this.db.write(this.path, { ...(cur ?? {}), ...data });
+  }
 }
 
 class FakeQuery {

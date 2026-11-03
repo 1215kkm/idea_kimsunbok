@@ -12,6 +12,14 @@ import {
 } from "firebase/auth";
 import { auth, isConfigured } from "@/lib/firebase";
 import { apiPost } from "@/lib/api-client";
+import type { BusinessInfo, MemberType } from "@/lib/business";
+import { saveDemoProfile } from "@/lib/demo-store";
+
+/** 가입 구분: 개인 / 기업(상호·사업자등록번호·대표자) */
+export interface SignUpProfile {
+  memberType: MemberType;
+  business?: BusinessInfo;
+}
 
 interface SignUpResult {
   inviteRedeemed: boolean;
@@ -29,6 +37,7 @@ interface AuthContextType {
     name: string,
     inviteCode?: string | null,
     betaConsent?: boolean,
+    profile?: SignUpProfile,
   ) => Promise<SignUpResult>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -69,11 +78,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const signUp: AuthContextType["signUp"] = async (email, password, name, inviteCode, betaConsent) => {
+  const signUp: AuthContextType["signUp"] = async (email, password, name, inviteCode, betaConsent, profile) => {
     if (!isConfigured || !auth) {
       const demoUser = { ...DEMO_USER, displayName: name, email } as User;
       setUser(demoUser);
       localStorage.setItem("daland-demo-user", JSON.stringify({ displayName: name, email }));
+      saveDemoProfile(email, profile ?? { memberType: "personal" });
       return { inviteRedeemed: false, inviteError: null, totalPoints: 0 };
     }
     const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -96,6 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name,
         inviteCode: inviteCode ?? undefined,
         betaConsent: betaConsent === true,
+        memberType: profile?.memberType ?? "personal",
+        business: profile?.business,
       });
       return {
         inviteRedeemed: res.inviteRedeemed,

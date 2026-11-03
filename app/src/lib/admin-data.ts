@@ -30,6 +30,7 @@ import {
   getDemoPayoutsForCampaign,
   getDemoTodayPayouts,
   getDemoUsers,
+  getDemoProfile,
   getDemoWithdrawnTotal,
   setDemoDailyCap,
   type DemoCampaign,
@@ -292,6 +293,12 @@ export async function getTotals(): Promise<LedgerTotals> {
 // 회원 · 출금 · 설정 (기존 3탭 이관)
 // ---------------------------------------------------------------------------
 
+/** 데모 회원의 가입 구분 (가입 화면에서 고른 개인/기업) */
+function demoMemberType(email: string): Pick<AdminUser, "memberType" | "business"> {
+  const p = getDemoProfile(email);
+  return { memberType: p.memberType, business: p.business ?? null };
+}
+
 export async function listUsers(): Promise<AdminUser[]> {
   if (ADMIN_MODE === "live") {
     const r = await apiGet<{ items: AdminUser[] }>("/api/admin/users");
@@ -302,7 +309,7 @@ export async function listUsers(): Promise<AdminUser[]> {
     name: u.name,
     email: u.email,
     role: "consumer",
-    memberType: "personal",
+    ...demoMemberType(u.email),
     totalPoints: u.balance,
     lockedPoints: u.locked,
     depositTotal: u.isAdvertiser ? 100_000 : 0,

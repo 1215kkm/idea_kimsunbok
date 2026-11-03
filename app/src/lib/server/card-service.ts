@@ -3,6 +3,7 @@ import { adminDb } from "./firebase-admin";
 import { ApiError } from "./api-error";
 import { codefEncrypt, codefRequest, isCodefSuccess, type CodefResult } from "./codef";
 import { calculateNonlinear } from "@/lib/nonlinear-engine";
+import { readAdvertiserShare, writeAdvertiserShare } from "./advertiser-share";
 
 // CODEF 카드사 기관코드 (개인)
 // 출처: CODEF 개발가이드 - 카드 > 기관코드 > 개인
@@ -122,6 +123,7 @@ function ymd(d: Date): string {
 export async function syncCardTransactions(uid: string): Promise<{
   imported: number;
   totalAccumulation: number;
+  canceled: number;
 }> {
   const db = adminDb();
   const userRef = db.collection("users").doc(uid);
@@ -162,12 +164,26 @@ export async function syncCardTransactions(uid: string): Promise<{
   const list = resp.data?.resApprovalList ?? [];
   let imported = 0;
   let totalAccumulation = 0;
+  let canceled = 0;
+
+  // STOP 규칙 (약관 제6조②): 취소된 승인은 적립하지 않고, 이미 적립됐다면 회수한다.
+  // 같은 승인의 정상건이 목록에 따로 있어도 취소건을 먼저 모아 두고 건너뛴다.
+  const canceledKeys = new Set<string>();
+  for (const item of list) {
+    if (item.resCancelYN === "1" && item.resApprovalNo && item.resUsedDate) {
+      canceledKeys.add(`${cardOrg}_${item.resApprovalNo}_${item.resUsedDate}`);
+    }
+  }
+  for (const key of canceledKeys) {
+    if (await reverseCanceledCardSpend(db, uid, key)) canceled += 1;
+  }
 
   for (const item of list) {
-    if (item.resCancelYN === "1") continue; // 취소건 제외
+    if (item.resCancelYN === "1") continue; // 취소건은 위에서 처리
     const approvalNo = item.resApprovalNo;
     const usedDate = item.resUsedDate;
     if (!approvalNo || !usedDate) continue;
+    if (canceledKeys.has(`${cardOrg}_${approvalNo}_${usedDate}`)) continue;
 
     const amount = parseInt((item.resUsedAmount || "0").replace(/[^0-9]/g, ""), 10);
     if (!Number.isInteger(amount) || amount <= 0) continue;
@@ -183,7 +199,9 @@ export async function syncCardTransactions(uid: string): Promise<{
       const nl = calculateNonlinear(amount);
       const uSnap = await tx.get(userRef);
       const cur = (uSnap.data()?.totalPoints || 0) as number;
+      const share = await readAdvertiserShare(tx, db, uid, nl.advertiser.advertiserReward);
       tx.update(userRef, { totalPoints: cur + nl.totalAccumulation });
+      if (share) writeAdvertiserShare(tx, db, share, { consumerUid: uid, spendAmount: amount, spendTxId: txRef.id });
       tx.set(txRef, {
         consumerId: uid,
         type: "spend",
@@ -216,7 +234,49 @@ export async function syncCardTransactions(uid: string): Promise<{
   }
 
   await userRef.set({ cardLastSyncAt: FieldValue.serverTimestamp() }, { merge: true });
-  return { imported, totalAccumulation };
+  return { imported, totalAccumulation, canceled };
+}
+
+/**
+ * 이미 적립한 카드 승인이 취소되면 그 적립을 회수한다 (한 번만).
+ * 잔액이 모자라면 있는 만큼만 회수하고 모자란 금액(cancelShortfall)을 원 거래에 남긴다 — 관리자 확인 대상.
+ * 광고주 5% 적립은 자동 회수하지 않는다 (광고주 잔액 처리 규칙이 정해지면 추가).
+ */
+export async function reverseCanceledCardSpend(
+  db: FirebaseFirestore.Firestore,
+  uid: string,
+  dedupeId: string,
+): Promise<boolean> {
+  const txRef = db.collection("transactions").doc(`card_${uid}_${dedupeId}`);
+  const userRef = db.collection("users").doc(uid);
+  return db.runTransaction(async (tx: Transaction) => {
+    const orig = await tx.get(txRef);
+    if (!orig.exists || orig.data()?.canceled) return false; // 적립한 적 없음 / 이미 회수
+    const uSnap = await tx.get(userRef);
+    const cur = (uSnap.data()?.totalPoints || 0) as number;
+    const accumulated = (orig.data()?.totalAccumulation || 0) as number;
+    const recovered = Math.max(0, Math.min(accumulated, cur));
+    tx.update(userRef, { totalPoints: cur - recovered });
+    tx.update(txRef, {
+      canceled: true,
+      canceledAt: FieldValue.serverTimestamp(),
+      cancelRecovered: recovered,
+      cancelShortfall: accumulated - recovered,
+    });
+    tx.create(db.collection("transactions").doc(), {
+      consumerId: uid,
+      type: "spend_cancel",
+      source: "card_codef",
+      originalTxId: txRef.id,
+      storeName: `카드 결제 취소 · ${orig.data()?.storeName || "카드결제"}`,
+      categoryName: "결제 취소",
+      amount: (orig.data()?.amount || 0) as number,
+      totalAccumulation: -recovered,
+      shortfall: accumulated - recovered,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    return true;
+  });
 }
 
 export async function getCardStatus(uid: string): Promise<{

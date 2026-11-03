@@ -14,6 +14,14 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     return <>{children}</>;
   }
+  // 공식 사이트(/about)는 로그인 전 방문자용 소개 페이지 — 앱 메뉴 없이 단독으로
+  if (pathname === "/about") {
+    return <>{children}</>;
+  }
+  // 큰 글씨 간단 화면(/v2/*)은 자체 틀(V2Shell) — 사이드바·햄버거·뒤로가기 없음
+  if (pathname === "/v2" || pathname.startsWith("/v2/")) {
+    return <>{children}</>;
+  }
 
   return (
     <>

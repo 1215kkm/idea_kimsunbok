@@ -22,11 +22,15 @@ import {
 
 export interface DemoTransaction {
   id: string;
+  /** 없으면 지출(spend). advertiser_share = 유치회원 지출 5% 광고주 적립 */
+  type?: string;
   consumerId: string; // 이메일 (데모 환경의 user.uid 대체)
   userName: string;
   category: string;
   categoryName: string;
   storeName?: string;
+  /** 저장모드 (약관 제14조②): stored = 1,000원 미만이라 모아 두는 중, released = 모은 금액 적립 */
+  storeMode?: "normal" | "stored" | "released";
   amount: number;
   memo: string;
   totalAccumulation: number;
@@ -82,11 +86,45 @@ export function saveTransaction(
 
     const bal = getBalance(user);
     localStorage.setItem(BAL_KEY(key), String(bal - record.amount + record.totalAccumulation));
+    creditDemoAdvertiserShare(key, record);
   } catch {
     // 저장 실패 무시 (quota 초과 등)
   }
 
   return record;
+}
+
+/**
+ * 유치회원 지출 5% 광고주 적립 (실서버 lib/server/advertiser-share.ts 와 같은 규칙).
+ * 이 회원이 리워드 캠페인 코드로 가입 리워드를 받았다면, 그 캠페인 광고주에게 지출액의 5%를 더한다.
+ */
+function creditDemoAdvertiserShare(consumerKey: string, spend: DemoTransaction) {
+  const payout = readPayouts()[consumerKey];
+  if (!payout) return;
+  const campaign = readCampaigns().find((c) => c.id === payout.campaignId);
+  const ownerKey = campaign?.ownerEmail;
+  if (!ownerKey || ownerKey === consumerKey) return;
+  const amount = Math.floor(spend.nonlinearResult.advertiserReward || 0);
+  if (amount <= 0) return;
+  const owner = { email: ownerKey };
+  localStorage.setItem(BAL_KEY(ownerKey), String(getBalance(owner) + amount));
+  const raw = localStorage.getItem(TX_KEY(ownerKey));
+  const list: DemoTransaction[] = raw ? JSON.parse(raw) : [];
+  list.unshift({
+    id: `demo-share-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    type: "advertiser_share",
+    consumerId: ownerKey,
+    userName: campaign?.ownerName || "광고주",
+    category: "advertiser_share",
+    categoryName: "유치회원 지출 적립 (5%)",
+    storeName: `유치회원 지출 적립 (5%) · ${consumerKey.slice(0, 3)}****`,
+    amount: 0,
+    memo: `지출 ${spend.amount.toLocaleString()}P의 5%`,
+    totalAccumulation: amount,
+    nonlinearResult: { principal: 0, bonus: 0, totalAccumulation: amount, rate: 5, memberCount: 0, perMemberAmount: 0, advertiserReward: 0 },
+    createdAt: Date.now(),
+  });
+  localStorage.setItem(TX_KEY(ownerKey), JSON.stringify(list));
 }
 
 /** 회원 거래내역 전체 조회 (최신순) */
@@ -99,6 +137,57 @@ export function getTransactions(user: { email?: string | null } | null | undefin
     return raw ? (JSON.parse(raw) as DemoTransaction[]) : [];
   } catch {
     return [];
+  }
+}
+
+// --- 저장모드: 1,000원 미만 지출 모음 (실서버 users.smallSpendPending 과 같은 규칙) ---
+
+const SMALL_KEY = (email: string) => `daland-demo-small-pending-${email}`;
+
+export function getDemoSmallPending(user: { email?: string | null } | null | undefined): number {
+  if (!isBrowser()) return 0;
+  const key = emailKey(user);
+  if (!key) return 0;
+  const n = parseInt(localStorage.getItem(SMALL_KEY(key)) || "0", 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+export function setDemoSmallPending(user: { email?: string | null }, value: number) {
+  if (!isBrowser()) return;
+  const key = emailKey(user);
+  if (!key) return;
+  try {
+    localStorage.setItem(SMALL_KEY(key), String(value));
+  } catch {
+    // 무시
+  }
+}
+
+// --- 가입 구분 (개인 / 기업) ---
+
+const PROFILE_KEY = (email: string) => `daland-demo-profile-${email}`;
+
+export interface DemoProfile {
+  memberType: "personal" | "business";
+  business?: { companyName: string; bizNumber: string; ceoName: string };
+}
+
+export function saveDemoProfile(email: string, profile: DemoProfile) {
+  if (!isBrowser() || !email) return;
+  try {
+    localStorage.setItem(PROFILE_KEY(email.toLowerCase()), JSON.stringify(profile));
+  } catch {
+    // 무시
+  }
+}
+
+export function getDemoProfile(email: string | null | undefined): DemoProfile {
+  if (!isBrowser() || !email) return { memberType: "personal" };
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY(email.toLowerCase()));
+    return raw ? (JSON.parse(raw) as DemoProfile) : { memberType: "personal" };
+  } catch {
+    return { memberType: "personal" };
   }
 }
 
