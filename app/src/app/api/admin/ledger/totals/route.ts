@@ -20,6 +20,7 @@ export const runtime = "nodejs";
  *  withdrawal_refund   +amount
  *  reward_lock/out/in/refund  lib/reward-ledger.rewardTxDeltas
  *  advertiser_share    +totalAccumulation                       (advertiser-share: 유치회원 지출 5% 광고주 적립)
+ *  spend_cancel        +totalAccumulation (음수 = 회수액)         (card-service: 카드 승인 취소 시 적립 회수)
  *  invite_invitee      +amount        ┐ 무에서 생성된 구 경로 — "베타 조정" 항목으로 분리
  *  invite_advertiser   +totalAccumulation ┘ (소급 차감 없음, CEO 결정 §8-6)
  *  (type 없음)         −amount + totalAccumulation              (history/page.tsx 가 spend 로 취급)
@@ -83,6 +84,9 @@ export async function GET(req: NextRequest) {
           break;
         case "advertiser_share":
           bump("advertiser_share", amount, acc, 0);
+          break;
+        case "spend_cancel":
+          bump("spend_cancel", amount, acc, 0); // acc = −회수액
           break;
         case "invite_invitee":
           bump("beta_adjust_invitee", amount, amount, 0);

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import {
+  ADVERTISER_PACKAGES,
   MAX_HEADCOUNT,
   MIN_HEADCOUNT,
   REWARD_CHANNELS,
@@ -152,7 +153,27 @@ export default function CampaignCreateForm({ balance, qualified, defaultOwnerNam
           <span className={stepNoCls}>1</span> 예산 <span className="text-xs font-normal text-[#6B7394]">(1P = 1원)</span>
         </div>
 
-        <label className="block text-xs text-[#6B7394]">1인당 지급 금액</label>
+        <label className="block text-xs text-[#6B7394]">패키지</label>
+        <div className="mt-1 grid grid-cols-3 gap-2">
+          {ADVERTISER_PACKAGES.map((pk) => (
+            <button
+              key={pk.id}
+              type="button"
+              onClick={() => {
+                setUnitAmount(pk.unitAmount);
+                applyHeadcount(String(pk.headcount));
+              }}
+              className={tileCls(unitAmount === pk.unitAmount && headcount === pk.headcount)}
+            >
+              {pk.label}
+              <span className="mt-0.5 block font-normal">
+                {formatP(pk.unitAmount * pk.headcount)} · {pk.headcount}명
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <label className="mt-4 block text-xs text-[#6B7394]">1인당 지급 금액</label>
         <div className="mt-1 grid grid-cols-5 gap-2">
           {REWARD_UNIT_AMOUNTS.map((p) => (
             <button key={p} type="button" onClick={() => setUnitAmount(p)} className={tileCls(unitAmount === p)}>

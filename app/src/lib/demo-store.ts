@@ -29,6 +29,8 @@ export interface DemoTransaction {
   category: string;
   categoryName: string;
   storeName?: string;
+  /** 저장모드 (약관 제14조②): stored = 1,000원 미만이라 모아 두는 중, released = 모은 금액 적립 */
+  storeMode?: "normal" | "stored" | "released";
   amount: number;
   memo: string;
   totalAccumulation: number;
@@ -135,6 +137,29 @@ export function getTransactions(user: { email?: string | null } | null | undefin
     return raw ? (JSON.parse(raw) as DemoTransaction[]) : [];
   } catch {
     return [];
+  }
+}
+
+// --- 저장모드: 1,000원 미만 지출 모음 (실서버 users.smallSpendPending 과 같은 규칙) ---
+
+const SMALL_KEY = (email: string) => `daland-demo-small-pending-${email}`;
+
+export function getDemoSmallPending(user: { email?: string | null } | null | undefined): number {
+  if (!isBrowser()) return 0;
+  const key = emailKey(user);
+  if (!key) return 0;
+  const n = parseInt(localStorage.getItem(SMALL_KEY(key)) || "0", 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+export function setDemoSmallPending(user: { email?: string | null }, value: number) {
+  if (!isBrowser()) return;
+  const key = emailKey(user);
+  if (!key) return;
+  try {
+    localStorage.setItem(SMALL_KEY(key), String(value));
+  } catch {
+    // 무시
   }
 }
 

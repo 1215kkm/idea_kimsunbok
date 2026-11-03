@@ -17,6 +17,8 @@ interface Transaction {
   categoryName?: string;
   amount: number;
   totalAccumulation: number;
+  /** 저장모드: stored = 1,000원 미만이라 모아 두는 중 */
+  storeMode?: string;
   nonlinearResult?: {
     principal: number;
     bonus: number;
@@ -41,6 +43,7 @@ const TYPE_META: Record<
   reward_in: { label: "가입 리워드 수령", icon: "🎁", color: "#10B981", sign: "plus" },
   reward_refund: { label: "리워드 잔여 예산 반환", icon: "↩️", color: "#10B981", sign: "plus" },
   advertiser_share: { label: "유치회원 지출 적립 (5%)", icon: "📢", color: "#10B981", sign: "plus" },
+  spend_cancel: { label: "결제 취소 · 적립 회수", icon: "↩️", color: "#EF4444", sign: "minus" },
 };
 
 export default function HistoryPage() {
@@ -65,6 +68,7 @@ export default function HistoryPage() {
         categoryName: t.categoryName,
         amount: t.amount,
         totalAccumulation: t.totalAccumulation,
+        storeMode: t.storeMode,
         nonlinearResult: t.nonlinearResult,
         createdAt: t.createdAt,
       })) as Transaction[];
@@ -187,7 +191,8 @@ export default function HistoryPage() {
                 sign: "plus" as const,
               };
               const sign = meta.sign === "minus" ? "-" : "+";
-              const displayAmount = tx.totalAccumulation || tx.amount || 0;
+              // 지출은 적립액만 보여준다 (저장모드로 모아 두는 중이면 0)
+              const displayAmount = tx.type === "spend" ? tx.totalAccumulation || 0 : tx.totalAccumulation || tx.amount || 0;
               return (
                 <div
                   key={tx.id}
@@ -200,7 +205,9 @@ export default function HistoryPage() {
                         <div className="font-medium truncate">
                           {tx.storeName || tx.categoryName || meta.label}
                         </div>
-                        <div className="text-[11px] text-[#6B7394]">{meta.label}</div>
+                        <div className="text-[11px] text-[#6B7394]">
+                          {tx.storeMode === "stored" ? `${meta.label} · 1,000원 미만 모아 두는 중` : meta.label}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
@@ -217,7 +224,7 @@ export default function HistoryPage() {
                   </div>
                   <div className="mt-1 flex items-center justify-between text-[10px] text-[#9CA3C1]">
                     <span>{formatDate(tx.createdAt)}</span>
-                    {tx.type === "spend" && tx.nonlinearResult && (
+                    {tx.type === "spend" && tx.nonlinearResult && tx.totalAccumulation > 0 && (
                       <span className="rounded bg-[#3B4CCA]/10 px-1.5 py-0.5 text-[#3B4CCA]">
                         {tx.nonlinearResult.rate || 120}%
                       </span>

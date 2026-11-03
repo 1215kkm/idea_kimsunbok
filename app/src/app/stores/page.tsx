@@ -3,10 +3,8 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { isConfigured } from "@/lib/firebase";
-import { calculateNonlinear, determineTier, calculateSplitCount } from "@/lib/nonlinear-engine";
-import { saveTransaction as saveDemoTx, getBalance as getDemoBalance } from "@/lib/demo-store";
-import { apiPost, ApiClientError } from "@/lib/api-client";
+import { registerSpend, SpendError, type SpendOutcome } from "@/lib/spend-client";
+import { STORE_MODE_THRESHOLD, type StoreMode } from "@/lib/small-spend";
 import Navbar from "@/components/Navbar";
 
 // Web Audio API 신호음
@@ -82,6 +80,8 @@ type ResultState = null | {
   tierLevel: number;
   tierLabel: string;
   splitCount: number;
+  storeMode: StoreMode;
+  smallSpendPending: number;
 };
 
 export default function StoresPage() {
@@ -103,86 +103,21 @@ export default function StoresPage() {
     setProcessing(true);
     setSubmitError(null);
 
-    let earned = 0;
-    let bonus = 0;
-    let memberCount = 0;
-    let perMemberAmount = 0;
-    let advertiserReward = 0;
-    let tierLevel = 4;
-    let tierLabel = "백만 단위";
-    let splitCount = 1;
-
-    if (isConfigured) {
-      try {
-        const r = await apiPost<{
-          totalAccumulation: number;
-          bonus: number;
-          memberCount: number;
-          perMemberAmount: number;
-          advertiserReward: number;
-          tier?: { level: number; label: string };
-          splitCount?: number;
-        }>("/api/spend/register", {
-          categoryId: category.id,
-          spendAmount,
-          memo,
-        });
-        earned = r.totalAccumulation;
-        bonus = r.bonus;
-        memberCount = r.memberCount;
-        perMemberAmount = r.perMemberAmount;
-        advertiserReward = r.advertiserReward;
-        if (r.tier) { tierLevel = r.tier.level; tierLabel = r.tier.label; }
-        if (r.splitCount) splitCount = r.splitCount;
-      } catch (err) {
-        setProcessing(false);
-        if (err instanceof ApiClientError) {
-          if (err.code === "INSUFFICIENT_BALANCE") setSubmitError("잔액이 부족합니다. 입금 후 다시 시도해 주세요.");
-          else if (err.code === "INVALID_INPUT") setSubmitError("입력값이 올바르지 않습니다.");
-          else if (err.code === "UNAUTHENTICATED") setSubmitError("다시 로그인해 주세요.");
-          else setSubmitError("처리 중 오류가 발생했습니다.");
-        } else {
-          setSubmitError("네트워크 오류입니다.");
-        }
-        return;
-      }
-    } else {
-      // 데모 모드: 클라이언트 계산 + localStorage 저장 (실서비스 영향 없음)
-      // Model A: 잔액 차감 후 120% 적립 — 실서버와 동일하게 잔액 부족 시 차단
-      const demoBalance = getDemoBalance(user);
-      if (demoBalance < spendAmount) {
-        setProcessing(false);
-        setSubmitError(`잔액이 부족합니다. 데모 모드는 잔액(${demoBalance.toLocaleString()}P) 내에서 체험해 주세요.`);
-        return;
-      }
-      const nlResult = calculateNonlinear(spendAmount);
-      saveDemoTx(user, {
-        category: category.id,
+    let r: SpendOutcome;
+    try {
+      r = await registerSpend(user, {
+        categoryId: category.id,
         categoryName: category.name,
-        storeName: memo || category.name,
         amount: spendAmount,
-        memo: memo || category.examples,
-        totalAccumulation: nlResult.totalAccumulation,
-        nonlinearResult: {
-          principal: nlResult.principal,
-          bonus: nlResult.bonus,
-          totalAccumulation: nlResult.totalAccumulation,
-          rate: nlResult.rate,
-          memberCount: nlResult.memberCount,
-          perMemberAmount: nlResult.perMemberAmount,
-          advertiserReward: nlResult.advertiser.advertiserReward,
-        },
+        memo,
+        fallbackMemo: category.examples,
       });
-      earned = nlResult.totalAccumulation;
-      bonus = nlResult.bonus;
-      memberCount = nlResult.memberCount;
-      perMemberAmount = nlResult.perMemberAmount;
-      advertiserReward = nlResult.advertiser.advertiserReward;
-      const demoTier = determineTier(demoBalance); // 지출 전 잔액 기준 (실서버와 동일)
-      tierLevel = demoTier.level;
-      tierLabel = demoTier.label;
-      splitCount = calculateSplitCount(spendAmount, demoTier);
+    } catch (err) {
+      setProcessing(false);
+      setSubmitError(err instanceof SpendError ? err.message : "처리 중 오류가 발생했습니다.");
+      return;
     }
+    const { earned, bonus, memberCount, perMemberAmount, advertiserReward, tierLevel, tierLabel, splitCount } = r;
 
     setModal(null);
     setResult({
@@ -196,12 +131,15 @@ export default function StoresPage() {
       tierLevel,
       tierLabel,
       splitCount,
+      storeMode: r.storeMode,
+      smallSpendPending: r.smallSpendPending,
     });
     setProcessing(false);
     setAmount("");
     setMemo("");
 
     playSignalSound();
+    if (r.storeMode === "stored") return; // 저장모드: 적립 안내 음성 없음
     setTimeout(() => {
       speakAccumulation(category.name, spendAmount, earned);
     }, 600);
@@ -331,8 +269,30 @@ export default function StoresPage() {
         </div>
       )}
 
+      {/* 저장모드 결과 — 1,000원 미만은 모아 두었다가 1,000원이 되면 적립 (약관 제14조②) */}
+      {result && result.storeMode === "stored" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 px-6 backdrop-blur-sm">
+          <div className="w-full max-w-sm text-center">
+            <div className="text-4xl">🪙</div>
+            <div className="mt-2 text-lg font-bold text-[#1A1F36]">
+              {result.category.icon} {result.category.name} -{result.amount.toLocaleString()}원
+            </div>
+            <div className="mt-4 text-2xl font-black text-[#3B4CCA]">모아 두는 중 {result.smallSpendPending.toLocaleString()}원</div>
+            <p className="mt-2 text-sm text-[#6B7394]">
+              {STORE_MODE_THRESHOLD.toLocaleString()}원 미만 지출은 모아 두었다가 {STORE_MODE_THRESHOLD.toLocaleString()}원이 되면 한 번에 적립됩니다.
+            </p>
+            <button
+              onClick={() => setResult(null)}
+              className="mt-6 rounded-full border border-[#3B4CCA]/30 bg-[#3B4CCA]/8 px-8 py-2.5 text-sm font-bold text-[#3B4CCA] hover:bg-[#3B4CCA]/12"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 적립 결과 */}
-      {result && (
+      {result && result.storeMode !== "stored" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 px-6 backdrop-blur-sm">
           <div className="w-full max-w-sm text-center">
             <div className="text-4xl">✅</div>
@@ -353,8 +313,11 @@ export default function StoresPage() {
             </div>
 
             <div className="mt-3 text-xs text-[#6B7394]">
-              원금 {result.amount.toLocaleString()}P + 보너스 {result.bonus.toLocaleString()}P
+              원금 {(result.earned - result.bonus).toLocaleString()}P + 보너스 {result.bonus.toLocaleString()}P
             </div>
+            {result.storeMode === "released" && (
+              <div className="mt-1 text-xs font-bold text-[#3B4CCA]">모아 둔 소액 지출까지 함께 적립되었습니다</div>
+            )}
 
             {/* 단계 · 빈로그 · 분할 정보 (의뢰자 새 공식) */}
             <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 text-[11px]">

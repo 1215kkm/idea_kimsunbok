@@ -6,7 +6,9 @@ import { useEffect, useState, useCallback } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
 import { apiPost, ApiClientError } from "@/lib/api-client";
-import { getBalance as getDemoBalance, saveDeposit as saveDemoDeposit } from "@/lib/demo-store";
+import { getBalance as getDemoBalance, getDemoProfile, saveDeposit as saveDemoDeposit } from "@/lib/demo-store";
+import { depositLimitError, depositLimitFor, toMemberType } from "@/lib/deposit-limits";
+import type { MemberType } from "@/lib/business";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -24,6 +26,7 @@ export default function DepositPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [balance, setBalance] = useState(0);
+  const [memberType, setMemberType] = useState<MemberType>("personal");
   const [amount, setAmount] = useState("");
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,11 +41,15 @@ export default function DepositPage() {
     // 데모 모드: localStorage 잔액 (사이드바 MY BALANCE와 동일 소스)
     if (!isConfigured || !db) {
       setBalance(getDemoBalance(user));
+      setMemberType(getDemoProfile(user.email).memberType);
       return;
     }
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
-      if (snap.exists()) setBalance(snap.data().totalPoints || 0);
+      if (snap.exists()) {
+        setBalance(snap.data().totalPoints || 0);
+        setMemberType(toMemberType(snap.data().memberType));
+      }
     } catch {
       // ignore
     }
@@ -54,8 +61,9 @@ export default function DepositPage() {
 
   const handleDeposit = async () => {
     const amt = parseInt(amount);
-    if (!amt || amt < 1000) {
-      setError("최소 입금 금액은 1,000P 입니다.");
+    const limitError = depositLimitError(amt || 0, memberType);
+    if (limitError) {
+      setError(limitError);
       return;
     }
     setProcessing(true);
@@ -91,6 +99,9 @@ export default function DepositPage() {
       setProcessing(false);
     }
   };
+
+  const limit = depositLimitFor(memberType);
+  const presets = PRESETS.filter((p) => p >= limit.min && p <= limit.max);
 
   if (loading || !user) {
     return <div className="flex min-h-screen items-center justify-center dark-text-muted">로딩 중...</div>;
@@ -150,14 +161,11 @@ export default function DepositPage() {
           </div>
         )}
 
-        {/* 회원 등급별 입금 안내 (의뢰자 시안) */}
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row">
-          <div className="flex-1 rounded-xl border border-[#E8EAF0] bg-white px-3 py-2 text-xs text-[#6B7394]">
-            👤 <strong className="text-[#1A1F36]">일반회원</strong> · 1회 최대 1억원 권장
-          </div>
-          <div className="flex-1 rounded-xl border border-[#E8EAF0] bg-white px-3 py-2 text-xs text-[#6B7394]">
-            🏢 <strong className="text-[#1A1F36]">기업회원</strong> 대량입금은 고객센터 문의
-          </div>
+        {/* 회원 구분별 충전 한도 (약관 제3조) */}
+        <div className="mb-4 rounded-xl border border-[#E8EAF0] bg-white px-3 py-2 text-xs text-[#6B7394]">
+          {memberType === "business" ? "🏢" : "👤"}{" "}
+          <strong className="text-[#1A1F36]">{memberType === "business" ? "기업회원" : "일반회원"}</strong> · 최소{" "}
+          {limit.min.toLocaleString()}원 · 1회 최대 {limit.max.toLocaleString()}원
         </div>
 
         <div className="space-y-3">
@@ -175,7 +183,7 @@ export default function DepositPage() {
           />
 
           <div className="grid grid-cols-4 gap-2">
-            {PRESETS.map((p) => (
+            {presets.map((p) => (
               <button
                 key={p}
                 onClick={() => setAmount(String(p))}
@@ -261,7 +269,7 @@ export default function DepositPage() {
             <ul className="space-y-1.5 text-xs text-[#6B7394]">
               <li>• 입금은 실시간으로 반영됩니다.</li>
               <li>• 자동이체(CMS)는 신청 후 익월부터 적용됩니다.</li>
-              <li>• 입금 한도는 1회 최대 100억원입니다.</li>
+              <li>• 입금 한도는 1회 최대 {limit.max.toLocaleString()}원입니다.</li>
               <li>• 문의 : 고객센터 1588-0000</li>
             </ul>
           </div>

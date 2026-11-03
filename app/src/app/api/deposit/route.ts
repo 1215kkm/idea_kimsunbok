@@ -3,11 +3,13 @@ import { FieldValue, type Transaction } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/server/firebase-admin";
 import { requireAuth } from "@/lib/server/auth";
 import { ApiError, jsonError, jsonOk } from "@/lib/server/api-error";
+import { DEPOSIT_LIMITS, depositLimitError } from "@/lib/deposit-limits";
 
 export const runtime = "nodejs";
 
-const MIN_DEPOSIT = 1_000;
-const MAX_DEPOSIT_PER_TX = 10_000_000_000; // 100억 (의뢰자 확정: 입금 프리셋 최대 100억)
+// 회원 구분별 한도는 약관 제3조 (lib/deposit-limits) — 여기서는 전체 범위만 먼저 거른다
+const MIN_DEPOSIT = DEPOSIT_LIMITS.personal.min;
+const MAX_DEPOSIT_PER_TX = DEPOSIT_LIMITS.business.max;
 
 interface Body {
   amount?: unknown;
@@ -40,6 +42,8 @@ export async function POST(req: NextRequest) {
 
     const newBalance = await db.runTransaction(async (tx: Transaction) => {
       const snap = await tx.get(userRef);
+      const limitError = depositLimitError(amount, snap.exists ? snap.data()?.memberType : undefined);
+      if (limitError) throw new ApiError("INVALID_INPUT", limitError, 400, { field: "amount" });
       const current = (snap.exists ? snap.data()?.totalPoints || 0 : 0) as number;
       const next = current + amount;
       // 광고주 자격(입금 누적) 을 O(1) 로 읽기 위한 비정규화 — 강체크 PR #38 N-1.
