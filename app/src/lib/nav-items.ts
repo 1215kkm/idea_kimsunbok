@@ -21,6 +21,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/withdraw", label: "출금", icon: "account_balance", desc: "다랜드 계좌 → 내 은행계좌", admin: false },
   { href: "/card", label: "비선형카드", icon: "badge", desc: "카드 잔액 & 충전데이터", admin: false },
   { href: "/history", label: "내역", icon: "list_alt", desc: "포인트 기록", admin: false },
+  { href: "/v2/home", label: "큰 글씨 화면", icon: "person", desc: "큰 버튼만 있는 간단한 화면", admin: false },
   { href: "/store-dashboard", label: "멤버십 분배", icon: "swap_horiz", desc: "회원간 분배 현황", admin: false },
   { href: "/engine", label: "엔진 설명", icon: "settings", desc: "비선형공식 원리", admin: false },
   { href: "/advertiser", label: "리워드광고", icon: "redeem", desc: "내 예산으로 가입 보상 캠페인", admin: false },

@@ -18,6 +18,10 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   if (pathname === "/about") {
     return <>{children}</>;
   }
+  // 큰 글씨 간단 화면(/v2/*)은 자체 틀(V2Shell) — 사이드바·햄버거·뒤로가기 없음
+  if (pathname === "/v2" || pathname.startsWith("/v2/")) {
+    return <>{children}</>;
+  }
 
   return (
     <>

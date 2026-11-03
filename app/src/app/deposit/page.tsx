@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db, isConfigured } from "@/lib/firebase";
-import { apiPost, ApiClientError } from "@/lib/api-client";
-import { getBalance as getDemoBalance, getDemoProfile, saveDeposit as saveDemoDeposit } from "@/lib/demo-store";
-import { depositLimitError, depositLimitFor, toMemberType } from "@/lib/deposit-limits";
+import { getBalance as getDemoBalance, getDemoProfile } from "@/lib/demo-store";
+import { depositLimitFor, toMemberType } from "@/lib/deposit-limits";
+import { DepositError, registerDeposit } from "@/lib/deposit-client";
 import type { MemberType } from "@/lib/business";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
@@ -60,41 +60,16 @@ export default function DepositPage() {
   }, [refreshBalance]);
 
   const handleDeposit = async () => {
-    const amt = parseInt(amount);
-    const limitError = depositLimitError(amt || 0, memberType);
-    if (limitError) {
-      setError(limitError);
-      return;
-    }
+    if (!user) return;
     setProcessing(true);
     setError(null);
-    // 데모 모드: 서버 없이 localStorage 잔액·입금 누적에 반영 (리워드광고 자격 게이트가 같은 값을 본다)
-    if (!isConfigured || !db) {
-      const r = user ? saveDemoDeposit(user, amt) : null;
-      if (!r) {
-        setError("데모 저장에 실패했습니다. 브라우저 저장소를 확인해 주세요.");
-      } else {
-        setBalance(r.newBalance);
-        setSuccess({ amount: amt, newBalance: r.newBalance });
-        setAmount("");
-      }
-      setProcessing(false);
-      return;
-    }
     try {
-      const r = await apiPost<{ amount: number; newBalance: number }>("/api/deposit", {
-        amount: amt,
-        method: "beta_virtual",
-      });
+      const r = await registerDeposit(user, parseInt(amount) || 0, memberType);
       setBalance(r.newBalance);
-      setSuccess({ amount: r.amount, newBalance: r.newBalance });
+      setSuccess(r);
       setAmount("");
     } catch (err) {
-      if (err instanceof ApiClientError) {
-        setError(err.message || "입금 처리에 실패했습니다.");
-      } else {
-        setError("네트워크 오류입니다.");
-      }
+      setError(err instanceof DepositError ? err.message : "입금 처리에 실패했습니다.");
     } finally {
       setProcessing(false);
     }
