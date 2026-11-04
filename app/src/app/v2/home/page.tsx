@@ -23,7 +23,7 @@ export default function V2Home() {
 
   return (
     <V2Shell title="다랜드">
-      <section className="rounded-3xl bg-gradient-to-br from-[#3B4CCA] to-[#2D3A8C] px-6 py-10 text-center text-white">
+      <section className="rounded-3xl bg-gradient-to-br from-[#3B4CCA] to-[#2D3A8C] px-6 py-7 text-center text-white">
         <div className="text-[26px] font-bold text-white/85">내 포인트</div>
         <div className={`mt-3 whitespace-nowrap font-black leading-tight ${bigNumberSize(shown)}`}>
           {shown}
@@ -31,7 +31,7 @@ export default function V2Home() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-5">
+      <section className="flex flex-col gap-3">
         <BigButton href="/v2/spend" icon="🛒" tone="gold">
           쓴 돈 적기
         </BigButton>
@@ -46,7 +46,7 @@ export default function V2Home() {
         </BigButton>
       </section>
 
-      <section className="flex flex-col gap-4 border-t-2 border-[#E8EAF0] pt-10">
+      <section className="flex flex-col gap-2 border-t-2 border-[#BEC4D4] pt-6">
         <BigButton small onClick={signOut}>
           나가기
         </BigButton>

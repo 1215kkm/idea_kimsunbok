@@ -21,7 +21,7 @@ import { speak } from "@/components/v2/speak";
 type Step = "amount" | "bank" | "number" | "holder";
 
 const input =
-  "w-full min-h-[80px] rounded-2xl border-2 border-[#E8EAF0] bg-white px-5 text-[28px] font-bold text-[#1A1F36] outline-none focus:border-[#3B4CCA]";
+  "w-full min-h-[80px] rounded-2xl border-2 border-[#BEC4D4] bg-white px-5 text-[28px] font-bold text-[#1A1F36] outline-none focus:border-[#3B4CCA]";
 
 export default function V2Withdraw() {
   const { user } = useAuth();
@@ -84,7 +84,7 @@ export default function V2Withdraw() {
   if (done) {
     return (
       <V2Shell title="돈 찾기">
-        <section className="flex flex-col items-center gap-4 py-6 text-center">
+        <section className="flex flex-col items-center gap-2 py-3 text-center">
           <div className="text-[80px]" aria-hidden>
             ✅
           </div>
@@ -104,7 +104,7 @@ export default function V2Withdraw() {
     return (
       <V2Shell title="돈 찾기" back="/v2/home">
         <h2 className="text-[34px] font-black">어느 은행이에요?</h2>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {BANKS.map((b) => (
             <BigButton
               key={b.id}
@@ -165,7 +165,7 @@ export default function V2Withdraw() {
       <button
         type="button"
         onClick={() => setStep("bank")}
-        className="flex min-h-[96px] items-center gap-4 rounded-3xl border-2 border-[#E8EAF0] bg-white px-5 text-left"
+        className="flex min-h-[96px] items-center gap-4 rounded-3xl border-2 border-[#BEC4D4] bg-white px-5 text-left"
       >
         <span className="text-[40px]" aria-hidden>
           🏦

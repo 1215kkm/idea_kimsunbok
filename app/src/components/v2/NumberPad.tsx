@@ -40,10 +40,10 @@ export default function NumberPad({ value, onChange, mode = "money", quick = [],
   });
 
   const shown = mode === "money" ? (value ? Number(value).toLocaleString() : "0") : value || " ";
-  const key = "flex min-h-[72px] items-center justify-center rounded-2xl border-2 border-[#E8EAF0] bg-white text-[36px] font-black text-[#1A1F36] active:scale-95 active:bg-[#F0F2F8]";
+  const key = "flex min-h-[72px] items-center justify-center rounded-2xl border-2 border-[#BEC4D4] bg-white text-[36px] font-black text-[#1A1F36] active:scale-95 active:bg-[#F0F2F8]";
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <div
         aria-live="polite"
         className="flex min-h-[96px] items-center justify-end gap-2 rounded-3xl border-2 border-[#3B4CCA] bg-white px-6 font-black text-[#1A1F36]"
@@ -62,7 +62,7 @@ export default function NumberPad({ value, onChange, mode = "money", quick = [],
                 const next = String((Number(value) || 0) + n);
                 if (next.length <= maxLength) onChange(next);
               }}
-              className="min-h-[64px] rounded-2xl border-2 border-[#3B4CCA]/30 bg-[#3B4CCA]/5 text-[26px] font-black text-[#3B4CCA] active:scale-95"
+              className="min-h-[64px] rounded-2xl border-2 border-[#3B4CCA]/50 bg-[#3B4CCA]/5 text-[26px] font-black text-[#3B4CCA] active:scale-95"
             >
               {quickLabel(n)}
             </button>

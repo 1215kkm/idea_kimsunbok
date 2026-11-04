@@ -13,7 +13,7 @@ interface Props {
   title: string;
   /** 뒤로 갈 곳 (없으면 뒤로 버튼 없음) */
   back?: string;
-  /** 화면 맨 아래에 붙어 있는 버튼 — 숫자판처럼 긴 화면에서도 스크롤 없이 누를 수 있게 */
+  /** 내용 맨 끝에 놓는 버튼 (내용이 짧으면 화면 맨 아래로 내려간다) */
   action?: ReactNode;
   children: ReactNode;
 }
@@ -31,13 +31,13 @@ export default function V2Shell({ title, back, action, children }: Props) {
   }
 
   return (
-    <div className={`min-h-screen ${action ? "pb-48" : "pb-16"}`}>
-      <header className="sticky top-0 z-20 border-b-2 border-[#E8EAF0] bg-white">
+    <div className="flex min-h-screen flex-col pb-10">
+      <header className="sticky top-0 z-20 border-b-2 border-[#BEC4D4] bg-white">
         <div className="mx-auto flex min-h-[88px] max-w-xl items-center gap-4 px-5">
           {back && (
             <Link
               href={back}
-              className="flex min-h-[64px] items-center rounded-2xl border-2 border-[#E8EAF0] px-5 text-[24px] font-black text-[#1A1F36] active:scale-95"
+              className="flex min-h-[64px] items-center rounded-2xl border-2 border-[#BEC4D4] px-5 text-[24px] font-black text-[#1A1F36] active:scale-95"
             >
               ← 뒤로
             </Link>
@@ -45,12 +45,10 @@ export default function V2Shell({ title, back, action, children }: Props) {
           <h1 className="text-[30px] font-black text-[#1A1F36]">{title}</h1>
         </div>
       </header>
-      <main className={`mx-auto flex max-w-xl flex-col px-5 ${action ? "gap-6 pt-6" : "gap-10 pt-10"}`}>{children}</main>
-      {action && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t-2 border-[#E8EAF0] bg-white/95 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 backdrop-blur">
-          <div className="mx-auto max-w-xl px-5">{action}</div>
-        </div>
-      )}
+      <main className={`mx-auto flex w-full max-w-xl flex-1 flex-col px-5 ${action ? "gap-5 pt-5" : "gap-7 pt-7"}`}>
+        {children}
+        {action && <div className="mt-auto pt-2">{action}</div>}
+      </main>
     </div>
   );
 }

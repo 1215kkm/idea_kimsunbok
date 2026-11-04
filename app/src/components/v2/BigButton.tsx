@@ -11,7 +11,7 @@ type Tone = "gold" | "plain" | "blue";
 
 const TONE: Record<Tone, string> = {
   gold: "bg-[#FFB800] text-[#1A1F36] hover:bg-[#E5A600] border-transparent",
-  plain: "bg-white text-[#1A1F36] border-[#E8EAF0] hover:border-[#3B4CCA]",
+  plain: "bg-white text-[#1A1F36] border-[#BEC4D4] hover:border-[#3B4CCA]",
   blue: "bg-[#3B4CCA]/10 text-[#3B4CCA] border-[#3B4CCA]",
 };
 

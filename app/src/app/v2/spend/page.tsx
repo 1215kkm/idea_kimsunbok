@@ -53,7 +53,7 @@ export default function V2Spend() {
     const stored = done.storeMode === "stored";
     return (
       <V2Shell title="쓴 돈 적기">
-        <section className="flex flex-col items-center gap-4 py-6 text-center">
+        <section className="flex flex-col items-center gap-2 py-3 text-center">
           <div className="text-[80px]" aria-hidden>
             {stored ? "🪙" : "✅"}
           </div>
@@ -93,13 +93,13 @@ export default function V2Spend() {
     return (
       <V2Shell title="쓴 돈 적기" back="/v2/home">
         <h2 className="text-[34px] font-black">어디에 썼어요?</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {KINDS.map((k) => (
             <button
               key={k.id}
               type="button"
               onClick={() => setKind(k)}
-              className="flex min-h-[140px] flex-col items-center justify-center gap-2 rounded-3xl border-2 border-[#E8EAF0] bg-white text-[28px] font-black active:scale-[0.98]"
+              className="flex min-h-[140px] flex-col items-center justify-center gap-2 rounded-3xl border-2 border-[#BEC4D4] bg-white text-[28px] font-black active:scale-[0.98]"
             >
               <span className="text-[48px]" aria-hidden>
                 {k.icon}
