@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import BigButton from "@/components/v2/BigButton";
 
 const input =
-  "w-full min-h-[80px] rounded-2xl border-2 border-[#E8EAF0] bg-white px-5 text-[26px] font-bold text-[#1A1F36] outline-none focus:border-[#3B4CCA]";
+  "w-full min-h-[80px] rounded-2xl border-2 border-[#BEC4D4] bg-white px-5 text-[26px] font-bold text-[#1A1F36] outline-none focus:border-[#3B4CCA]";
 
 function authMessage(err: unknown): string {
   const code = (err as { code?: string })?.code || "";
@@ -56,7 +56,7 @@ export default function V2Start() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-10 px-5 py-14">
+    <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-7 px-5 py-10">
       <div className="text-center">
         <div className="mx-auto grid h-24 w-24 place-items-center rounded-3xl bg-gradient-to-br from-[#3B4CCA] to-[#2D3A8C] text-[52px] font-black text-white">
           D
@@ -64,7 +64,7 @@ export default function V2Start() {
         <h1 className="mt-5 text-[44px] font-black text-[#3B4CCA]">다랜드</h1>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
         {mode === "up" && (
           <label className="flex flex-col gap-2">
             <span className="text-[24px] font-bold">이름</span>
@@ -101,7 +101,7 @@ export default function V2Start() {
             aria-checked={agree}
             onClick={() => setAgree((v) => !v)}
             className={`flex min-h-[88px] items-center gap-4 rounded-2xl border-2 px-5 text-left text-[24px] font-bold ${
-              agree ? "border-[#3B4CCA] bg-[#3B4CCA]/10 text-[#3B4CCA]" : "border-[#E8EAF0] bg-white text-[#1A1F36]"
+              agree ? "border-[#3B4CCA] bg-[#3B4CCA]/10 text-[#3B4CCA]" : "border-[#BEC4D4] bg-white text-[#1A1F36]"
             }`}
           >
             <span className="text-[36px]" aria-hidden>

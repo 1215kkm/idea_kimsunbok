@@ -33,9 +33,9 @@ export default function V2History() {
       ) : items.length === 0 ? (
         <p className="py-10 text-center text-[26px] text-[#6B7394]">아직 내역이 없어요.</p>
       ) : (
-        <ul className="flex flex-col gap-4">
+        <ul className="flex flex-col gap-3">
           {items.map((it) => (
-            <li key={it.id} className="flex gap-4 rounded-3xl border-2 border-[#E8EAF0] bg-white px-5 py-6">
+            <li key={it.id} className="flex gap-4 rounded-3xl border-2 border-[#BEC4D4] bg-white px-5 py-4">
               <span className="text-[40px] leading-none" aria-hidden>
                 {it.icon}
               </span>

@@ -46,7 +46,7 @@ export default function V2Charge() {
   if (done) {
     return (
       <V2Shell title="돈 넣기">
-        <section className="flex flex-col items-center gap-4 py-6 text-center">
+        <section className="flex flex-col items-center gap-2 py-3 text-center">
           <div className="text-[80px]" aria-hidden>
             ✅
           </div>
